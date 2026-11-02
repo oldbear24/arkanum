@@ -172,7 +172,7 @@ export const cs = {
         name: 'Tarot',
         format: '70 × 120 mm',
         desc: 'Klasický věštecký balíček: 22 karet velké arkány a 56 malé. Římské číslování a souměrná rubová strana, aby obrácená karta nic neprozradila.',
-        specs: ['Číslo arkány a název', 'Význam ve vzpřímené i obrácené poloze', 'Čtyři rámy a čtyři palety'],
+        specs: ['Číslo arkány a název', 'Význam ve vzpřímené i obrácené poloze', 'Osm rámů a šestnáct palet'],
       },
       bestie: {
         name: 'Bestie',

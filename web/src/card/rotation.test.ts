@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cssRotation, fullPose, NO_TURN, screenToCard, turn, twistDegrees, viewAngles, type Quat } from './rotation';
+import { cssRotation, fullPose, NO_TURN, screenToCard, turn, twistDegrees, viewAngles, viewDirection, type Quat } from './rotation';
 
 /** Where the rotation moves a point, the way CSS would move it. */
 function apply([x, y, z, w]: Quat, [px, py, pz]: [number, number, number]): [number, number, number] {
@@ -13,6 +13,19 @@ function apply([x, y, z, w]: Quat, [px, py, pz]: [number, number, number]): [num
 function expectPoint(actual: [number, number, number], expected: [number, number, number]) {
   actual.forEach((value, i) => expect(value).toBeCloseTo(expected[i]!, 6));
 }
+
+describe('viewDirection', () => {
+  it('points out of the front at the viewer on a card that faces them', () => {
+    const view = viewDirection(NO_TURN);
+    expectPoint([view.x, view.y, view.z], [0, 0, 1]);
+  });
+
+  it('is the vector that a pose takes to the viewer', () => {
+    const pose = turn(turn(NO_TURN, 25, -40, 0), 0, 0, 70);
+    const { x, y, z } = viewDirection(pose);
+    expectPoint(apply(pose, [x, y, z]), [0, 0, 1]);
+  });
+});
 
 describe('turn', () => {
   it('matches rotateY and rotateX of CSS', () => {

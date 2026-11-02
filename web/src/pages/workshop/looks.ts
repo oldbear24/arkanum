@@ -1,8 +1,9 @@
 import { normalizeCard } from '../../card/normalize';
 import { enums, templateFor, type CardElement, type CardLook, type Family, type Palette } from '../../card/spec';
 
-// The look of a whole card at once. All of it leaves alone what makes the card this one
-// card: its family, its illustration and which of its layers and parts it shows.
+// The look of a whole card at once. The styles, the random look and pasting leave alone what
+// makes the card this one card: its family, its illustration and which of its layers and parts
+// it shows. Only the reset goes all the way back to the template, see resetLook().
 
 /** What a style does not mention goes back to these, so that styles do not pile up on each other. */
 const NEUTRAL: Partial<CardLook> = {
@@ -75,6 +76,7 @@ function between([min, max]: readonly [number, number], random: () => number): n
 
 /** A whole new look. The ranges are narrower than the limits, the far ends rarely look good. */
 export function randomLook(look: CardLook, random: () => number = Math.random): CardLook {
+  const font = any(enums.font, random);
   return {
     ...look,
     ...NEUTRAL,
@@ -90,7 +92,9 @@ export function randomLook(look: CardLook, random: () => number = Math.random): 
     textureI: between([20, 60], random),
     wear: random() < 0.25 ? between([20, 60], random) : 0,
     edge: any(enums.edge, random),
-    font: any(enums.font, random),
+    font,
+    // A script font falls apart in capitals.
+    titleCaps: font !== 'vibes',
     titleEffect: any(enums.titleEffect, random),
     skyStyle: any(enums.skyStyle, random),
     skyPattern: any(enums.skyPattern, random),
@@ -101,7 +105,7 @@ export function randomLook(look: CardLook, random: () => number = Math.random): 
   };
 }
 
-/** Back to the template, except for the illustration the card has by now. */
+/** All the way back to the template, hidden layers and parts too. Only the illustration stays. */
 export function resetLook(look: CardLook, family: Family): CardLook {
   return { ...templateFor(family).defaults.look, art: look.art, figure: look.figure };
 }

@@ -48,14 +48,14 @@ var demoCards = []demoCard{
 		obj{"id": "stin", "type": "symbol", "kind": "mesic", "x": 12, "y": 12, "size": 10, "rotate": -20, "opacity": 70},
 	}}, look: obj{"palette": "smaragd", "edge": "zlata"}},
 
-	tarot("noctua", "Velekněžka", "II", "mesic", "smaragd", "minimal", "zlata"),
+	tarot("noctua", "Velekněžka", "II", "knezka", "smaragd", "minimal", "zlata"),
 	tarot("sudicka", "Císařovna", "III", "slunce", "pulnoc", "secese", "duha"),
 	tarot("alchymista", "Císař", "IV", "mag", "krev", "deco", "zlata"),
-	tarot("sudicka", "Poustevník", "IX", "hvezda", "pergamen", "gotika", "zadna"),
-	tarot("noctua", "Kolo štěstí", "X", "slunce", "smaragd", "deco", "kosmos"),
+	tarot("sudicka", "Poustevník", "IX", "poustevnik", "pergamen", "gotika", "zadna"),
+	tarot("noctua", "Kolo štěstí", "X", "kolo", "smaragd", "luna", "galaxie"),
 	tarot("alchymista", "Síla", "VIII", "mag", "pulnoc", "secese", "duha"),
 	tarot("sudicka", "Soud", "XX", "hvezda", "krev", "gotika", "zlata"),
-	tarot("noctua", "Svět", "XXI", "mesic", "pulnoc", "deco", "kosmos"),
+	tarot("noctua", "Svět", "XXI", "svet", "ametyst", "baroko", "kosmos"),
 
 	beast("bludny_kamen", "Mlžný jelen", "mlha", "duch hvozdu · Mlha", 90, 4, 3, "Zatmění", 30, "Bytost se na jedno kolo skryje.", "Parohy", 60, "Zasáhne bytost v první řadě."),
 	beast("bludny_kamen", "Žhavý mlok", "ohen", "podzemní plaz · Oheň", 50, 2, 1, "Jiskra", 10, "Sousední bytost získá +1 útok.", "Výheň", 40, "Odhoď kartu a zasáhni všechny."),

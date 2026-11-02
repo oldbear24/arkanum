@@ -22,15 +22,23 @@ test('the extra sections and the items have no automatically detectable problems
   await signIn(page, 'demo');
   await createCard(page);
 
-  await page.getByText('Úpravy ilustrace').click();
-  await page.getByText('Vlastní barvy').click();
-  await page.getByText('Rub karty').click();
+  for (const section of ['Hotové styly', 'Úpravy ilustrace', 'Pozadí okna', 'Vlastní barvy', 'Části karty', 'Rub karty']) await page.getByText(section, { exact: true }).click();
+  await checkA11y(page);
+
+  await settingsTab(page, 'Materiál').click();
+  await page.getByText('Textura a opotřebení').click();
+  await checkA11y(page);
+
+  await settingsTab(page, 'Text').click();
+  await page.getByText('Úprava nadpisu').click();
   await checkA11y(page);
 
   for (const name of ['Text', 'Symbol', 'Ornament', 'Statistika', 'Tvar']) {
     await page.getByRole('complementary', { name: 'Šablona a vrstvy' }).getByRole('button', { name, exact: true }).click();
     await checkA11y(page);
   }
+  await page.getByText('Vzhled prvku').click();
+  await checkA11y(page);
 });
 
 test.describe('on a phone', () => {
@@ -74,9 +82,15 @@ test.describe('on a phone', () => {
           .map((element) => `${element.tagName} ${element.getAttribute('aria-label') ?? element.textContent?.slice(0, 20)} ${Math.round(element.getBoundingClientRect().width)}×${Math.round(element.getBoundingClientRect().height)}`),
       );
 
-    await page.getByText('Úpravy ilustrace').click();
-    await page.getByText('Vlastní barvy').click();
-    await page.getByText('Rub karty').click();
+    for (const section of ['Hotové styly', 'Úpravy ilustrace', 'Pozadí okna', 'Vlastní barvy', 'Části karty', 'Rub karty']) await page.getByText(section, { exact: true }).click();
+    expect(await tooSmall()).toEqual([]);
+
+    await sheet.getByRole('button', { name: 'Materiál', exact: true }).click();
+    await page.getByText('Textura a opotřebení').click();
+    expect(await tooSmall()).toEqual([]);
+
+    await sheet.getByRole('button', { name: 'Text', exact: true }).click();
+    await page.getByText('Úprava nadpisu').click();
     expect(await tooSmall()).toEqual([]);
 
     await sheet.getByRole('button', { name: 'Prvky', exact: true }).click();

@@ -190,6 +190,66 @@ describe('normalizeCard', () => {
     expect(normalizeCard({ look: { backPattern: 'kostky' } }).look.backPattern).toBe('mandala');
   });
 
+  it('accepts the new colours the same way', () => {
+    const { colors } = normalizeCard({ look: { colors: { title: '#112233', plaque: 'red', panel: '#445566', glow: 12, edge: '#778899', backBase: '#000000', backMetal: 'url(x)' } } }).look;
+    expect(colors).toMatchObject({ title: '#112233', plaque: '', panel: '#445566', glow: '', edge: '#778899', backBase: '#000000', backMetal: '' });
+  });
+
+  it('clamps the material, title and background options', () => {
+    const { look } = normalizeCard({
+      look: { foilAngle: 999, textureI: -5, wear: 999, vignette: 999, frameWeight: 1, titleSpacing: 999, titleOffset: -999, bodyScale: 1, artFilter: { sepia: 999 } },
+    });
+    expect(look).toMatchObject({ foilAngle: 180, textureI: 0, wear: 100, vignette: 100, frameWeight: 50, titleSpacing: 40, titleOffset: -40, bodyScale: 70 });
+    expect(look.artFilter.sepia).toBe(100);
+  });
+
+  it('falls back on the defaults for unknown choices of the new options', () => {
+    const { look } = normalizeCard({ look: { foilArea: 'rub', texture: 'kamen', titleEffect: 'blikani', skyStyle: 'mraky', skyPattern: 'logo' } });
+    expect(look).toMatchObject({ foilArea: 'cela', texture: 'zadna', titleEffect: 'zadny', skyStyle: 'prechod', skyPattern: 'zadny' });
+  });
+
+  it('keeps a card from before these options the same as it was', () => {
+    const { look, content } = normalizeCard({ look: { foil: 'duha', palette: 'krev' }, content: { hp: 90, elements: [{ type: 'text', id: 'a' }] } });
+    expect(look).toMatchObject({ figure: '', foilArea: 'cela', foilAngle: 115, texture: 'zadna', wear: 0, vignette: 0, frameWeight: 100, titleEffect: 'zadny', titleSpacing: 0, titleOffset: 0, bodyScale: 100, skyStyle: 'prechod', skyPattern: 'zadny' });
+    expect(Object.values(look.parts).every(Boolean)).toBe(true);
+    expect(content).toMatchObject({ backText: '', labels: { level: '', s1: '', s2: '', s3: '' } });
+    expect(content.elements[0]).toMatchObject({ flipX: false, flipY: false, depth: 0, shadow: 0, blend: 'normal', locked: false, spacing: 0, line: 115, caps: false, effect: 'zadny', curve: 0, stroke: 3, mask: '', border: 0 });
+  });
+
+  it('only takes a figure that belongs to the family', () => {
+    expect(normalizeCard({ family: 'bestie', look: { figure: 'sova' } }).look.figure).toBe('sova');
+    expect(normalizeCard({ family: 'bestie', look: { figure: 'kalich' } }).look.figure).toBe('');
+    expect(normalizeCard({ family: 'hrdina', look: { figure: 'kalich' } }).look.figure).toBe('kalich');
+    expect(normalizeCard({ family: 'orakulum', look: { figure: 'vez' } }).look.figure).toBe('vez');
+    expect(normalizeCard({ family: 'tarot', look: { figure: 'vez' } }).look.figure).toBe('');
+    expect(normalizeCard({ family: 'prazdna', look: { figure: 'vez' } }).look.figure).toBe('');
+  });
+
+  it('keeps the parts of a card and ignores junk', () => {
+    const { parts } = normalizeCard({ look: { parts: { numeral: false, corners: 'no', rarity: false } } }).look;
+    expect(parts).toMatchObject({ numeral: false, corners: true, rarity: false, title: true });
+    expect(normalizeCard({ look: { parts: 'x' } }).look.parts.title).toBe(true);
+  });
+
+  it('shortens the back text and the captions', () => {
+    const { content } = normalizeCard({ content: { backText: 'r'.repeat(999), labels: { s1: 'š'.repeat(99), s2: 5, s3: null } } });
+    expect(content.backText).toHaveLength(textLimits.backText);
+    expect(content.labels.s1).toHaveLength(textLimits.statLabel);
+    expect(content.labels.s2).toBe('5');
+    expect(content.labels.s3).toBe('');
+  });
+
+  it('clamps the new options of an element and refuses unknown values', () => {
+    const [item] = normalizeCard({
+      content: { elements: [{ id: 'a', type: 'text', flipX: true, flipY: 'ano', depth: 999, shadow: -5, blend: 'dissolve', locked: 1, spacing: 999, line: 1, caps: true, effect: 'blikani', curve: -999, stroke: 99, mask: 'logo', border: 99 }] },
+    }).content.elements;
+    expect(item).toMatchObject({ flipX: true, flipY: false, depth: 100, shadow: 0, blend: 'normal', locked: false, spacing: 60, line: 80, caps: true, effect: 'zadny', curve: -100, stroke: 12, mask: '', border: 10 });
+  });
+
+  it('keeps the cut-out of an image', () => {
+    expect(normalizeCard({ content: { elements: [{ type: 'image', mask: 'kruh' }] } }).content.elements[0]?.mask).toBe('kruh');
+  });
+
   it('shortens the artist', () => {
     expect(normalizeCard({ content: { artist: 'a'.repeat(999) } }).content.artist).toHaveLength(textLimits.artist);
   });

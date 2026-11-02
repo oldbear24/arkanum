@@ -5,9 +5,11 @@ import { Card3D } from './Card3D';
 import { CardBack } from './CardBack';
 import { CardFace } from './CardFace';
 import { LazyCard } from './LazyCard';
+import { buildGeometry } from './geometry';
+import { hasFoilOverlay } from './motion';
 import { itemDefaults } from './normalize';
 import type { PlacedItem } from './resolve';
-import { enums, type ItemType } from './spec';
+import { enums, type Figure, type ItemType, type Variant } from './spec';
 
 let frames: FrameRequestCallback[] = [];
 
@@ -659,6 +661,14 @@ describe('Card3D with editable items', () => {
     expect(scene.style.getPropertyValue('--orient')).toBe('rotate3d(0.0000, 1.0000, 0.0000, 55.00deg)');
   });
 
+  it('lets a locked item be, and turns the card through it', () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <Card3D interactive="drag" items={[{ ...itemDefaults('symbol'), id: 'a', type: 'symbol', locked: true }]} editing={{ selected: null, onSelect: () => undefined, onMove }} />,
+    );
+    expect(container.querySelector<HTMLElement>('[data-item="a"]')?.style.pointerEvents).toBe('none');
+  });
+
   it('moves items with reduced motion too, without turning the card', () => {
     stubMatchMedia(true);
     const { scene, element, editing } = setup();
@@ -752,6 +762,87 @@ describe('free items', () => {
     expect(path?.getAttribute('stroke')).toMatch(/^url/);
   });
 
+  it('draw the signs by lines and the other symbols filled or as an outline', () => {
+    const sign = render(<CardFace items={[place('symbol', { kind: 'lev', stroke: 5 })]} />);
+    const line = sign.container.querySelector('[data-item] path');
+    expect(line?.getAttribute('fill')).toBe('none');
+    expect(line?.getAttribute('stroke-width')).toBe('12');
+    cleanup();
+    const { container } = render(<CardFace items={[place('symbol', { kind: 'mesic', filled: false, stroke: 5 })]} />);
+    const outline = container.querySelector('[data-item] path');
+    expect(outline?.getAttribute('fill')).toBe('none');
+    expect(outline?.getAttribute('stroke-width')).toBe('5');
+  });
+
+  it('mirror themselves on top of their rotation', () => {
+    const { container } = render(<CardFace items={[place('shape', { rotate: 30, flipX: true }), place('symbol', { flipY: true })]} />);
+    expect(container.querySelector<HTMLElement>('[data-item="shape"]')?.style.transform).toBe('translate(-50%, -50%) rotate(30deg) scale(-1, 1)');
+    expect(container.querySelector<HTMLElement>('[data-item="symbol"]')?.style.transform).toBe('translate(-50%, -50%) rotate(0deg) scale(1, -1)');
+  });
+
+  it('float by the variables of their side', () => {
+    const { container } = render(<Card3D items={[place('shape', { depth: 50 }), place('symbol', { depth: -100, side: 'back' })]} />);
+    expect(container.querySelector<HTMLElement>('[data-item="shape"]')?.style.transform).toBe('translate(calc(var(--ifx) * 0.5), calc(var(--ify) * 0.5)) translate(-50%, -50%) rotate(0deg)');
+    expect(container.querySelector<HTMLElement>('[data-item="symbol"]')?.style.transform).toBe('translate(calc(var(--ibx) * -1), calc(var(--ify) * -1)) translate(-50%, -50%) rotate(0deg)');
+  });
+
+  it('have no effects until they are asked for', () => {
+    const { container } = render(<CardFace items={[place('shape')]} />);
+    const box = container.querySelector<HTMLElement>('[data-item]');
+    expect(box?.style.filter).toBe('');
+    expect(box?.style.mixBlendMode).toBe('');
+  });
+
+  it('cast a shadow and blend with the card', () => {
+    const { container } = render(<CardFace items={[place('shape', { shadow: 50, blend: 'screen' })]} />);
+    const box = container.querySelector<HTMLElement>('[data-item]');
+    expect(box?.style.filter).toMatch(/^drop-shadow/);
+    expect(box?.style.mixBlendMode).toBe('screen');
+  });
+
+  it('show a text with its spacing, line height, capitals and effect', () => {
+    const { container } = render(<CardFace items={[place('text', { text: 'Hvězda', spacing: 20, line: 150, caps: true, effect: 'stin' })]} />);
+    const text = container.querySelector<HTMLElement>('[data-item] > div');
+    expect(text?.style.letterSpacing).toBe('0.2em');
+    expect(text?.style.lineHeight).toBe('1.5');
+    expect(text?.style.textTransform).toBe('uppercase');
+    expect(text?.style.textShadow).not.toBe('');
+  });
+
+  it.each([60, -60, 100, -100])('bend a text by %i along a path, on one line', (curve) => {
+    const { container } = render(<CardFace items={[place('text', { text: 'První\nDruhý', curve })]} />);
+    const box = container.querySelector<HTMLElement>('[data-item]');
+    expect(container.querySelector('textPath')?.textContent).toBe('První Druhý');
+    expect(box?.style.width).toMatch(/%$/);
+    expect(container.querySelector('[data-item] svg')?.getAttribute('viewBox')).not.toContain('NaN');
+    const id = container.querySelector('textPath')?.getAttribute('href')?.slice(1);
+    const path = container.querySelector(`[id="${id}"]`)?.getAttribute('d') ?? '';
+    // The middle of the path is the top of the circle going up, and the bottom going down.
+    expect(path).toMatch(curve > 0 ? /^M0 [\d.]+A/ : /^M0 -[\d.]+A/);
+    expect(path).toContain(curve > 0 ? ' 0 1 1 ' : ' 0 1 0 ');
+  });
+
+  it('keep a straight text as plain text', () => {
+    const { container } = render(<CardFace items={[place('text', { curve: 0 })]} />);
+    expect(container.querySelector('textPath')).toBeNull();
+    expect(container.querySelector<HTMLElement>('[data-item]')?.style.width).toBe('max-content');
+  });
+
+  it('cut an image by a shape and draw a line around it', () => {
+    const { container } = render(<CardFace items={[place('image', { url: '/a.png', ratio: 80, mask: 'kruh', border: 4 })]} />);
+    const image = container.querySelector('[data-item] image');
+    const clip = container.querySelector(`[data-item] clipPath`);
+    expect(image?.getAttribute('clip-path')).toBe(`url(#${clip?.id})`);
+    expect(clip?.id).toMatch(/^[a-zA-Z0-9]+$/);
+    expect(container.querySelector('[data-item] svg > path')?.getAttribute('stroke-width')).toBe('4');
+  });
+
+  it('show an image as it is without a cut-out', () => {
+    const { container } = render(<CardFace items={[place('image', { url: '/a.png' })]} />);
+    expect(container.querySelector('[data-item] clipPath')).toBeNull();
+    expect(container.querySelector('[data-item] svg > path')).toBeNull();
+  });
+
   it('show the number and label of a stat', () => {
     render(<CardFace items={[place('stat', { value: '7', text: 'Útok' })]} />);
     expect(screen.getByText('7')).toBeTruthy();
@@ -773,6 +864,312 @@ describe('free items', () => {
 });
 
 describe('look options', () => {
+  const stop = (container: HTMLElement) => container.querySelector('linearGradient[data-gold] stop[offset="0.38"]')?.getAttribute('stop-color');
+  const faceRoot = (container: HTMLElement) => container.querySelector<HTMLElement>('[role="img"]');
+
+  it.each(enums.frame)('draws the frame %s', (frame) => {
+    const { g } = buildGeometry('tarot', frame, 'hvezda', 'mlha', 3, 14);
+    for (const path of [g.win, g.plaque, g.corner]) {
+      expect(path).toBeTruthy();
+      expect(path).not.toContain('NaN');
+    }
+  });
+
+  it.each(enums.art)('draws the arcana %s', (art) => {
+    const { a } = buildGeometry('tarot', 'secese', art, 'mlha', 3, 14);
+    expect(a.line).toBeTruthy();
+    expect(Object.values(a).join('')).not.toContain('NaN');
+  });
+
+  it.each(enums.element)('has an icon for the element %s', (element) => {
+    const { g } = buildGeometry('bestie', 'secese', 'hvezda', element, 3, 14);
+    expect(g.icoF + g.icoS).toBeTruthy();
+  });
+
+  const figureCases: [Variant, Figure][] = [...enums.figureBestie.map((figure): [Variant, Figure] => ['bestie', figure]), ...enums.figureHrdina.map((figure): [Variant, Figure] => ['hrdina', figure]), ...enums.art.map((figure): [Variant, Figure] => ['orakulum', figure])];
+
+  it.each(figureCases)('draws for a card of the family %s the figure %s', (variant, figure) => {
+    const own = buildGeometry(variant, 'secese', 'hvezda', 'mlha', 3, 14).a;
+    const other = buildGeometry(variant, 'secese', 'hvezda', 'mlha', 3, 14, 514, 'mandala', figure).a;
+    expect(other).not.toEqual(own);
+    expect(Object.values(other).join('')).not.toContain('NaN');
+  });
+
+  it('ignores a figure of another family', () => {
+    const line = (figure?: string) => {
+      const { container } = render(<CardFace variant="bestie" figure={figure} />);
+      const d = [...container.querySelectorAll('path')].map((path) => path.getAttribute('d')).join('|');
+      cleanup();
+      return d;
+    };
+    expect(line('kalich')).toBe(line());
+    expect(line('sova')).not.toBe(line());
+  });
+
+  it('has one back pattern that reads the same upside down', () => {
+    const { b } = buildGeometry('tarot', 'secese', 'hvezda', 'mlha', 3, 14, 514, 'sachovnice');
+    const squares = [...b.fill.matchAll(/M([\d.]+) ([\d.]+)h/g)].map((m) => [Number(m[1]), Number(m[2])]);
+    const size = /h([\d.]+)v([\d.]+)/.exec(b.fill)!;
+    for (const [x, y] of squares) {
+      const twin = squares.some(([u, v]) => Math.abs(u! + Number(size[1]) + x! - 300) < 0.3 && Math.abs(v! + Number(size[2]) + y! - 514) < 0.3);
+      expect(twin).toBe(true);
+    }
+  });
+
+  it.each(enums.skyPattern.filter((pattern) => pattern !== 'zadny'))('draws the background pattern %s', (skyPattern) => {
+    const { sky } = buildGeometry('tarot', 'secese', 'hvezda', 'mlha', 3, 14, 514, 'mandala', '', skyPattern);
+    expect(sky.line + sky.fill).toBeTruthy();
+    expect(sky.line + sky.fill).not.toContain('NaN');
+  });
+
+  it('keeps the sky of a card the same on every render', () => {
+    const sky = () => buildGeometry('tarot', 'secese', 'hvezda', 'mlha', 3, 14, 514, 'mandala', '', 'hvezdy').sky.fill;
+    expect(sky()).toBe(sky());
+  });
+
+  it('draws no pattern by default', () => {
+    expect(buildGeometry('tarot', 'secese', 'hvezda', 'mlha', 3, 14).sky).toEqual({ line: '', fill: '' });
+  });
+
+  it('turns the background around and takes other forms of it', () => {
+    const stops = (container: HTMLElement) => [...container.querySelectorAll('defs linearGradient:not([data-gold]):not([data-metal]) stop')].map((s) => s.getAttribute('stop-color'));
+    const usual = render(<CardFace palette="krev" />);
+    const [top, bottom] = stops(usual.container);
+    cleanup();
+    expect(stops(render(<CardFace palette="krev" skyStyle="opacny" />).container)).toEqual([bottom, top]);
+    cleanup();
+    const glow = render(<CardFace palette="krev" skyStyle="zare" />);
+    expect(glow.container.querySelector('defs radialGradient[cy="0.38"]')).toBeTruthy();
+    cleanup();
+    const flat = render(<CardFace palette="krev" skyStyle="plna" />);
+    expect(flat.container.querySelector('[clip-path] rect')?.getAttribute('fill')).toBe(top);
+  });
+
+  it('darkens the corners of the illustration only when asked to', () => {
+    const plain = render(<CardFace />);
+    expect(plain.container.querySelectorAll('[clip-path] > rect')).toHaveLength(0);
+    cleanup();
+    const { container } = render(<CardFace vignette={40} />);
+    const rect = container.querySelector('[clip-path] > rect');
+    expect(rect?.getAttribute('opacity')).toBe('0.4');
+    expect(rect?.getAttribute('fill')).toMatch(/^url/);
+    expect(rect?.getAttribute('width')).toBe('232');
+  });
+
+  it('adds sepia to the filter of the illustration', () => {
+    const { container } = render(<CardFace artFilter={{ brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 100 }} />);
+    expect(container.querySelector('filter[filterUnits] feColorMatrix[type="matrix"]')?.getAttribute('values')).toBe('0.393 0.769 0.189 0 0 0.349 0.686 0.168 0 0 0.272 0.534 0.131 0 0 0 0 0 1 0');
+  });
+
+  it.each(['ruzova', 'medena'])('replaces the metal of the card with the foil %s', (foil) => {
+    const usual = render(<CardFace />);
+    const gold = stop(usual.container);
+    cleanup();
+    const { container } = render(<CardFace foil={foil} />);
+    expect(stop(container)).not.toBe(gold);
+    expect(Number(faceRoot(container)?.style.getPropertyValue('--holo-o'))).toBe(0);
+  });
+
+  it.each(enums.foil.filter((foil) => hasFoilOverlay(foil)))('shimmers with the overlay foil %s', (foil) => {
+    const { container } = render(<CardFace foil={foil} foilI={100} />);
+    expect(Number(faceRoot(container)?.style.getPropertyValue('--holo-o'))).toBeGreaterThan(0);
+  });
+
+  it.each(['kosmos', 'trpytky', 'galaxie'])('sparkles with the foil %s', (foil) => {
+    const { container } = render(<CardFace foil={foil} foilI={100} />);
+    expect(Number(faceRoot(container)?.style.getPropertyValue('--sp-o'))).toBeGreaterThan(0);
+  });
+
+  it('leaves a foil over the whole card without any clipping', () => {
+    const { container } = render(<CardFace foil="duha" />);
+    expect(container.querySelector('clipPath[clipPathUnits]')).toBeNull();
+    expect(container.querySelector<HTMLElement>('[style*="clip-path"]')).toBeNull();
+  });
+
+  it.each(['ilustrace', 'okraj'])('limits a foil to the area %s, in the units of its own box', (foilArea) => {
+    const { container } = render(<CardFace foil="duha" foilArea={foilArea} />);
+    const clip = container.querySelector('clipPath[clipPathUnits="objectBoundingBox"]');
+    const path = clip?.querySelector('path');
+    expect(path?.getAttribute('transform')).toBe(`scale(${1 / 300} ${1 / 514})`);
+    expect(path?.getAttribute('d')?.startsWith('M0 0H300V514H0Z')).toBe(foilArea === 'okraj');
+    expect(container.querySelectorAll(`[style*="${clip?.id}"]`)).toHaveLength(2);
+  });
+
+  it('has no area of the foil on a full art card', () => {
+    const { container } = render(<CardFace foil="duha" foilArea="okraj" fullArt />);
+    expect(container.querySelector('clipPath[clipPathUnits]')).toBeNull();
+  });
+
+  it('turns the rainbow of a foil', () => {
+    const { container } = render(<CardFace foil="duha" foilAngle={30} />);
+    expect(container.querySelector<HTMLElement>('[style*="linear-gradient(30deg"]')).toBeTruthy();
+  });
+
+  it('shines more with the mirror surface', () => {
+    const glare = (surface: string) => {
+      const { container } = render(<CardFace surface={surface} />);
+      const value = Number(faceRoot(container)?.style.getPropertyValue('--ga'));
+      cleanup();
+      return value;
+    };
+    expect(glare('zrcadlo')).toBeGreaterThan(glare('lesk'));
+  });
+
+  it.each(enums.texture.filter((texture) => texture !== 'zadna'))('lays the texture %s over both sides', (texture) => {
+    const face = render(<CardFace texture={texture} textureI={40} />);
+    expect(face.container.querySelector<HTMLElement>(`[data-texture="${texture}"]`)?.style.opacity).toBe('0.4');
+    cleanup();
+    const back = render(<CardBack texture={texture} />);
+    expect(back.container.querySelector(`[data-texture="${texture}"]`)).toBeTruthy();
+  });
+
+  it('has no texture or wear by default', () => {
+    const { container } = render(<CardFace />);
+    expect(container.querySelector('[data-texture]')).toBeNull();
+    expect(container.querySelector('[data-wear]')).toBeNull();
+  });
+
+  it('wears the edges of the card', () => {
+    const { container } = render(<CardFace wear={60} />);
+    expect(container.querySelector<HTMLElement>('[data-wear]')?.style.boxShadow).toContain('inset');
+  });
+
+  it('keeps the lines of the frame the same by default and changes them on demand', () => {
+    const width = (frameWeight?: number) => {
+      const { container } = render(<CardFace frameWeight={frameWeight} />);
+      const value = container.querySelector('[filter] path[stroke-width="2"], [filter] path[stroke-width="3"]')?.getAttribute('stroke-width');
+      cleanup();
+      return value;
+    };
+    expect(width()).toBe('2');
+    expect(width(150)).toBe('3');
+  });
+
+  it('hides single parts and leaves the others', () => {
+    const { container } = render(<CardFace cardTitle="Název" numeral="IX" parts={{ numeral: false, corners: false, plaque: false }} />);
+    expect(screen.queryByText('IX')).toBeNull();
+    expect(screen.getByText('Název')).toBeTruthy();
+    const usual = buildGeometry('tarot', 'secese', 'hvezda', 'mlha', 3, 14).g;
+    const paths = [...container.querySelectorAll('path')].map((path) => path.getAttribute('d'));
+    expect(paths).not.toContain(usual.corner);
+    expect(paths).not.toContain(usual.plaque);
+    expect(paths).toContain(usual.border);
+  });
+
+  it('hides the title, the second text, the rarity and the credit of a beast', () => {
+    const { container } = render(<CardFace variant="bestie" cardTitle="Mlok" subtitle="Popis" setNo="S1" author="@ja" rarity={3} parts={{ title: false, subtitle: false, rarity: false, credit: false }} />);
+    for (const text of ['Mlok', 'Popis', 'S1']) expect(screen.queryByText(text)).toBeNull();
+    const usual = buildGeometry('bestie', 'secese', 'hvezda', 'mlha', 3, 14).g;
+    expect([...container.querySelectorAll('path')].map((path) => path.getAttribute('d'))).not.toContain(usual.rarF);
+  });
+
+  it('gives the title an effect, more spacing and another place', () => {
+    render(<CardFace cardTitle="Velmi" titleEffect="zare" titleSpacing={20} titleOffset={-10} />);
+    const title = screen.getByText('Velmi');
+    expect(title.style.textShadow).not.toBe('');
+    expect(parseFloat(title.style.letterSpacing)).toBeCloseTo(0.38, 3);
+    expect(title.style.top).toMatch(/^calc\(/);
+    cleanup();
+    render(<CardFace cardTitle="Velmi" />);
+    expect(screen.getByText('Velmi').style.top).toBe('85.2%');
+    expect(screen.getByText('Velmi').style.textShadow).toBe('');
+  });
+
+  it('keeps a wider title on the card', () => {
+    const size = (titleSpacing: number) => {
+      render(<CardFace cardTitle="Velmi dlouhý název" titleSpacing={titleSpacing} />);
+      const value = parseFloat(screen.getByText('Velmi dlouhý název').style.fontSize);
+      cleanup();
+      return value;
+    };
+    expect(size(30)).toBeLessThan(size(0));
+  });
+
+  it('colours the title on its own', () => {
+    render(<CardFace cardTitle="Velmi" colors={{ title: '#102030', text: '#a0b0c0' }} />);
+    expect(screen.getByText('Velmi').style.color).toBe('rgb(16, 32, 48)');
+  });
+
+  it('colours the plaque, the panel and the glow', () => {
+    const { container } = render(<CardFace variant="bestie" colors={{ plaque: '#102030', panel: '#203040', glow: '#304050' }} />);
+    const fills = [...container.querySelectorAll('path')].map((path) => path.getAttribute('fill'));
+    expect(fills).toContain('#102030');
+    expect(fills).toContain('#203040');
+    expect(container.querySelector('radialGradient stop')?.getAttribute('stop-color')).toBe('#304050');
+  });
+
+  it('keeps the texts on a panel readable in its own colour', () => {
+    render(<CardFace variant="hrdina" ab1="Hradba" colors={{ panel: '#101010' }} subtitle="Citát" />);
+    expect(screen.getByText('Citát').style.color).toBe('rgb(207, 199, 178)');
+    cleanup();
+    render(<CardFace variant="bestie" ab1="Mámení" ab1t="Účinek" colors={{ panel: '#f0f0f0' }} />);
+    expect(screen.getByText('Mámení').style.color).toBe('rgb(42, 32, 24)');
+    cleanup();
+    render(<CardFace variant="hrdina" subtitle="Citát" />);
+    expect(screen.getByText('Citát').style.color).toBe('rgb(94, 76, 56)');
+  });
+
+  it('scales the other texts', () => {
+    render(<CardFace variant="bestie" ab1="Mámení" bodyScale={80} />);
+    expect(screen.getByText('Mámení').style.fontSize).toBe('0.464em');
+    cleanup();
+    render(<CardFace variant="bestie" ab1="Mámení" />);
+    expect(screen.getByText('Mámení').style.fontSize).toBe('0.58em');
+  });
+
+  it('takes own captions of the stats', () => {
+    render(<CardFace variant="hrdina" labels={{ s1: 'ÚTOK', s3: 'MANA' }} />);
+    expect(screen.getByText('ÚTOK')).toBeTruthy();
+    expect(screen.getByText('OBRANA')).toBeTruthy();
+    expect(screen.getByText('MANA')).toBeTruthy();
+    cleanup();
+    const { container } = render(<CardFace variant="bestie" level={4} labels={{ level: 'LV' }} />);
+    expect(container.textContent).toContain('LV 4');
+  });
+
+  it('makes the edge of an own colour, from dark to light', () => {
+    const { container } = render(<Card3D edge="zlata" colors={{ edge: '#3060c0' }} />);
+    const layers = [...container.querySelectorAll<HTMLElement>('[role="img"] > div:nth-child(2) > div')].slice(0, 10);
+    expect(layers[4]?.style.background).toBe('rgb(48, 96, 192)');
+    expect(layers[0]?.style.background).not.toBe(layers[4]?.style.background);
+  });
+
+  it.each(enums.edge)('has the edge %s', (edge) => {
+    const { container } = render(<Card3D edge={edge} />);
+    const layers = [...container.querySelectorAll<HTMLElement>('[role="img"] > div:nth-child(2) > div')].slice(0, 10);
+    expect(layers.every((layer) => layer.style.background)).toBe(true);
+  });
+
+  it('colours the back on its own', () => {
+    const { container } = render(<CardBack colors={{ backBase: '#102030', backMetal: '#405060' }} />);
+    expect(faceRoot(container)?.style.background).toBe('rgb(16, 32, 48)');
+    expect(stop(container)).toBe('#405060');
+  });
+
+  it('shows the own text on the back of every card, and instead of the brand', () => {
+    render(<CardBack backText="Moje sada" />);
+    expect(screen.getByText('Moje sada')).toBeTruthy();
+    cleanup();
+    render(<CardBack variant="bestie" backText="Moje sada" />);
+    expect(screen.getByText('Moje sada')).toBeTruthy();
+    expect(screen.queryByText('ARKÁNUM')).toBeNull();
+    cleanup();
+    render(<CardBack variant="bestie" />);
+    expect(screen.getByText('ARKÁNUM')).toBeTruthy();
+  });
+
+  it('gives way to the back of a deck with everything a card has of its own', () => {
+    const own = { colors: { backBase: '#102030', backMetal: '#405060', edge: '#3060c0' }, backText: 'Prozradí', texture: 'platno' };
+    const { container } = render(<CardBack {...own} backPalette="krev" uniformBack />);
+    expect(faceRoot(container)?.style.background).toBe('rgb(35, 10, 17)');
+    expect(screen.queryByText('Prozradí')).toBeNull();
+    expect(container.querySelector('[data-texture]')).toBeNull();
+    cleanup();
+    const card = render(<Card3D {...own} edge="zlata" backPalette="krev" uniformBack />);
+    const layers = [...card.container.querySelectorAll<HTMLElement>('[role="img"] > div:nth-child(2) > div')].slice(0, 10);
+    expect(layers[4]?.style.background).not.toBe('rgb(48, 96, 192)');
+  });
+
   it('lays custom colours over the palette', () => {
     const { container } = render(<CardFace colors={{ base: '#102030', sky: '#405060', metal: '#708090', text: '#a0b0c0' }} cardTitle="Název" />);
     const root = container.querySelector<HTMLElement>('[role="img"]');

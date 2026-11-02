@@ -141,6 +141,14 @@ describe('static values match the prototype', () => {
   });
 });
 
+describe('values beyond the design', () => {
+  it('stay out of the way of the defaults', () => {
+    const plain = resolveCard({});
+    const named = resolveCard({ foilArea: 'cela', foilAngle: 115, texture: 'zadna', wear: 0, frameWeight: 100, titleEffect: 'zadny', titleSpacing: 0, titleOffset: 0, bodyScale: 100, skyStyle: 'prechod', skyPattern: 'zadny', vignette: 0 });
+    expect(named).toEqual(plain);
+  });
+});
+
 describe('motion matches the prototype', () => {
   const states: MotionState[] = [
     { rx: 0, ry: 0, spin: 0, gx: 50, gy: 30, active: false, drag: false },
