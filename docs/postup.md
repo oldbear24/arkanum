@@ -7,7 +7,7 @@
 | 1. Kostra | hotovo |
 | 2. Data | hotovo |
 | 3. Karta | hotovo |
-| 4. Úvod, šablony, přihlášení, profil | čeká |
+| 4. Úvod, šablony, přihlášení, profil | hotovo |
 | 5. Dílna | čeká |
 | 6. Detail karty, lajky, remix, balíčky | čeká |
 | 7. Export | čeká |
@@ -83,6 +83,23 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 - `artworkTransform` je `{ x, y, zoom, layers: [{ x, y, zoom }] }`. `x` a `y` jsou procenta velikosti okna. Vrstvy
   v `artworkLayers` jdou od pozadí k popředí a hloubku určuje jejich počet (1: pozadí, 2: pozadí a popředí,
   3: pozadí, střed a popředí). Obrázek přesahuje okno o 16 jednotek, aby paralaxa neodhalila okraj.
+
+### Úvod, šablony, přihlášení, profil (fáze 4)
+
+- Pixelové porovnání s návrhem při 1440 px: `/sablony` 0,62 % pixelů, horní část `/` 0,17 % pixelů. Zbytek je
+  vyhlazení textu.
+- **Bez globálního `box-sizing: border-box`.** Návrh počítá s výchozím `content-box` (šířka 1280 px je bez
+  odsazení), `border-box` mají jen pole formulářů. S globálním resetem by byl obsah o 96 px užší.
+- **Vlastní `web/src/styles/fonts.css`** místo importů z `@fontsource`. Tamní soubory po jednotlivých subsetech
+  nemají `unicode-range`, takže `latin-ext` přebíjel základní latinku (špatně se kreslilo „Á" a měřily `ch`).
+  Soubor se odkazuje na písma v `node_modules/@fontsource`, jen woff2 a použité řezy.
+- Trasa `/@:handle` je v React Routeru `/:atHandle` s kontrolou `@` ve stránce, částečné segmenty router neumí.
+- `/dilna` bez id otevře naposledy upravenou kartu uživatele, případně pošle na `/sablony`.
+- Hledání v hlavičce je rozbalovací pole, na `/` filtruje galerii podle názvu, na `/sablony` šablony. Filtr
+  a řazení galerie jsou v adrese, aby šly sdílet.
+- Návrh používá pro „Použít šablonu" odkaz. Protože akce vytváří záznam, je to skutečné tlačítko.
+- Stránky bez návrhu (přihlášení, registrace, obnova hesla, ověření e-mailu, profil, 404) jsem odvodil
+  z vizuálního jazyka ostatních obrazovek. Přibyla stránka `/zmena-emailu/:token`, protože na ni míří e-mail.
 
 ### Lajky
 

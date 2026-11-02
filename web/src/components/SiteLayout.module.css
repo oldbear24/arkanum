@@ -1,0 +1,248 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+  background-image: var(--stars-image);
+  background-size: var(--stars-size);
+}
+
+.header {
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 13, 30, 0.88);
+}
+
+.headerInner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 12px var(--page-gutter);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.logo:hover {
+  color: var(--text);
+}
+
+.logoText {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.22em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  color: var(--text-2);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.navLink:hover {
+  color: var(--text);
+}
+
+.navLinkActive {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchButton {
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchButton:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.searchForm {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 4px 0 14px;
+  border-radius: 22px;
+  border: 1px solid var(--line-strong);
+  background: var(--field);
+  color: var(--text-3);
+}
+
+.searchInput {
+  width: clamp(110px, 18vw, 220px);
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.searchForm:focus-within {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.searchInput::-webkit-search-cancel-button {
+  display: none;
+}
+
+.searchClose {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchClose:hover {
+  color: var(--text);
+}
+
+.accountHolder {
+  position: relative;
+}
+
+.account {
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+}
+
+.account:hover {
+  border-color: var(--line-accent);
+  color: var(--text);
+}
+
+.accountImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.accountInitial {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+}
+
+.menuName {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.menuItem {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.menuItem:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+
+.footerInner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 28px var(--page-gutter);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.footerBrand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--text-2);
+}

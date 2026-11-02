@@ -1,0 +1,160 @@
+.main {
+  flex: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  margin: 0 auto;
+  padding: 48px var(--page-gutter) 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+}
+
+.avatar {
+  box-sizing: border-box;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 88px;
+  border-radius: 44px;
+  border: 1px solid var(--line-strong);
+  background: var(--raised);
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 34px;
+  color: var(--gold);
+}
+
+.names {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(28px, 3.2vw, 40px);
+  overflow-wrap: anywhere;
+}
+
+.handle {
+  font-size: 15px;
+  color: var(--text-3);
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 15px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 26px;
+}
+
+.empty {
+  padding: 16px 0;
+  color: var(--text-2);
+}
+
+.decks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 24px;
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 18px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.deckLink {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.deckFan {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--panel-inset);
+}
+
+.deckCard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92px;
+}
+
+.deckName {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.deckMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fileInput {
+  padding: 8px 12px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--text-2);
+}

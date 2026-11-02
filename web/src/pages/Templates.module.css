@@ -1,0 +1,271 @@
+.intro {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 56px var(--page-gutter) 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px 40px;
+}
+
+.introText {
+  flex: 1 1 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(34px, 4.4vw, 56px);
+  line-height: 1.08;
+}
+
+.lead {
+  max-width: 46ch;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--text-lead);
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.familiesSection {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 8px var(--page-gutter) 32px;
+}
+
+.noMatch {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--text-2);
+}
+
+.families {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(540px, 100%), 1fr));
+  gap: 24px;
+}
+
+.family {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.stage {
+  flex: 1 1 260px;
+  min-width: 0;
+  position: relative;
+  min-height: 330px;
+  background: var(--panel-inset);
+}
+
+.stageCard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.familyInfo {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 26px 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.familyHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.familyName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+}
+
+.familyFormat {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.familyDesc {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.specs {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.spec {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.familyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.blankActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.blankSection {
+  max-width: var(--page-max);
+  margin: 0 auto 32px;
+  padding: 8px var(--page-gutter) 40px;
+}
+
+.blank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: clamp(20px, 3vw, 36px);
+  border-radius: 20px;
+  border: 1px dashed var(--line-accent);
+  background: rgba(22, 19, 43, 0.7);
+}
+
+.blankForm {
+  flex: 1 1 440px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.blankHead,
+.blankGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blankLead {
+  max-width: 52ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.format {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line-soft);
+  background: var(--option);
+  color: var(--text-2);
+  text-align: left;
+}
+
+.format[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: var(--option-on);
+  color: var(--text);
+}
+
+.formatName {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.formatSize {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.customSize {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.customSize > * {
+  flex: 1 1 140px;
+}
+
+.orientation {
+  align-self: flex-start;
+}
+
+.preview {
+  flex: 1 1 280px;
+  min-width: 0;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.previewBox {
+  box-sizing: border-box;
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1.5px dashed var(--gold);
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewLabel {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+
+.previewNote {
+  font-size: 13px;
+  color: var(--text-3);
+}

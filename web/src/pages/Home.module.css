@@ -1,0 +1,248 @@
+.main {
+  padding-bottom: 64px;
+}
+
+.hero {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 56px var(--page-gutter) 32px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 40px;
+}
+
+.heroText {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(40px, 5.2vw, 68px);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: 34ch;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 23px;
+  line-height: 1.45;
+  color: var(--text-lead);
+  text-wrap: pretty;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.features {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 460px;
+}
+
+.feature {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.featureIcon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+}
+
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.featureText strong {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.featureText span {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.fan {
+  flex: 1 1 460px;
+  min-width: 0;
+  position: relative;
+  height: clamp(380px, 46vw, 600px);
+}
+
+.astro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(580px, 100%);
+  height: auto;
+  transform: translate(-50%, -50%);
+  opacity: 0.55;
+}
+
+.fanCard {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.fanLeft {
+  width: clamp(124px, 14vw, 200px);
+  transform: translate(-50%, -50%) translateX(-80%) translateY(5%) rotate(-11deg);
+}
+
+.fanRight {
+  width: clamp(124px, 14vw, 200px);
+  transform: translate(-50%, -50%) translateX(80%) translateY(5%) rotate(11deg);
+}
+
+.fanCenter {
+  z-index: 2;
+  width: clamp(150px, 17vw, 240px);
+  transform: translate(-50%, -52%);
+}
+
+.fanHint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-3);
+}
+
+.section {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 64px var(--page-gutter) 24px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 32px;
+}
+
+.sectionTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(28px, 3.2vw, 40px);
+}
+
+.templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.template {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.templateStage {
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-inset);
+  border-bottom: 1px solid var(--line);
+}
+
+.templateInfo {
+  padding: 20px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.templateRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.templateName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.templateFormat {
+  font-size: 13px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.templateDesc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 32px;
+}
+
+.searchNote {
+  margin: -16px 0 24px;
+  font-size: 15px;
+  color: var(--text-2);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+  text-align: center;
+  color: var(--text-2);
+}

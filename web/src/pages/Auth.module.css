@@ -1,0 +1,132 @@
+.main {
+  flex: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  margin: 0 auto;
+  padding: 56px var(--page-gutter);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+}
+
+.panel {
+  flex: 1 1 380px;
+  max-width: 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: clamp(22px, 3vw, 36px);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(28px, 3.2vw, 36px);
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--text-lead);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 15px;
+  color: var(--text-2);
+}
+
+.oauth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.oauthLabel {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.oauthButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aside {
+  flex: 1 1 340px;
+  max-width: 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.asideFan {
+  position: relative;
+  width: 100%;
+  height: 340px;
+}
+
+.asideLeft,
+.asideRight {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.asideLeft {
+  width: 150px;
+  transform: translate(-50%, -50%) translateX(-44%) translateY(4%) rotate(-9deg);
+}
+
+.asideRight {
+  z-index: 1;
+  width: 170px;
+  transform: translate(-50%, -50%) translateX(36%) rotate(6deg);
+}
+
+.asideTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.asideText {
+  max-width: 36ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+@media (max-width: 860px) {
+  .aside {
+    display: none;
+  }
+}
