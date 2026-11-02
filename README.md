@@ -8,6 +8,11 @@ karta s vlastním formátem. Karty se ukládají, sdílejí v galerii a exportuj
 - **Zadání a návrh:** [docs/zadani.md](docs/zadani.md), [design/](design/README.md).
 - **Stav prací a rozhodnutí:** [docs/postup.md](docs/postup.md).
 
+## Stažení
+
+Hotové binárky pro Linux, macOS a Windows jsou v [Releases](https://github.com/oldbear24/arkanum/releases). Stačí
+archiv rozbalit a spustit `./arkanum serve --http=127.0.0.1:8090`.
+
 ## Lokální vývoj
 
 Potřebujete Go 1.27+, Node 22+ a GNU Make. Na Windows s MSYS2 je Make k dispozici jako `mingw32-make`.

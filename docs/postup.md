@@ -21,13 +21,18 @@
 - `eslint-plugin-jsx-a11y` zatím nepodporuje ESLint 10, proto je ESLint připnutý na `^9`.
 - Na vývojovém stroji není `make` jako takový, jen `mingw32-make` z MSYS2. Makefile proto spouští jen
   `go` a `npm` a nespoléhá na konkrétní shell. Ověřeno přes `mingw32-make`.
-- Na vývojovém stroji není Docker, takže **Dockerfile není ověřený skutečným buildem**.
-- Repozitář zatím nemá vzdálený `origin`, commity zůstávají lokálně a `push` se neprovádí.
+- Na vývojovém stroji není Docker. Image proto staví a spouští CI (job `docker`), který čeká na healthcheck, ověří
+  API a frontend a zkontroluje, že data ve svazku přežijí restart.
+- Repozitář je veřejný na <https://github.com/oldbear24/arkanum>. CI běží na každý push do `main` a na pull requesty.
+
+## Vydání
+
+Binárky se zatím staví ručně z čistého commitu (`CGO_ENABLED=0 go build -trimpath -ldflags="-s -w"` pro Linux, macOS
+a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. Docker image se nikam nepublikuje. U vydání
+`v0.1.0` je přímo spuštěná jen binárka pro Windows. Sestavení pro Linux pokrývá CI, macOS se jen kompiluje.
 
 ## Co není ověřené
 
-- **Docker image** se tu nedal postavit. Kroky Dockerfile odpovídají příkazům, které tu procházejí, ale jako celek
-  neběžel. Stejně tak neběžel workflow GitHub Actions, protože repozitář nemá vzdálený `origin`.
 - **Skutečné Safari.** Playwright WebKit na Windows neumí 3D skládání vůbec: rub prosvítá zrcadlově i na nejjednodušší
   testovací stránce a i u původního návrhu, takže o 3D kartě v Safari nic neříká. Export v něm funguje. Před ostrým
   provozem je potřeba 3D kartu prohlédnout na iPhonu nebo Macu.
