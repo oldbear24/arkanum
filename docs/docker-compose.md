@@ -122,7 +122,7 @@ Aplikace sama HTTPS neřeší. V provozu ji dejte za reverzní proxy, napříkla
 - `ARKANUM_PORT=127.0.0.1:8090`, pokud proxy běží na stejném stroji,
 - v proxy vypnuté bufferování odpovědí pro `/api/realtime` (v nginx `proxy_buffering off`). Jinak se změny od spoluautorů
   nezobrazí živě,
-- v administraci v části Settings → Application hlavičku se skutečnou adresou klienta (`Trusted proxy`).
+- v administraci v části Settings → Application, v oddílu „IP proxy headers", hlavičku se skutečnou adresou klienta.
 
 Limit velikosti požadavku v proxy nastavte aspoň na 40 MB, ilustrace může mít až 10 MB a karta několik vrstev.
 
