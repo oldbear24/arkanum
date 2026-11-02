@@ -29,7 +29,10 @@
 
 Vydání spouští tag `v*`. Workflow `.github/workflows/release.yml` postaví Docker image pro `linux/amd64` a `linux/arm64`,
 publikuje ho do `ghcr.io/oldbear24/arkanum` (značky `0.1.0`, `0.1` a `latest`) a ověří, že běží. Na amd64 kontroluje
-healthcheck, API a frontend, na arm64 běží pod emulací a kontroluje se jen spuštění s `--version`.
+healthcheck, API a frontend přes `compose.yaml`, na arm64 běží pod emulací a kontroluje se jen spuštění s `--version`.
+
+Provoz přes Compose popisuje [docker-compose.md](docker-compose.md). CI (job `docker`) prochází jeho příkazy s image z daného
+commitu: spuštění, založení správce, ukázková data, záloha a obnova. Nastavení reverzní proxy z návodu ověřené není.
 
 Binárky se zatím staví ručně z čistého commitu (`CGO_ENABLED=0 go build -trimpath -ldflags="-s -w"` pro Linux, macOS
 a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. U vydání `v0.1.0` je přímo spuštěná jen binárka

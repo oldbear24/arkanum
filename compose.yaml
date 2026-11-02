@@ -1,0 +1,16 @@
+# Návod je v docs/docker-compose.md. Hodnoty se nastavují v souboru .env.
+services:
+  arkanum:
+    image: ghcr.io/oldbear24/arkanum:${ARKANUM_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${ARKANUM_PORT:-8090}:8090"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - arkanum-data:/pb_data
+
+volumes:
+  arkanum-data:
+    name: arkanum-data

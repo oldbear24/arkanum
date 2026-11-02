@@ -43,17 +43,12 @@ jobs:
 
       - name: Check the published image
         env:
+          ARKANUM_VERSION: ${{ steps.meta.outputs.version }}
           IMAGE: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
         run: |
           docker run --rm --platform linux/arm64 "$IMAGE" --version
-          docker run -d --name arkanum --platform linux/amd64 -p 8090:8090 "$IMAGE"
-          for attempt in $(seq 1 45); do
-            status=$(docker inspect --format '{{.State.Health.Status}}' arkanum)
-            echo "$attempt: $status"
-            if [ "$status" = healthy ]; then break; fi
-            sleep 2
-          done
-          test "$status" = healthy || { docker logs arkanum; exit 1; }
+          docker pull --platform linux/amd64 "$IMAGE"
+          docker compose up -d --wait --wait-timeout 120 || { docker compose logs; exit 1; }
           curl --fail --silent --show-error http://127.0.0.1:8090/api/health
           curl --fail --silent --show-error http://127.0.0.1:8090/ | grep -q 'id="root"'
           curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/templates/records | grep -q '"totalItems":5'

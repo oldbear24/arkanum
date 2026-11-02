@@ -91,3 +91,43 @@ jobs:
           done
           docker logs arkanum
           exit 1
+
+      # The steps below follow docs/docker-compose.md, with an image built from this commit.
+      - name: Start with Compose
+        run: |
+          docker rm -f arkanum
+          docker volume rm arkanum-data
+          docker tag arkanum ghcr.io/oldbear24/arkanum:ci
+          cp .env.example .env
+          sed -i 's/^ARKANUM_VERSION=.*/ARKANUM_VERSION=ci/' .env
+          sed -i "s/^PB_ENCRYPTION_KEY=.*/PB_ENCRYPTION_KEY=$(openssl rand -hex 16)/" .env
+          docker compose up -d --wait --wait-timeout 120
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/health
+          ARKANUM_PORT=127.0.0.1:8090 docker compose config | grep -q 'host_ip: 127.0.0.1'
+
+      - name: Create a superuser and seed demo data with Compose
+        run: |
+          docker compose exec -T arkanum arkanum superuser upsert admin@example.com correct-horse-battery --dir=/pb_data
+          docker compose exec -T arkanum arkanum seed --dir=/pb_data | grep 'generated password'
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/users/records | grep -q '"handle":"noctua"'
+
+      - name: Back up and restore with Compose
+        run: |
+          docker compose stop
+          docker run --rm -v arkanum-data:/data -v "$PWD":/backup alpine tar czf /backup/arkanum-zaloha.tar.gz -C /data .
+          docker compose start
+          docker compose down -v
+          docker compose create
+          docker compose stop
+          docker run --rm -v arkanum-data:/data -v "$PWD":/backup alpine sh -c "rm -rf /data/* && tar xzf /backup/arkanum-zaloha.tar.gz -C /data"
+          docker compose up -d --wait --wait-timeout 120
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/users/records | grep -q '"handle":"noctua"'
+          curl --fail --silent --show-error -X POST http://127.0.0.1:8090/api/collections/_superusers/auth-with-password \
+            -H 'Content-Type: application/json' \
+            -d '{"identity":"admin@example.com","password":"correct-horse-battery"}' > /dev/null
+
+      - name: Show what Compose saw on failure
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs

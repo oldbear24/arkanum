@@ -16,7 +16,8 @@ Nejjednodušší je Docker image pro `linux/amd64` a `linux/arm64`:
 docker run --name arkanum -p 8090:8090 -v arkanum-data:/pb_data ghcr.io/oldbear24/arkanum:latest
 ```
 
-Aplikace pak běží na `http://localhost:8090`, podrobnosti jsou v části [Docker](#docker). Hotové binárky pro Linux,
+Aplikace pak běží na `http://localhost:8090`. Pro trvalý provoz je tu [návod pro Docker Compose](docs/docker-compose.md),
+další podrobnosti jsou v části [Docker](#docker). Hotové binárky pro Linux,
 macOS a Windows jsou v [Releases](https://github.com/oldbear24/arkanum/releases). Stačí archiv rozbalit a spustit
 `./arkanum serve --http=127.0.0.1:8090`.
 
@@ -95,7 +96,8 @@ Adresa pro přesměrování u poskytovatele je `APP_URL/api/oauth2-redirect`.
 ## Docker
 
 Image se publikuje do `ghcr.io/oldbear24/arkanum` při každém tagu `v*`, se značkami podle verze (například `0.1.0`
-a `0.1`) a `latest`.
+a `0.1`) a `latest`. Pro trvalý provoz doporučujeme [Docker Compose](docs/docker-compose.md) a přiložený
+[compose.yaml](compose.yaml), jednorázově stačí:
 
 ```bash
 docker run --name arkanum -p 8090:8090 -v arkanum-data:/pb_data --env-file .env ghcr.io/oldbear24/arkanum:latest
