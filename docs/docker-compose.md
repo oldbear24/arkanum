@@ -35,7 +35,7 @@ Pro ověřování e-mailů a obnovu hesla vyplňte `SMTP_*`, pro přihlášení 
 
 | Proměnná | Výchozí hodnota | Význam |
 | --- | --- | --- |
-| `ARKANUM_VERSION` | `latest` | značka image. Na serveru doporučujeme konkrétní verzi, například `0.1.0` |
+| `ARKANUM_VERSION` | `latest` | značka image. Na serveru doporučujeme konkrétní verzi, například `0.1.1` |
 | `ARKANUM_PORT` | `8090` | port na hostiteli. Hodnota `127.0.0.1:8090` zpřístupní aplikaci jen místně, typicky pro reverzní proxy |
 
 ## 3. Spuštění
