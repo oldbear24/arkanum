@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card3D } from '../../card/Card3D';
 import { Icon } from '../../components/Icon';
+import { UnlockSwitch } from '../../components/UnlockSwitch';
 import { cs } from '../../i18n/cs';
 import { useWorkshop } from './context';
 import { SettingsPanel } from './panels';
@@ -17,7 +18,7 @@ function cardWidth(family: string, formatW: number, formatH: number): string {
 }
 
 export function WorkshopMobile() {
-  const { doc, params, record, isOwner, flip, spin, toggleSpin, resetKey, turnBy, itemEditing, straighten, light, publishing, publish, openShare, canUndo, canRedo, undo, redo, others } = useWorkshop();
+  const { doc, params, record, isOwner, flip, spin, toggleSpin, unlocked, toggleUnlocked, resetKey, turnBy, itemEditing, straighten, light, publishing, publish, openShare, canUndo, canRedo, undo, redo, others } = useWorkshop();
   const [first] = others;
 
   return (
@@ -45,8 +46,9 @@ export function WorkshopMobile() {
 
       <div className={styles.cardArea}>
         <div style={{ width: cardWidth(doc.family, doc.formatW, doc.formatH) }}>
-          <Card3D {...params} light={light} flip={flip} spin={spin} resetKey={resetKey} turnBy={turnBy} editing={itemEditing} interactive="drag" />
+          <Card3D {...params} light={light} flip={flip} spin={spin} unlocked={unlocked} resetKey={resetKey} turnBy={turnBy} editing={itemEditing} interactive="drag" />
         </div>
+        <UnlockSwitch on={unlocked} onToggle={toggleUnlocked} className={`${styles.round} ${styles.unlock}`} iconOnly />
         <div className={styles.controls}>
           <button type="button" className={styles.round} aria-label={w.undo} disabled={!canUndo} onClick={undo}>
             <Icon name="undo" />

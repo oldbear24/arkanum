@@ -390,6 +390,45 @@ test('the buttons turn the card in steps and straighten it', async ({ page }) =>
   await expect.poll(orient).toBe('rotate3d(0, 0, 1, 0deg)');
 });
 
+test('the switch unlocks the card, which then keeps turning until it is locked again', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+  const scene = cardScene(page);
+  const orient = () => scene.evaluate((element) => (element as HTMLElement).style.getPropertyValue('--orient'));
+  const unlock = page.getByRole('switch', { name: 'Odemknout kartu' });
+  const box = await scene.boundingBox();
+  if (!box) throw new Error('The card has no box');
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  const flick = async () => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 120, y, { steps: 6 });
+    await page.mouse.up();
+  };
+
+  // Locked by default, a flick leaves the card where it was let go of.
+  await expect(unlock).toHaveAttribute('aria-checked', 'false');
+  await flick();
+  const held = 'rotate3d(0.0000, 1.0000, 0.0000, 66.00deg)';
+  await expect.poll(orient).toBe(held);
+  await page.waitForTimeout(100);
+  expect(await orient()).toBe(held);
+
+  await unlock.click();
+  await expect(unlock).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('Odemknutá karta se po puštění točí dál.')).toBeVisible();
+  await flick();
+  const first = await orient();
+  await expect.poll(orient).not.toBe(first);
+
+  await unlock.click();
+  await expect(unlock).toHaveAttribute('aria-checked', 'false');
+  const stopped = await orient();
+  await page.waitForTimeout(100);
+  expect(await orient()).toBe(stopped);
+});
+
 test('the card stays in view while the settings scroll', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await signIn(page, 'demo');
@@ -447,6 +486,53 @@ test.describe('on a phone', () => {
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('the switch stands next to the card and the row under it stays in one line', async ({ page }) => {
+    await signIn(page, 'demo');
+    await createCard(page, 'Bestie');
+
+    const unlock = page.getByRole('switch', { name: 'Odemknout kartu' });
+    await unlock.click();
+    await expect(unlock).toHaveAttribute('aria-checked', 'true');
+
+    const scene = page.getByRole('img').first();
+    const [toggleBox, cardBox, undoBox, redoBox] = await Promise.all([unlock.boundingBox(), scene.boundingBox(), page.getByRole('button', { name: 'Zpět' }).boundingBox(), page.getByRole('button', { name: 'Znovu' }).boundingBox()]);
+    expect(toggleBox?.x).toBeGreaterThanOrEqual((cardBox?.x ?? 0) + (cardBox?.width ?? 0));
+    expect(undoBox?.y).toBe(redoBox?.y);
+  });
+
+  test.describe('with a finger', () => {
+    test.use({ hasTouch: true });
+
+    test('a flick keeps an unlocked card turning and a tap stops it', async ({ page, context }) => {
+      await signIn(page, 'demo');
+      await createCard(page);
+      const unlock = page.getByRole('switch', { name: 'Odemknout kartu' });
+      await unlock.tap();
+      await expect(unlock).toHaveAttribute('aria-checked', 'true');
+
+      const scene = page.getByRole('img').first();
+      const orient = () => scene.evaluate((element) => (element as HTMLElement).style.getPropertyValue('--orient'));
+      const box = await scene.boundingBox();
+      if (!box) throw new Error('The card has no box');
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      const cdp = await context.newCDPSession(page);
+      const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', touchPoints: { x: number; y: number }[]) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+
+      await touch('touchStart', [{ x, y }]);
+      for (let i = 1; i <= 6; i++) await touch('touchMove', [{ x: x + i * 15, y }]);
+      await touch('touchEnd', []);
+      const first = await orient();
+      await expect.poll(orient).not.toBe(first);
+
+      await touch('touchStart', [{ x, y }]);
+      await touch('touchEnd', []);
+      const stopped = await orient();
+      await page.waitForTimeout(100);
+      expect(await orient()).toBe(stopped);
+    });
   });
 
   test('settings live in the bottom sheet', async ({ page }) => {

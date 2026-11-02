@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useRef, type CSSProperti
 import { cs } from '../i18n/cs';
 import { BackLayers } from './CardBack';
 import { FaceLayers } from './CardFace';
+import { recordMove, releaseSpeed, slowDown, type Axes, type DragMove } from './momentum';
 import { computeMotion, posed, REST, type MotionMode, type MotionOptions, type MotionState } from './motion';
 import type { CardParams, ResolvedCard } from './resolve';
 import { fullPose, NO_TURN, screenToCard, turn, twistDegrees } from './rotation';
@@ -27,6 +28,8 @@ export interface ItemEditing {
 export interface Card3DProps extends CardParams {
   flip?: boolean;
   spin?: boolean;
+  /** A card let go of in a flick goes on turning. Only in the drag mode. */
+  unlocked?: boolean;
   interactive?: Interactive;
   resetKey?: number | string;
   /** Every new object turns the card once more. For the buttons next to it. */
@@ -72,10 +75,11 @@ function resolveMode(interactive: Interactive | undefined, reducedMotion: boolea
  * requestAnimationFrame straight into CSS variables on the scene element, so React
  * renders only when the card parameters change.
  */
-export const Card3D = memo(function Card3D({ flip = false, spin = false, interactive, resetKey, turnBy, editing, className, style, ...params }: Card3DProps) {
+export const Card3D = memo(function Card3D({ flip = false, spin = false, unlocked = false, interactive, resetKey, turnBy, editing, className, style, ...params }: Card3DProps) {
   const reducedMotion = usePrefersReducedMotion();
   const mode = resolveMode(interactive, reducedMotion);
   const spinning = spin && !reducedMotion;
+  const canCoast = unlocked && mode === 'drag';
   const card = useResolvedCard(params);
 
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -85,7 +89,10 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const moved = useRef(0);
   const movingItem = useRef<{ id: string; back: boolean } | null>(null);
+  /** The last moves of the drag, they tell how fast the card goes when let go of. */
+  const trail = useRef<DragMove[]>([]);
   const frame = useRef(0);
+  const coastFrame = useRef(0);
   const latest = useRef<{ card: ResolvedCard; options: MotionOptions }>({
     card,
     options: { flip, mode, spinning, reducedMotion },
@@ -123,20 +130,58 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
     });
   }, [write]);
 
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(frame.current);
+      cancelAnimationFrame(coastFrame.current);
+    },
+    [],
+  );
 
-  // Turning the card over or pressing "straighten" clears the rotation.
+  const stopCoasting = useCallback(() => {
+    cancelAnimationFrame(coastFrame.current);
+    motion.current.coast = undefined;
+  }, []);
+
+  const startCoasting = useCallback(
+    (speed: Axes) => {
+      motion.current.coast = speed;
+      let last = 0;
+      const tick = (time: number) => {
+        const m = motion.current;
+        if (!m.coast) return;
+        const dt = last ? Math.min(64, time - last) : 16;
+        last = time;
+        m.orient = turn(m.orient ?? NO_TURN, m.coast.x * dt, m.coast.y * dt, m.coast.z * dt);
+        m.coast = slowDown(m.coast, dt) ?? undefined;
+        write();
+        if (m.coast) coastFrame.current = requestAnimationFrame(tick);
+      };
+      coastFrame.current = requestAnimationFrame(tick);
+    },
+    [write],
+  );
+
+  // Turning the card over or pressing "straighten" clears the rotation. A step of the buttons
+  // is there to reach an exact pose, so that one stops a card still turning as well.
   const previous = useRef({ flip, resetKey, turnBy });
   useLayoutEffect(() => {
     const before = previous.current;
     if (before.flip !== flip || before.resetKey !== resetKey) {
+      stopCoasting();
       motion.current = { ...motion.current, rx: 0, ry: 0, spin: 0, orient: undefined };
     }
     if (turnBy && before.turnBy !== turnBy) {
+      stopCoasting();
       motion.current.orient = turn(motion.current.orient ?? NO_TURN, turnBy.x ?? 0, turnBy.y ?? 0, turnBy.z ?? 0);
     }
     previous.current = { flip, resetKey, turnBy };
-  }, [flip, resetKey, turnBy]);
+  }, [flip, resetKey, stopCoasting, turnBy]);
+
+  // Locking the card stops it where it is, and so does asking for less motion.
+  useLayoutEffect(() => {
+    if (!canCoast) stopCoasting();
+  }, [canCoast, stopCoasting]);
 
   // Runs after every render, which only happens when the parameters change.
   useLayoutEffect(() => {
@@ -193,11 +238,12 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
           moveItem(item, dx, dy, r);
         } else {
           const other = [...pointers.current].find(([id]) => id !== e.pointerId)?.[1];
-          const pose = m.orient ?? NO_TURN;
           // Two fingers twist the card in its plane, the Shift key does the same for a mouse.
-          if (other) m.orient = turn(pose, 0, 0, twistDegrees(other, from, to));
-          else if (e.shiftKey) m.orient = turn(pose, 0, 0, dx * DRAG_DEGREES_PER_PX);
-          else m.orient = turn(pose, -dy * DRAG_DEGREES_PER_PX, dx * DRAG_DEGREES_PER_PX, 0);
+          let step: Axes = { x: -dy * DRAG_DEGREES_PER_PX, y: dx * DRAG_DEGREES_PER_PX, z: 0 };
+          if (other) step = { x: 0, y: 0, z: twistDegrees(other, from, to) };
+          else if (e.shiftKey) step = { x: 0, y: 0, z: dx * DRAG_DEGREES_PER_PX };
+          m.orient = turn(m.orient ?? NO_TURN, step.x, step.y, step.z);
+          trail.current = recordMove(trail.current, { ...step, at: e.timeStamp });
         }
       }
     } else {
@@ -225,9 +271,11 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
     // Moving an item is no motion of the card, so it works with reduced motion as well.
     const hit = editing && pointers.current.size === 0 ? (e.target as Element).closest?.<HTMLElement>('[data-item]') : null;
     if (mode !== 'drag' && !hit) return;
+    stopCoasting();
     const m = motion.current;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moved.current = 0;
+    trail.current = [{ at: e.timeStamp, x: 0, y: 0, z: 0 }];
 
     if (hit?.dataset.item) {
       movingItem.current = { id: hit.dataset.item, back: hit.dataset.side === 'back' };
@@ -257,9 +305,13 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
 
     // A click next to all items lets go of the selected one.
     if (editing && !movingItem.current && moved.current < CLICK_SLOP_PX) editing.onSelect(null);
+    // A press that only stopped the card must not start it again, however the finger trembled.
+    const flicked = canCoast && e.type === 'pointerup' && !movingItem.current && moved.current >= CLICK_SLOP_PX;
+    const speed = flicked ? releaseSpeed(trail.current, e.timeStamp) : null;
     movingItem.current = null;
     m.drag = false;
     m.active = false;
+    if (speed) startCoasting(speed);
     schedule();
   };
 
