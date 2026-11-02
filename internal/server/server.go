@@ -2,9 +2,11 @@
 package server
 
 import (
+	"fmt"
 	"io/fs"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -14,6 +16,8 @@ import (
 // Register attaches the frontend and the runtime configuration to the app.
 func Register(app core.App, ui fs.FS) {
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		e.InstallerFunc = printInstallerLink
+
 		if err := applyEnvConfig(e.App); err != nil {
 			return err
 		}
@@ -30,6 +34,23 @@ func Register(app core.App, ui fs.FS) {
 		},
 		Priority: 999,
 	})
+}
+
+// printInstallerLink replaces apis.DefaultInstallerFunc, which opens a browser
+// window on every start until the first superuser exists. Starting the app must
+// not open anything, so the link only goes to the console.
+func printInstallerLink(_ core.App, systemSuperuser *core.Record, baseURL string) error {
+	token, err := systemSuperuser.NewStaticAuthToken(30 * time.Minute)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf(
+		"\nNo superuser yet. Create one at %s/_/#/pbinstall/%s\nor run: arkanum superuser upsert EMAIL PASS\n\n",
+		strings.TrimRight(baseURL, "/"),
+		token,
+	)
+	return nil
 }
 
 // serveUI serves the single page app with a fallback to index.html. Unknown API
