@@ -77,7 +77,8 @@ make build
 ```
 
 Výsledná binárka servíruje API i frontend. Data ukládá do `pb_data` vedle binárky, jiný adresář určí
-přepínač `--dir`. Na Windows se binárka jmenuje `bin/arkanum.exe`.
+přepínač `--dir`. Na Windows se binárka jmenuje `bin/arkanum.exe`. Příkaz `arkanum --version` u ní vypíše `dev`,
+číslo verze mají jen vydané binárky a Docker image.
 
 ## Konfigurace
 

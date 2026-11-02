@@ -40,14 +40,16 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: VERSION=${{ steps.meta.outputs.version }}
 
       - name: Check the published image
         env:
           ARKANUM_VERSION: ${{ steps.meta.outputs.version }}
           IMAGE: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
         run: |
-          docker run --rm --platform linux/arm64 "$IMAGE" --version
+          docker run --rm --platform linux/arm64 "$IMAGE" --version | grep -Fx "arkanum version $ARKANUM_VERSION"
           docker pull --platform linux/amd64 "$IMAGE"
+          docker run --rm "$IMAGE" --version | grep -Fx "arkanum version $ARKANUM_VERSION"
           docker compose up -d --wait --wait-timeout 120 || { docker compose logs; exit 1; }
           curl --fail --silent --show-error http://127.0.0.1:8090/api/health
           curl --fail --silent --show-error http://127.0.0.1:8090/ | grep -q 'id="root"'

@@ -50,7 +50,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build image
-        run: docker build -t arkanum .
+        run: docker build --build-arg VERSION=0.0.0-ci -t arkanum .
+
+      - name: Check the reported version
+        run: docker run --rm arkanum --version | grep -Fx 'arkanum version 0.0.0-ci'
 
       - name: Start container
         run: docker run -d --name arkanum -p 8090:8090 -v arkanum-data:/pb_data arkanum

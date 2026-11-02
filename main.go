@@ -15,10 +15,15 @@ import (
 	"arkanum/web"
 )
 
+// version is what `arkanum --version` prints. Releases set it with the linker flag
+// -X main.version=<version>, which silently does nothing if this variable is renamed.
+var version = "dev"
+
 func main() {
 	app := pocketbase.NewWithConfig(pocketbase.Config{
 		DefaultEncryptionEnv: "PB_ENCRYPTION_KEY",
 	})
+	app.RootCmd.Version = version
 
 	// The schema is code first, so changes made in the admin UI never turn into
 	// migration files on their own.

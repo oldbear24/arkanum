@@ -78,6 +78,12 @@ docker compose up -d --wait
 
 Migrace databáze proběhnou samy při startu. Před aktualizací si udělejte zálohu.
 
+Běžící verzi vypíše příkaz níže. Verze 0.1.1 a starší místo čísla vypisují `(untracked)`.
+
+```bash
+docker compose exec arkanum arkanum --version
+```
+
 ## Záloha a obnova
 
 Vše podstatné je ve svazku `arkanum-data`. Aplikaci před zálohou zastavte, aby byla databáze v konzistentním stavu:
