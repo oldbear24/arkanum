@@ -410,7 +410,8 @@ test('the switch unlocks the card, which then keeps turning until it is locked a
   // Locked by default, a flick leaves the card where it was let go of.
   await expect(unlock).toHaveAttribute('aria-checked', 'false');
   await flick();
-  const held = await orient();
+  const held = 'rotate3d(0.0000, 1.0000, 0.0000, 66.00deg)';
+  await expect.poll(orient).toBe(held);
   await page.waitForTimeout(100);
   expect(await orient()).toBe(held);
 
