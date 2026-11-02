@@ -1,5 +1,5 @@
-# 1) Frontend
-FROM node:22-alpine AS web
+# 1) Frontend. The result is the same for every architecture, so it is built only once.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS web
 WORKDIR /src
 COPY cardspec/ ./cardspec/
 COPY web/package.json web/package-lock.json ./web/
@@ -7,14 +7,16 @@ RUN npm --prefix web ci --no-audit --no-fund
 COPY web/ ./web/
 RUN npm --prefix web run build
 
-# 2) Go binary with the frontend embedded
-FROM golang:1.27-alpine AS build
+# 2) Go binary with the frontend embedded. Cross-compiling is much faster than emulation.
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS build
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=web /src/web/dist/ ./web/dist/
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/arkanum .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/arkanum .
 
 # 3) Small runtime image
 FROM alpine:3.22

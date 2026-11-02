@@ -1,0 +1,59 @@
+name: Release image
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The final stage runs apk, which needs emulation on the other architecture.
+      - uses: docker/setup-qemu-action@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Check the published image
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
+        run: |
+          docker run --rm --platform linux/arm64 "$IMAGE" --version
+          docker run -d --name arkanum --platform linux/amd64 -p 8090:8090 "$IMAGE"
+          for attempt in $(seq 1 45); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' arkanum)
+            echo "$attempt: $status"
+            if [ "$status" = healthy ]; then break; fi
+            sleep 2
+          done
+          test "$status" = healthy || { docker logs arkanum; exit 1; }
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/health
+          curl --fail --silent --show-error http://127.0.0.1:8090/ | grep -q 'id="root"'
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/templates/records | grep -q '"totalItems":5'

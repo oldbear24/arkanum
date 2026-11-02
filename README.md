@@ -10,8 +10,15 @@ karta s vlastním formátem. Karty se ukládají, sdílejí v galerii a exportuj
 
 ## Stažení
 
-Hotové binárky pro Linux, macOS a Windows jsou v [Releases](https://github.com/oldbear24/arkanum/releases). Stačí
-archiv rozbalit a spustit `./arkanum serve --http=127.0.0.1:8090`.
+Nejjednodušší je Docker image pro `linux/amd64` a `linux/arm64`:
+
+```bash
+docker run --name arkanum -p 8090:8090 -v arkanum-data:/pb_data ghcr.io/oldbear24/arkanum:latest
+```
+
+Aplikace pak běží na `http://localhost:8090`, podrobnosti jsou v části [Docker](#docker). Hotové binárky pro Linux,
+macOS a Windows jsou v [Releases](https://github.com/oldbear24/arkanum/releases). Stačí archiv rozbalit a spustit
+`./arkanum serve --http=127.0.0.1:8090`.
 
 ## Lokální vývoj
 
@@ -87,16 +94,25 @@ Adresa pro přesměrování u poskytovatele je `APP_URL/api/oauth2-redirect`.
 
 ## Docker
 
-```bash
-docker build -t arkanum .
-```
+Image se publikuje do `ghcr.io/oldbear24/arkanum` při každém tagu `v*`, se značkami podle verze (například `0.1.0`
+a `0.1`) a `latest`.
 
 ```bash
-docker run --name arkanum -p 8090:8090 -v arkanum-data:/pb_data --env-file .env arkanum
+docker run --name arkanum -p 8090:8090 -v arkanum-data:/pb_data --env-file .env ghcr.io/oldbear24/arkanum:latest
 ```
 
 Image běží pod neprivilegovaným uživatelem, data ukládá do svazku `/pb_data` a healthcheck volá
-`/api/health`.
+`/api/health`. Správce založíte takto:
+
+```bash
+docker exec arkanum arkanum superuser upsert EMAIL HESLO --dir=/pb_data
+```
+
+Vlastní image sestavíte z kořene repozitáře:
+
+```bash
+docker build -t arkanum .
+```
 
 ## Záloha `pb_data`
 

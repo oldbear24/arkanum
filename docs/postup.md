@@ -27,9 +27,13 @@
 
 ## Vydání
 
+Vydání spouští tag `v*`. Workflow `.github/workflows/release.yml` postaví Docker image pro `linux/amd64` a `linux/arm64`,
+publikuje ho do `ghcr.io/oldbear24/arkanum` (značky `0.1.0`, `0.1` a `latest`) a ověří, že běží. Na amd64 kontroluje
+healthcheck, API a frontend, na arm64 běží pod emulací a kontroluje se jen spuštění s `--version`.
+
 Binárky se zatím staví ručně z čistého commitu (`CGO_ENABLED=0 go build -trimpath -ldflags="-s -w"` pro Linux, macOS
-a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. Docker image se nikam nepublikuje. U vydání
-`v0.1.0` je přímo spuštěná jen binárka pro Windows. Sestavení pro Linux pokrývá CI, macOS se jen kompiluje.
+a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. U vydání `v0.1.0` je přímo spuštěná jen binárka
+pro Windows, ostatní se jen kompilují.
 
 ## Co není ověřené
 

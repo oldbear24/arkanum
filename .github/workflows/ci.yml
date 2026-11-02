@@ -72,6 +72,13 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:8090/dilna/abc | grep -q 'id="root"'
           curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/templates/records | grep -q '"totalItems":5'
 
+      - name: Create a superuser the way the README says
+        run: |
+          docker exec arkanum arkanum superuser upsert admin@example.com correct-horse-battery --dir=/pb_data
+          curl --fail --silent --show-error -X POST http://127.0.0.1:8090/api/collections/_superusers/auth-with-password \
+            -H 'Content-Type: application/json' \
+            -d '{"identity":"admin@example.com","password":"correct-horse-battery"}' > /dev/null
+
       - name: Keep data in the volume across a restart
         run: |
           curl --fail --silent --show-error -X POST http://127.0.0.1:8090/api/collections/users/records \
