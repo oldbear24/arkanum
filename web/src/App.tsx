@@ -18,6 +18,8 @@ const ConfirmVerification = named(auth, 'ConfirmVerification');
 const ConfirmEmailChange = named(auth, 'ConfirmEmailChange');
 const Profile = named(() => import('./pages/Profile'), 'Profile');
 const WorkshopEntry = named(() => import('./pages/WorkshopEntry'), 'WorkshopEntry');
+const Workshop = named(() => import('./pages/workshop/Workshop'), 'Workshop');
+const CardDetail = named(() => import('./pages/CardDetail'), 'CardDetail');
 const DevCards = named(() => import('./pages/DevCards'), 'DevCards');
 
 export function App() {
@@ -39,10 +41,12 @@ export function App() {
             <Route path="overeni/:token" element={<ConfirmVerification />} />
             <Route path="zmena-emailu/:token" element={<ConfirmEmailChange />} />
             <Route path="dilna" element={<WorkshopEntry />} />
+            <Route path="karta/:id" element={<CardDetail />} />
             {/* React Router has no partial segments, so `/@handle` is checked in the page. */}
             <Route path=":atHandle" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Route>
+          <Route path="dilna/:id" element={<Workshop />} />
           <Route path="dev/karty" element={<DevCards />} />
         </Routes>
       </Suspense>

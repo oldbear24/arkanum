@@ -8,7 +8,7 @@
 | 2. Data | hotovo |
 | 3. Karta | hotovo |
 | 4. Úvod, šablony, přihlášení, profil | hotovo |
-| 5. Dílna | čeká |
+| 5. Dílna | hotovo |
 | 6. Detail karty, lajky, remix, balíčky | čeká |
 | 7. Export | čeká |
 | 8. Později | mimo tuto iteraci |
@@ -100,6 +100,35 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 - Návrh používá pro „Použít šablonu" odkaz. Protože akce vytváří záznam, je to skutečné tlačítko.
 - Stránky bez návrhu (přihlášení, registrace, obnova hesla, ověření e-mailu, profil, 404) jsem odvodil
   z vizuálního jazyka ostatních obrazovek. Přibyla stránka `/zmena-emailu/:token`, protože na ni míří e-mail.
+
+### Dílna (fáze 5)
+
+- Pixelové porovnání s návrhem při 1440 × 1000: 1,5 % pixelů, hlavně ukázkové avatary spoluautorů, které návrh
+  kreslí napevno. Mobil při 390 × 844 sedí na rozložení, liší se jen výchozí fólie v prototypu a tlačítka navíc.
+- **Přítomnost spoluautorů:** PocketBase realtime ji neumí, proto je tu vlastní trasa
+  `POST/DELETE /api/arkanum/presence/{card}` a vlastní realtime téma `arkanum/presence/<id>`. Stav je jen v paměti
+  serveru, což stačí pro jednu binárku. Odběr tématu je povolený jen tomu, kdo smí kartu upravovat.
+- **Odesílání do realtime kanálu běží na pozadí.** `client.Send` blokuje, dokud si klient zprávu nepřečte, takže
+  pomalé spojení by jinak zdrželo cizí požadavek. Odhalil to test, který se zasekl.
+- **Zpět a znovu** obsluhuje aplikace i uvnitř textových polí, protože jsou řízená Reactem a nativní zpět v nich
+  nefunguje spolehlivě. Série rychlých změn stejného pole je jeden krok (800 ms). Nahrávání souborů do historie
+  nepatří, vrací se jen jejich umístění.
+- **Změny od spoluautora** se do historie nezapisují. Má-li uživatel neuložené změny, vyhrává jeho zápis.
+- **Přepnutí šablony** resetuje jen hodnoty z `VDEF`, zbytek (tloušťka, povrch, písmo…) zůstává. Navíc oproti `VDEF`
+  tarot resetuje význam, jinak by po přepnutí přes orákulum zůstal v tarotu výklad orákula. Dotaz se ukáže, jen když
+  se změnil text, který daná rodina opravdu používá.
+- Tlačítko „Prázdná" se v levém panelu ukazuje jen u prázdné karty, návrh počítá se čtyřmi šablonami.
+- Vrstvy v levém panelu po kliknutí otevřou odpovídající záložku, prototyp je jen zvýrazňoval.
+- **Rozšíření oproti návrhu, bez kterých by šlo něco nastavit jen na desktopu nebo vůbec:**
+  - Účinek schopností bestie, návrh má pole jen pro název a sílu. Text karty by jinak nešel změnit.
+  - Na mobilu jsou všechna nastavení z desktopu, ne jen podmnožina z `Mobil.dc.html`. Návrhové pořadí je
+    zachované, navíc přibyla ilustrace, vrstvy, povrch a zaoblení.
+  - Na mobilu přibylo zpět, znovu a sdílet, protože telefon nemá klávesové zkratky.
+- „Přidat prvek" a „3D model" jsou podle fáze 8 vypnuté tlačítka s vysvětlením.
+- Ovládání vrstev paralaxy se ukazuje až po nahrání ilustrace, aby výchozí panel odpovídal návrhu. Vrstvy jdou
+  přeskládat šipkami.
+- Soubory karet nejsou v PocketBase `protected`, protože by je host bez tokenu nenačetl. Názvy souborů mají
+  náhodnou příponu, takže je nejde uhodnout.
 
 ### Lajky
 

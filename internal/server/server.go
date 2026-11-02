@@ -13,8 +13,10 @@ import (
 	"github.com/pocketbase/pocketbase/tools/hook"
 )
 
-// Register attaches the frontend and the runtime configuration to the app.
+// Register attaches the frontend, the custom routes and the runtime configuration to the app.
 func Register(app core.App, ui fs.FS) {
+	newPresenceHub().register(app)
+
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		e.InstallerFunc = printInstallerLink
 

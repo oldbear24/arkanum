@@ -1,0 +1,82 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+}
+
+.linkRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fieldset legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+}
+
+.none {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.editors {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 14px;
+  border-radius: 12px;
+  background: var(--raised);
+}
+
+.editorName {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.addRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.addField {
+  flex: 1;
+  min-width: 0;
+}

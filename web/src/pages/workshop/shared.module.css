@@ -1,0 +1,100 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.statusPlain {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.dotPlain {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+}
+
+.status[data-state='saved'],
+.statusPlain[data-state='saved'] {
+  color: var(--saved-text);
+}
+
+.status[data-state='saved'] {
+  background: var(--saved-bg);
+}
+
+[data-state='saved'] > .dot,
+[data-state='saved'] > .dotPlain {
+  background: var(--saved-dot);
+}
+
+.status[data-state='saving'],
+.statusPlain[data-state='saving'],
+.status[data-state='offline'],
+.statusPlain[data-state='offline'] {
+  color: var(--warn-text);
+}
+
+.status[data-state='saving'],
+.status[data-state='offline'] {
+  background: var(--warn-bg);
+}
+
+[data-state='saving'] > .dot,
+[data-state='saving'] > .dotPlain,
+[data-state='offline'] > .dot,
+[data-state='offline'] > .dotPlain {
+  background: var(--warn-dot);
+}
+
+.status[data-state='error'],
+.statusPlain[data-state='error'] {
+  color: var(--danger-text);
+}
+
+.status[data-state='error'] {
+  background: var(--danger-bg);
+}
+
+[data-state='error'] > .dot,
+[data-state='error'] > .dotPlain {
+  background: var(--danger-dot);
+}
+
+.sides {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 26px;
+}
+
+.side {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.side[aria-pressed='true'] {
+  background: var(--option-on);
+  color: var(--text);
+}

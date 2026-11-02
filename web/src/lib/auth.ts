@@ -1,12 +1,19 @@
 import { useSyncExternalStore } from 'react';
 import { pb, users, type UserRecord } from './pb';
 
+// The store parses a new object from localStorage on every read, while
+// useSyncExternalStore needs the same object until something really changes.
+let cachedRecord = pb.authStore.record as UserRecord | null;
+pb.authStore.onChange(() => {
+  cachedRecord = pb.authStore.record as UserRecord | null;
+});
+
 function subscribe(onChange: () => void) {
   return pb.authStore.onChange(() => onChange());
 }
 
 function currentUser(): UserRecord | null {
-  return pb.authStore.isValid ? (pb.authStore.record as UserRecord | null) : null;
+  return pb.authStore.isValid ? cachedRecord : null;
 }
 
 /** The signed-in user, or null for a guest. Re-renders on sign-in and sign-out. */
