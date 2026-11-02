@@ -21,7 +21,11 @@ interface CardTileProps {
 }
 
 export const CardTile = memo(function CardTile({ record, liked = false, onToggleLike, showVisibility, flip, overrides }: CardTileProps) {
-  const params = useMemo(() => ({ ...recordToParams(record), ...overrides }), [record, overrides]);
+  const params = useMemo(() => {
+    const own = recordToParams(record);
+    // The back of a deck stands in for the whole back of the card, with what is placed on it.
+    return overrides?.backPalette ? { ...own, ...overrides, items: own.items?.filter((item) => item.side === 'face') } : { ...own, ...overrides };
+  }, [record, overrides]);
   const href = `/karta/${record.id}`;
   const title = record.title || cs.card.defaults.titleBlank;
   const author = authorOf(record);

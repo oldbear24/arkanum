@@ -6,9 +6,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"unicode/utf8"
 )
+
+// hexColor is the only form of a custom colour. An empty value means the colour of the card.
+var hexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
 //go:embed spec.json
 var specJSON []byte
@@ -107,6 +111,28 @@ func (p *Problems) boolean(obj map[string]any, key string) {
 	}
 }
 
+func (p *Problems) color(obj map[string]any, key string) {
+	v, ok := obj[key]
+	if !ok {
+		return
+	}
+	if s, isText := v.(string); !isText || (s != "" && !hexColor.MatchString(s)) {
+		p.addf("%s: must be a colour like #d6b067", key)
+	}
+}
+
+func (p *Problems) object(obj map[string]any, key string) map[string]any {
+	v, ok := obj[key]
+	if !ok {
+		return nil
+	}
+	nested, isObject := v.(map[string]any)
+	if !isObject {
+		p.addf("%s: must be an object", key)
+	}
+	return nested
+}
+
 func (p *Problems) array(obj map[string]any, key, count string) []any {
 	v, ok := obj[key]
 	if !ok {
@@ -129,20 +155,31 @@ func ValidateLook(look map[string]any) Problems {
 	for _, key := range []string{"variant", "art", "frame", "palette", "element", "foil", "surface", "edge", "font"} {
 		p.enum(look, key, key)
 	}
-	for _, key := range []string{"foilI", "thick", "radius", "depth"} {
+	for _, key := range []string{"foilI", "thick", "radius", "depth", "titleScale"} {
 		p.number(look, key, key)
 	}
-	p.boolean(look, "emboss")
-
-	if v, ok := look["visible"]; ok {
-		visible, isObject := v.(map[string]any)
-		if !isObject {
-			p.addf("visible: must be an object")
-		}
-		for _, key := range []string{"art", "frame", "text", "foil"} {
-			p.boolean(visible, key)
-		}
+	for _, key := range []string{"emboss", "fullArt", "titleCaps"} {
+		p.boolean(look, key)
 	}
+	p.enum(look, "backPattern", "backPattern")
+	// Empty means the same palette as the front.
+	if palette, ok := look["backPalette"]; !ok || palette != "" {
+		p.enum(look, "backPalette", "palette")
+	}
+
+	visible := p.object(look, "visible")
+	for _, key := range []string{"art", "frame", "text", "foil"} {
+		p.boolean(visible, key)
+	}
+	colors := p.object(look, "colors")
+	for _, key := range []string{"base", "sky", "metal", "text"} {
+		p.color(colors, key)
+	}
+	filter := p.object(look, "artFilter")
+	p.number(filter, "brightness", "artBrightness")
+	p.number(filter, "contrast", "artContrast")
+	p.number(filter, "saturate", "artSaturate")
+	p.number(filter, "hue", "artHue")
 	return p
 }
 
@@ -153,6 +190,7 @@ func ValidateContent(content map[string]any) Problems {
 	p.text(content, "subtitle", "subtitle")
 	p.text(content, "cls", "cls")
 	p.text(content, "setNo", "setNo")
+	p.text(content, "artist", "artist")
 	for _, key := range []string{"hp", "level", "cost", "s1", "s2", "s3", "rarity"} {
 		p.number(content, key, key)
 	}
@@ -169,11 +207,37 @@ func ValidateContent(content map[string]any) Problems {
 	}
 
 	for _, item := range p.array(content, "elements", "elements") {
-		if _, ok := item.(map[string]any); !ok {
+		element, ok := item.(map[string]any)
+		if !ok {
 			p.addf("elements: every item must be an object")
+			continue
 		}
+		p.element(element)
 	}
 	return p
+}
+
+// element checks one freely placed element. Which of the keys matter depends on its type,
+// the limits hold for all of them.
+func (p *Problems) element(element map[string]any) {
+	for key, enum := range map[string]string{"type": "itemType", "side": "itemSide", "font": "itemFont", "align": "itemAlign"} {
+		p.enum(element, key, enum)
+	}
+	for key, limit := range map[string]string{"id": "itemId", "text": "itemText", "value": "itemValue", "file": "itemFile"} {
+		p.text(element, key, limit)
+	}
+	for key, rng := range map[string]string{"x": "itemPosition", "y": "itemPosition", "size": "itemSize", "rotate": "itemRotate", "opacity": "itemOpacity", "ratio": "itemRatio"} {
+		p.number(element, key, rng)
+	}
+	p.color(element, "color")
+	p.boolean(element, "filled")
+	p.boolean(element, "hidden")
+	p.text(element, "kind", "itemId")
+
+	kinds := map[string]string{"symbol": "itemSymbol", "ornament": "itemOrnament", "shape": "itemShape", "stat": "itemShape"}
+	if enum, ok := kinds[fmt.Sprint(element["type"])]; ok {
+		p.enum(element, "kind", enum)
+	}
 }
 
 // ValidateMeaning checks the `meaning` JSON.
@@ -213,6 +277,8 @@ func (p *Problems) placement(obj map[string]any) {
 	p.number(obj, "x", "artOffset")
 	p.number(obj, "y", "artOffset")
 	p.number(obj, "zoom", "artZoom")
+	p.number(obj, "rotate", "artRotate")
+	p.boolean(obj, "flipX")
 }
 
 // ValidateDeckBack checks the `back` JSON of a deck.

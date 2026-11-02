@@ -3,6 +3,10 @@
 Dílna vlastních sběratelských karet s plně 3D náhledem. Tarot, orákulum, bestie, hrdinové i prázdná
 karta s vlastním formátem. Karty se ukládají, sdílejí v galerii a exportují k tisku.
 
+V dílně jde kartou otáčet úplně volně. Kromě šablony, rámu, palety, fólie a textů se dají nastavit i vlastní barvy, vzor
+a barvy rubu, ilustrace přes celou kartu a její jas, kontrast, sytost a odstín. Na líc i rub se dají přidat volně umístěné
+prvky: text, obrázek, symbol, ornament, statistika a tvar.
+
 - **Backend:** Go + [PocketBase](https://pocketbase.io) jako knihovna (v0.40). Schéma a hooky jsou v Go.
 - **Frontend:** React, TypeScript, Vite v adresáři `web/`. Vestavěný do binárky přes `embed`.
 - **Zadání a návrh:** [docs/zadani.md](docs/zadani.md), [design/](design/README.md).
@@ -60,7 +64,7 @@ na `/dev/karty`.
 | `internal/hooks/` | validace karet, přepočet lajků, handle a skrytý e-mail |
 | `internal/server/` | servírování frontendu, konfigurace z prostředí, přítomnost spoluautorů |
 | `internal/seed/` | ukázková data |
-| `web/src/card/` | `CardFace`, `CardBack`, `Card3D`, `LazyCard`, `normalizeCard()` |
+| `web/src/card/` | `CardFace`, `CardBack`, `CardItems`, `Card3D`, `LazyCard`, `normalizeCard()`, volné otáčení v `rotation.ts` |
 | `web/src/pages/` | stránky aplikace, `workshop/` je dílna |
 | `web/src/export/` | PNG, PDF k tisku a náhledy |
 | `web/src/i18n/cs.ts` | všechny texty UI |

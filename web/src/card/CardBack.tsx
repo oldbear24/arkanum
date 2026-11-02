@@ -1,5 +1,6 @@
 import { memo, type CSSProperties } from 'react';
 import { cs } from '../i18n/cs';
+import { CardItems } from './CardItems';
 import { flatContainerStyle, flatRootStyle, type FlatCardProps } from './CardFace';
 import { restingMotion } from './motion';
 import type { ResolvedCard } from './resolve';
@@ -16,7 +17,7 @@ const glareStyle: CSSProperties = {
 };
 
 /** The back's SVG and glare. The motion comes in through CSS variables. */
-export const BackLayers = memo(function BackLayers({ card }: { card: ResolvedCard }) {
+export const BackLayers = memo(function BackLayers({ card, editable = false, selected = null }: { card: ResolvedCard; editable?: boolean; selected?: string | null }) {
   const ids = useCardIds();
   const gold = `url(#${ids.gold})`;
   const rest = restingMotion(card);
@@ -33,13 +34,20 @@ export const BackLayers = memo(function BackLayers({ card }: { card: ResolvedCar
             <stop offset="0.62" stopColor={back.g1} />
             <stop offset="1" stopColor={back.g0} />
           </linearGradient>
+          <linearGradient id={ids.metal} data-metal="" x1={rest.mx1} y1="0" x2={rest.mx2} y2="1">
+            <stop offset="0" stopColor={back.g0} />
+            <stop offset="0.38" stopColor={back.g1} />
+            <stop offset="0.5" stopColor={back.g2} />
+            <stop offset="0.62" stopColor={back.g1} />
+            <stop offset="1" stopColor={back.g0} />
+          </linearGradient>
         </defs>
         <path d={b.thin} fill="none" stroke={gold} strokeWidth={0.9} opacity={0.75} />
         <path d={b.line} fill="none" stroke={gold} strokeWidth={1.5} />
         <path d={b.fill} fill={gold} />
         <path d={b.dark} fill={back.base} />
       </svg>
-      {card.tcg && (
+      {card.tcg && card.backPattern === 'mandala' && (
         <div
           style={{
             position: 'absolute',
@@ -61,6 +69,7 @@ export const BackLayers = memo(function BackLayers({ card }: { card: ResolvedCar
           {cs.card.brand}
         </div>
       )}
+      <CardItems items={card.items} side="back" ink={{ base: back.base, text: back.txt, metal: `url(#${ids.metal})` }} editable={editable} selected={selected} />
       <div aria-hidden="true" style={glareStyle} />
     </>
   );

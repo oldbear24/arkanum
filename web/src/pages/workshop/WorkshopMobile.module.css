@@ -104,13 +104,20 @@
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
 }
 
 .sides {
   background: var(--panel-toolbar);
   border: 1px solid var(--line-soft);
+}
+
+/* Five controls have to fit next to each other on a narrow phone. */
+.sides > button {
+  padding: 0 10px;
 }
 
 .round {

@@ -42,7 +42,11 @@ var demoCards = []demoCard{
 	{owner: "demo", title: "Rozpracovaná karta", family: "tarot", visibility: "private", look: obj{"art": "mesic", "palette": "krev"}},
 	{owner: "demo", title: "Pro přátele", family: "orakulum", visibility: "unlisted", content: obj{"subtitle": "Sdílená radost je dvojnásobná."}},
 	{owner: "noctua", title: "Společná práce", family: "hrdina", visibility: "private", editors: []string{"demo"}, content: obj{"subtitle": "Dvě hlavy, jeden meč.", "cls": "Bard · Vzácná"}},
-	{owner: "demo", title: "Pozvánka", family: "prazdna", visibility: "public", format: [2]int{70, 70}, content: obj{"subtitle": "Sejdeme se o slunovratu."}, look: obj{"palette": "smaragd", "edge": "zlata"}},
+	{owner: "demo", title: "Pozvánka", family: "prazdna", visibility: "public", format: [2]int{70, 70}, content: obj{"subtitle": "Sejdeme se o slunovratu.", "elements": []any{
+		obj{"id": "slunce", "type": "symbol", "kind": "slunce", "x": 50, "y": 22, "size": 22},
+		obj{"id": "linka", "type": "ornament", "kind": "linka", "x": 50, "y": 68, "size": 62},
+		obj{"id": "stin", "type": "symbol", "kind": "mesic", "x": 12, "y": 12, "size": 10, "rotate": -20, "opacity": 70},
+	}}, look: obj{"palette": "smaragd", "edge": "zlata"}},
 
 	tarot("noctua", "Velekněžka", "II", "mesic", "smaragd", "minimal", "zlata"),
 	tarot("sudicka", "Císařovna", "III", "slunce", "pulnoc", "secese", "duha"),

@@ -43,6 +43,11 @@ export const ICONS = {
   pencil: 'M4 20L5 15.5L16.5 4L20 7.5L8.5 19ZM14 6.5L17.5 10',
   chevronUp: 'M6 15L12 9L18 15',
   chevronDown: 'M6 9L12 15L18 9',
+  chevronLeft: 'M15 6L9 12L15 18',
+  chevronRight: 'M9 6L15 12L9 18',
+  rotateLeft: 'M4 12A8 8 0 1 0 6.3 6.3M4 4V8H8',
+  copy: 'M9 9H20V20H9ZM5 15H4V4H15V5',
+  swap: 'M7 4L3 8L7 12M3 8H17M17 12L21 16L17 20M21 16H7',
 } as const;
 
 export type IconName = keyof typeof ICONS;

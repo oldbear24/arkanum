@@ -51,6 +51,11 @@ const original = new Prototype();
 
 const prototypeVariants = enums.variant.filter((v): v is Exclude<Variant, 'prazdna'> => v !== 'prazdna');
 
+// The values added after the design exist only here, the prototype falls back on its defaults.
+const prototypePalettes = enums.palette.filter((palette) => ['pulnoc', 'krev', 'smaragd', 'pergamen'].includes(palette));
+const prototypeFoils = enums.foil.filter((foil) => ['zadna', 'zlata', 'duha', 'kosmos'].includes(foil));
+const prototypeEdges = enums.edge.filter((edge) => ['zlata', 'cerna', 'bila', 'ram'].includes(edge));
+
 function render(props: Record<string, unknown>, state: Partial<MotionState> = {}) {
   const instance = new Prototype();
   instance.props = props;
@@ -84,10 +89,10 @@ describe('static values match the prototype', () => {
   const samples: CardParams[] = [];
   for (const variant of prototypeVariants) {
     samples.push({ variant });
-    for (const palette of enums.palette) samples.push({ variant, palette });
+    for (const palette of prototypePalettes) samples.push({ variant, palette });
     for (const element of enums.element) samples.push({ variant, element });
-    for (const foil of enums.foil) samples.push({ variant, foil, foilI: 80 });
-    for (const edge of enums.edge) samples.push({ variant, edge, palette: 'krev' });
+    for (const foil of prototypeFoils) samples.push({ variant, foil, foilI: 80 });
+    for (const edge of prototypeEdges) samples.push({ variant, edge, palette: 'krev' });
     for (const font of enums.font) samples.push({ variant, font, cardTitle: 'Velmi dlouhý název karty' });
     for (const art of enums.art) samples.push({ variant, art });
     samples.push({ variant, thick: 7.5, radius: 22 });

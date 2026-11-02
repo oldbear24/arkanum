@@ -1,12 +1,20 @@
 import { cs } from '../i18n/cs';
-import { buildGeometry, type CardGeometry } from './geometry';
-import { enums, type ArtPlacement, type Art, type CardElement, type CardFont, type Edge, type Foil, type Frame, type Palette, type Surface, type Variant } from './spec';
+import { buildGeometry, type CardGeometry, type WindowBox } from './geometry';
+import { enums, ranges, type ArtFilter, type ArtPlacement, type Art, type BackPattern, type CardElement, type CardFont, type CardItem, type CustomColors, type Edge, type Foil, type Frame, type Palette, type Surface, type Variant } from './spec';
 
 // The static half of renderVals() from design/Karta.dc.html: everything that depends
 // only on the card parameters. The part that depends on the pointer is in motion.ts.
 
-export interface ArtLayer extends ArtPlacement {
+export interface ArtLayer extends Partial<ArtPlacement> {
   url: string;
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+/** An item ready for drawing. An image without a url lost its file and stays out of sight. */
+export interface PlacedItem extends CardItem {
+  url?: string;
 }
 
 /** Parameter names follow design/Karta.dc.html. Values may be missing or invalid. */
@@ -57,6 +65,17 @@ export interface CardParams {
   formatH?: number;
   /** Overrides the colours of the back, for decks that share one look. */
   backPalette?: Palette | string;
+  backPattern?: BackPattern | string;
+  /** Own colours on top of the palette. */
+  colors?: Partial<CustomColors>;
+  /** The illustration fills the whole card and the window has no border of its own. */
+  fullArt?: boolean;
+  /** The size of the title in percent. */
+  titleScale?: number;
+  titleCaps?: boolean;
+  artFilter?: Partial<ArtFilter>;
+  /** The freely placed parts of the card, from the bottom up. */
+  items?: PlacedItem[];
 }
 
 interface PaletteColors {
@@ -76,6 +95,10 @@ export const PAL: Record<Palette, PaletteColors> = {
   krev: { base: '#230a11', sky0: '#43141f', sky1: '#17060b', g0: '#7e5523', g1: '#dca55a', g2: '#ffe9c2', ink: '#f4e0cb', glow: '#e08a5a', light: false },
   smaragd: { base: '#0b1f1b', sky0: '#163a31', sky1: '#081512', g0: '#76612c', g1: '#d3b56f', g2: '#fbf1cc', ink: '#e9e4cb', glow: '#7fd1b6', light: false },
   pergamen: { base: '#ece1c8', sky0: '#f6efde', sky1: '#e0cfab', g0: '#2b1d10', g1: '#4b3520', g2: '#c0913d', ink: '#3b2a19', glow: '#c0913d', light: true },
+  ametyst: { base: '#1b1030', sky0: '#3a2263', sky1: '#130a24', g0: '#6a5587', g1: '#c9b3e6', g2: '#f6eeff', ink: '#ece2f7', glow: '#b58cf0', light: false },
+  safir: { base: '#0b1730', sky0: '#16325f', sky1: '#081022', g0: '#5c6c8a', g1: '#b7c7de', g2: '#f2f7ff', ink: '#e3ecf8', glow: '#7fb0f0', light: false },
+  obsidian: { base: '#101114', sky0: '#272a30', sky1: '#0a0b0d', g0: '#585d66', g1: '#b9bec7', g2: '#f6f8fb', ink: '#e8eaee', glow: '#aab4c4', light: false },
+  jantar: { base: '#2a1606', sky0: '#5c3411', sky1: '#1c0e04', g0: '#80521a', g1: '#e8b04c', g2: '#fff0bf', ink: '#f6e4bf', glow: '#f0a03c', light: false },
 };
 
 export const EL: Record<CardElement, { c: string; d: string; l: string; n: string }> = {
@@ -90,6 +113,8 @@ export const EDGE: Record<Exclude<Edge, 'ram'>, string[]> = {
   zlata: ['#6f5424', '#9a7637', '#c49a4f', '#dfbd73', '#f0d796', '#f0d796', '#dfbd73', '#c49a4f', '#9a7637', '#6f5424'],
   cerna: ['#050506', '#0c0c0f', '#141418', '#1b1b20', '#212127', '#212127', '#1b1b20', '#141418', '#0c0c0f', '#050506'],
   bila: ['#b5ad9d', '#c8c0b0', '#d9d2c3', '#e6e0d2', '#efeadf', '#efeadf', '#e6e0d2', '#d9d2c3', '#c8c0b0', '#b5ad9d'],
+  stribrna: ['#5b606a', '#7f858f', '#a5abb5', '#c8cdd5', '#e4e7ec', '#e4e7ec', '#c8cdd5', '#a5abb5', '#7f858f', '#5b606a'],
+  medena: ['#5f3417', '#84492a', '#a9623a', '#c9814f', '#e3a26f', '#e3a26f', '#c9814f', '#a9623a', '#84492a', '#5f3417'],
 };
 
 const SHADE = [0.55, 0.4, 0.25, 0.1, 0, 0, 0.1, 0.25, 0.4, 0.55];
@@ -100,6 +125,9 @@ const FONTS: Record<CardFont, [string, number, number]> = {
   aboreto: ["'Aboreto', 'Cinzel', Georgia, serif", 400, 0.92],
   gotika: ["'Grenze Gotisch', Georgia, serif", 600, 1.08],
 };
+
+/** The silver foil replaces the metal of the palette, in a darker shade on a light card. */
+const SILVER = { dark: { g0: '#5d6470', g1: '#b8c0cc', g2: '#f7f9fc' }, light: { g0: '#3f444d', g1: '#6b727d', g2: '#c9ced6' } };
 
 /** Placeholder for the gold gradient. Each rendered card swaps it for its own unique id. */
 export const GOLD = 'url(#gold)';
@@ -176,6 +204,62 @@ function palettes(variant: Variant, palette: Palette, element: CardElement): Car
   return { base: P.base, backBase: P.base, sky0: P.sky0, sky1: P.sky1, g0: P.g0, g1: P.g1, g2: P.g2, glow: P.glow, fill: GOLD, line: GOLD, thin: GOLD, under: GOLD, dots: P.ink, eyes: 'none', border2: GOLD, plaque: P.base, panelFill: 'none', panelStroke: 'none', acc: 'none', acc2: 'none', ico: 'none', sico: 'none', txt: P.g1, light: P.light };
 }
 
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+function isColor(value: unknown): value is string {
+  return typeof value === 'string' && HEX_COLOR.test(value);
+}
+
+function isBright(color: string): boolean {
+  const n = parseInt(color.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 140;
+}
+
+function withSilver(c: CardColors, tcg: boolean): CardColors {
+  const silver = c.light ? SILVER.light : SILVER.dark;
+  return { ...c, ...silver, txt: tcg || c.light ? c.txt : silver.g1 };
+}
+
+/** Lays the own colours over those of the palette. Whatever is left empty stays as it is. */
+function withCustomColors(c: CardColors, custom: Partial<CustomColors> | undefined, variant: Variant): CardColors {
+  if (!custom) return c;
+  const out = { ...c };
+  if (isColor(custom.base)) {
+    out.base = custom.base;
+    out.backBase = custom.base;
+    out.plaque = custom.base;
+    out.light = isBright(custom.base);
+    if (variant === 'bestie') out.panelFill = mix(custom.base, '#ffffff', 0.05);
+    if (variant === 'bestie' || variant === 'hrdina') out.acc2 = mix(custom.base, '#ffffff', 0.05);
+  }
+  if (isColor(custom.sky)) {
+    out.sky0 = custom.sky;
+    out.sky1 = mix(custom.sky, '#000000', 0.55);
+  }
+  if (isColor(custom.metal)) {
+    out.g0 = mix(custom.metal, '#000000', 0.45);
+    out.g1 = custom.metal;
+    out.g2 = mix(custom.metal, '#ffffff', 0.75);
+    out.glow = custom.metal;
+    out.txt = custom.metal;
+    if (variant === 'bestie') out.sico = custom.metal;
+  }
+  if (isColor(custom.text)) out.txt = custom.text;
+  return out;
+}
+
+function resolveFilter(raw: Partial<ArtFilter> | undefined): ArtFilter | null {
+  if (!raw) return null;
+  const filter: ArtFilter = {
+    brightness: clamp(ranges.artBrightness[0], ranges.artBrightness[1], num(raw.brightness, 100)),
+    contrast: clamp(ranges.artContrast[0], ranges.artContrast[1], num(raw.contrast, 100)),
+    saturate: clamp(ranges.artSaturate[0], ranges.artSaturate[1], num(raw.saturate, 100)),
+    hue: clamp(ranges.artHue[0], ranges.artHue[1], num(raw.hue, 0)),
+  };
+  // A filter costs on every frame of a moving card, so a card without one has none at all.
+  return filter.brightness === 100 && filter.contrast === 100 && filter.saturate === 100 && filter.hue === 0 ? null : filter;
+}
+
 function defaultTexts(variant: Variant, art: Art, elementName: string) {
   const d = cs.card.defaults;
   const title: Record<Variant, string> = { tarot: cs.card.arts[art].name, orakulum: d.titleOrakulum, bestie: d.titleBestie, hrdina: d.titleHrdina, prazdna: d.titleBlank };
@@ -187,12 +271,12 @@ const geometryCache = new Map<string, CardGeometry>();
 const GEOMETRY_CACHE_LIMIT = 256;
 
 /** SVG paths are memoized by the parameters they depend on. Many cards share them. */
-function cachedGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, H: number): CardGeometry {
-  const key = [variant, frame, art, element, rarity, radius, H].join('|');
+function cachedGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, H: number, backPattern: BackPattern): CardGeometry {
+  const key = [variant, frame, art, element, rarity, radius, H, backPattern].join('|');
   let geometry = geometryCache.get(key);
   if (!geometry) {
     if (geometryCache.size >= GEOMETRY_CACHE_LIMIT) geometryCache.clear();
-    geometry = buildGeometry(variant, frame, art, element, rarity, radius, H);
+    geometry = buildGeometry(variant, frame, art, element, rarity, radius, H, backPattern);
     geometryCache.set(key, geometry);
   }
   return geometry;
@@ -228,12 +312,16 @@ export function resolveCard(p: CardParams) {
   const showFoil = on(p.showFoil);
   const emboss = on(p.emboss);
   const shadow = on(p.shadow);
+  const backPattern = pick(p.backPattern, enums.backPattern, 'mandala');
+  const fullArt = p.fullArt === true;
+  const titleScale = clamp(ranges.titleScale[0], ranges.titleScale[1], num(p.titleScale, 100)) / 100;
 
-  const geometry = cachedGeometry(variant, frame, art, element, rarity, radius, H);
+  const geometry = cachedGeometry(variant, frame, art, element, rarity, radius, H, backPattern);
 
   const E = EL[element];
-  const c = palettes(variant, palette, element);
-  const hl = foil === 'zadna' ? 0.12 : foil === 'zlata' ? 0.55 + 0.45 * I : 0.3 + 0.3 * I;
+  const paletteColors = palettes(variant, palette, element);
+  const c = withCustomColors(foil === 'stribrna' ? withSilver(paletteColors, tcg) : paletteColors, p.colors, variant);
+  const hl = foil === 'zadna' ? 0.12 : foil === 'zlata' || foil === 'stribrna' ? 0.55 + 0.45 * I : 0.3 + 0.3 * I;
 
   const backPalette = enums.palette.includes(p.backPalette as Palette) ? PAL[p.backPalette as Palette] : null;
   const back = backPalette
@@ -254,13 +342,14 @@ export function resolveCard(p: CardParams) {
   const F = FONTS[p.font as CardFont] || FONTS.cinzel;
   const len = Math.max(1, title.length);
   const tLs = len > 10 ? 0.08 : 0.18;
-  const tFs = Math.min(1.14 * F[2], 12.4 / (len * (0.74 + tLs)));
-  const nameFs = Math.min(1.0 * F[2], 11.2 / (len * 0.86));
-  const heroFs = Math.min(0.92 * F[2], 11 / (len * 0.78));
+  const tFs = Math.min(1.14 * F[2], 12.4 / (len * (0.74 + tLs))) * titleScale;
+  const nameFs = Math.min(1.0 * F[2], 11.2 / (len * 0.86)) * titleScale;
+  const heroFs = Math.min(0.92 * F[2], 11 / (len * 0.78)) * titleScale;
   const subFs = Math.min(0.66, 14 / (Math.max(1, subtitle.length) * 0.42));
 
   const d = cs.card.defaults;
   const isHrdina = variant === 'hrdina';
+  const artBox: WindowBox = fullArt ? { x: 0, y: 0, w: 300, h: H } : geometry.box;
 
   return {
     variant,
@@ -296,7 +385,15 @@ export function resolveCard(p: CardParams) {
     a: geometry.a,
     b: geometry.b,
     box: geometry.box,
+    artBox,
+    fullArt,
+    backPattern,
+    titleCaps: on(p.titleCaps),
+    artFilter: resolveFilter(p.artFilter),
+    /** The title colour of the game cards, which is not the colour of their other texts. */
+    ink: isColor(p.colors?.text) ? p.colors.text : '#f6ecd2',
     artwork: p.artwork ?? [],
+    items: p.items ?? [],
     g0: c.g0,
     g1: c.g1,
     g2: mix(c.g1, c.g2, hl),

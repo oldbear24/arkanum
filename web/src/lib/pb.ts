@@ -40,6 +40,7 @@ export interface CardRecord extends RecordModel {
   artwork: string;
   artworkLayers: string[];
   artworkTransform: unknown;
+  itemImages: string[];
   thumbnail: string;
   visibility: Visibility;
   remixOf: string;

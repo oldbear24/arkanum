@@ -1,14 +1,16 @@
-import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { ORNAMENTS, shapePath, SYMBOLS } from '../../card/itemArt';
 import { PAL, resolveCard } from '../../card/resolve';
-import { counts, ranges, textLimits, type CardAbility, type CardContent } from '../../card/spec';
+import { counts, enums, ranges, textLimits, type ArtFilter, type CardAbility, type CardContent, type CardItem, type CustomColors, type ItemOrnament, type ItemSide, type ItemSymbol } from '../../card/spec';
 import { Icon, type IconName } from '../../components/Icon';
 import { cs } from '../../i18n/cs';
 import { pb } from '../../lib/pb';
 import { useWorkshop, type ArtTarget, type TabId } from './context';
-import { ARCANAS, ARTS, BLANK_OPTION, EDGES, ELEMENTS, FOILS, FONTS, FRAMES, LAYERS, LAYER_ICONS, PALETTES, SURFACES, VARIANT_OPTIONS, dataTabLabel, millimetres } from './constants';
+import { ADD_ELEMENTS, ARCANAS, ARTS, BACK_PATTERNS, BLANK_OPTION, EDGES, ELEMENTS, FOILS, FONTS, FRAMES, ITEM_ALIGNS, ITEM_FONTS, ITEM_ICONS, ITEM_ORNAMENTS, ITEM_SHAPES, ITEM_SYMBOLS, LAYERS, LAYER_ICONS, PALETTES, SURFACES, VARIANT_OPTIONS, dataTabLabel, itemName, millimetres } from './constants';
 import styles from './panels.module.css';
 
 const w = cs.workshop;
+const it = w.items;
 
 function cx(...names: (string | false | undefined)[]) {
   return names.filter(Boolean).join(' ');
@@ -17,8 +19,8 @@ function cx(...names: (string | false | undefined)[]) {
 /** What the card shows for an empty field. The fields offer it as their placeholder. */
 function useCardFallbacks() {
   const { doc } = useWorkshop();
-  const { variant, art, element } = doc.look;
-  return useMemo(() => resolveCard({ variant, art, element }), [variant, art, element]);
+  const { variant, art, element, palette, foil } = doc.look;
+  return useMemo(() => resolveCard({ variant, art, element, palette, foil }), [variant, art, element, palette, foil]);
 }
 
 function Section({ title, children, tight }: { title?: string; children: ReactNode; tight?: boolean }) {
@@ -27,6 +29,29 @@ function Section({ title, children, tight }: { title?: string; children: ReactNo
       {title && <h3 className={styles.heading}>{title}</h3>}
       {children}
     </section>
+  );
+}
+
+/** Sections that stay open when their tab comes back, the panel rebuilds on every switch. */
+const openFoldouts = new Set<string>();
+
+/** A section beyond the basics, which stays out of the way until someone asks for it. */
+function Foldout({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details
+      className={styles.foldout}
+      open={openFoldouts.has(title)}
+      onToggle={(e) => {
+        if (e.currentTarget.open) openFoldouts.add(title);
+        else openFoldouts.delete(title);
+      }}
+    >
+      <summary className={styles.foldoutHead}>
+        <h3 className={styles.heading}>{title}</h3>
+        <Icon name="chevronDown" size={18} />
+      </summary>
+      <div className={styles.foldoutBody}>{children}</div>
+    </details>
   );
 }
 
@@ -118,12 +143,49 @@ function pressed(on: boolean) {
   return { 'aria-pressed': on } as const;
 }
 
+function SwitchRow({ name, note, on, onToggle }: { name: string; note?: string; on: boolean; onToggle: () => void }) {
+  const labelId = useId();
+  return (
+    <div className={styles.switchRow}>
+      <span id={labelId} className={styles.switchLabel}>
+        <span className={styles.switchName}>{name}</span>
+        {note && <span className={styles.switchNote}>{note}</span>}
+      </span>
+      <button type="button" role="switch" aria-checked={on} aria-labelledby={labelId} className={styles.switch} onClick={onToggle}>
+        <span aria-hidden="true" className={styles.switchTrack} style={{ background: on ? 'var(--gold-track)' : 'var(--option)' }}>
+          <span className={styles.switchKnob} style={{ left: on ? 26 : 3 }} />
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/** A colour of its own, or the one the card has by itself when `value` is empty. */
+function ColorField({ label, value, shown, onChange }: { label: string; value: string; shown: string; onChange: (value: string) => void }) {
+  const id = useId();
+  return (
+    <div className={styles.colorRow}>
+      <label htmlFor={id} className={styles.label}>
+        {label}
+      </label>
+      <div className={styles.colorControls}>
+        {value && (
+          <button type="button" className={styles.artIcon} aria-label={w.colorReset + label} onClick={() => onChange('')}>
+            <Icon name="undo" size={18} />
+          </button>
+        )}
+        <input id={id} type="color" className={styles.colorInput} value={value || shown} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- artwork
 
 function ArtRow({ name, url, target, onRemove, extra }: { name: string; url: string; target: ArtTarget; onRemove: () => void; extra?: ReactNode }) {
   const { doc, setPlacement } = useWorkshop();
   const transform = doc.artworkTransform;
-  const placement = target === 'main' ? transform : (transform.layers[target] ?? { x: 0, y: 0, zoom: 1 });
+  const placement = target === 'main' ? transform : (transform.layers[target] ?? { x: 0, y: 0, zoom: 1, rotate: 0, flipX: false });
 
   return (
     <div className={styles.artRow}>
@@ -146,24 +208,34 @@ function ArtRow({ name, url, target, onRemove, extra }: { name: string; url: str
         step={0.05}
         onChange={(zoom) => setPlacement(target, { zoom })}
       />
+      <RangeRow label={w.artRotate} value={placement.rotate} display={`${placement.rotate}°`} min={ranges.artRotate[0]} max={ranges.artRotate[1]} step={1} onChange={(rotate) => setPlacement(target, { rotate })} />
+      <button type="button" className={styles.uploadQuiet} aria-pressed={placement.flipX} onClick={() => setPlacement(target, { flipX: !placement.flipX })}>
+        <Icon name="swap" size={18} />
+        {placement.flipX ? w.artUnmirror : w.artMirror}
+      </button>
     </div>
   );
 }
 
-function FilePicker({ label, onFile, disabled, dashed = true }: { label: string; onFile: (file: File) => void; disabled: boolean; dashed?: boolean }) {
-  const input = useRef<HTMLInputElement>(null);
+/** The same file dialog for every image. It stays out of the way of assistive technology. */
+function HiddenFileInput({ inputRef, onFile }: { inputRef: RefObject<HTMLInputElement | null>; onFile: (file: File) => void }) {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (file) onFile(file);
   };
+  return <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className={styles.fileInput} tabIndex={-1} aria-hidden="true" onChange={onChange} />;
+}
+
+function FilePicker({ label, onFile, disabled, dashed = true }: { label: string; onFile: (file: File) => void; disabled: boolean; dashed?: boolean }) {
+  const input = useRef<HTMLInputElement>(null);
   return (
     <>
       <button type="button" className={dashed ? styles.upload : styles.uploadQuiet} disabled={disabled} onClick={() => input.current?.click()}>
         <Icon name="upload" size={18} />
         {label}
       </button>
-      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className={styles.fileInput} tabIndex={-1} aria-hidden="true" onChange={onChange} />
+      <HiddenFileInput inputRef={input} onFile={onFile} />
     </>
   );
 }
@@ -236,14 +308,35 @@ function TemplatePicker() {
 }
 
 export function LayerList() {
-  const { doc, selectedLayer, selectLayer, setLook } = useWorkshop();
+  const { doc, selectedLayer, selectLayer, setLook, selectedItem, showItem, setItem, tab } = useWorkshop();
   const list = LAYERS[doc.family];
   return (
     <ul className={styles.layers}>
+      {[...doc.content.elements].reverse().map((item) => {
+        const on = tab === 'prvky' && selectedItem === item.id;
+        const name = itemName(item);
+        return (
+          <li key={item.id} className={styles.layer} data-on={on}>
+            <button type="button" className={styles.layerPick} style={{ opacity: item.hidden ? 0.5 : 1 }} {...pressed(on)} onClick={() => showItem(item.id)}>
+              <Icon name={ITEM_ICONS[item.type]} size={18} strokeWidth={1.6} />
+              <span className={styles.layerName}>{name}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.layerEye}
+              style={{ color: item.hidden ? '#7c759c' : 'var(--text-3)' }}
+              aria-label={(item.hidden ? w.showLayer : w.hideLayer) + name}
+              onClick={() => setItem(item.id, { hidden: !item.hidden })}
+            >
+              <Icon name={item.hidden ? 'eyeOff' : 'eye'} size={18} strokeWidth={1.6} />
+            </button>
+          </li>
+        );
+      })}
       {list.map((layer) => {
         const canHide = layer.group !== 'base';
         const shown = layer.group === 'base' ? true : doc.look.visible[layer.group];
-        const on = selectedLayer === layer.id;
+        const on = tab !== 'prvky' && selectedLayer === layer.id;
         return (
           <li key={layer.id} className={styles.layer} data-on={on}>
             <button type="button" className={styles.layerPick} style={{ opacity: shown ? 1 : 0.5 }} {...pressed(on)} onClick={() => selectLayer(layer.id, layer.tab)}>
@@ -271,6 +364,85 @@ export function LayerList() {
         );
       })}
     </ul>
+  );
+}
+
+function ArtAdjustSection() {
+  const { doc, setLook } = useWorkshop();
+  const { artFilter, fullArt } = doc.look;
+  const set = (patch: Partial<ArtFilter>, group: string) => setLook({ artFilter: { ...artFilter, ...patch } }, group);
+  const untouched = artFilter.brightness === 100 && artFilter.contrast === 100 && artFilter.saturate === 100 && artFilter.hue === 0;
+  return (
+    <Foldout title={w.artAdjust}>
+      <SwitchRow name={w.fullArt} note={w.fullArtHint} on={fullArt} onToggle={() => setLook({ fullArt: !fullArt })} />
+      <RangeRow label={w.artBrightness} value={artFilter.brightness} display={`${artFilter.brightness} %`} min={ranges.artBrightness[0]} max={ranges.artBrightness[1]} step={1} onChange={(brightness) => set({ brightness }, 'art-brightness')} />
+      <RangeRow label={w.artContrast} value={artFilter.contrast} display={`${artFilter.contrast} %`} min={ranges.artContrast[0]} max={ranges.artContrast[1]} step={1} onChange={(contrast) => set({ contrast }, 'art-contrast')} />
+      <RangeRow label={w.artSaturate} value={artFilter.saturate} display={`${artFilter.saturate} %`} min={ranges.artSaturate[0]} max={ranges.artSaturate[1]} step={1} onChange={(saturate) => set({ saturate }, 'art-saturate')} />
+      <RangeRow label={w.artHue} value={artFilter.hue} display={`${artFilter.hue}°`} min={ranges.artHue[0]} max={ranges.artHue[1]} step={1} onChange={(hue) => set({ hue }, 'art-hue')} />
+      {!untouched && (
+        <button type="button" className={styles.uploadQuiet} onClick={() => setLook({ artFilter: { brightness: 100, contrast: 100, saturate: 100, hue: 0 } })}>
+          <Icon name="undo" size={18} />
+          {w.artAdjustReset}
+        </button>
+      )}
+    </Foldout>
+  );
+}
+
+function CustomColorsSection() {
+  const { doc, setLook } = useWorkshop();
+  const { colors } = doc.look;
+  const fallback = useCardFallbacks();
+  const color = (slot: keyof CustomColors, label: string, shown: string) => (
+    <ColorField key={slot} label={label} value={colors[slot]} shown={shown} onChange={(value) => setLook({ colors: { ...colors, [slot]: value } }, `color-${slot}`)} />
+  );
+  return (
+    <Foldout title={w.customColors}>
+      {color('base', w.colorBase, fallback.c.base)}
+      {color('sky', w.colorSky, fallback.c.sky0)}
+      {color('metal', w.colorMetal, fallback.c.g1)}
+      {color('text', w.colorText, fallback.c.txt)}
+    </Foldout>
+  );
+}
+
+function BackSection() {
+  const { doc, setLook, setFlip } = useWorkshop();
+  const { backPalette, backPattern } = doc.look;
+  const fallback = useCardFallbacks();
+  // The back is out of sight while the front is on, and a choice needs to show what it does.
+  const choose = (patch: Parameters<typeof setLook>[0]) => {
+    setFlip(true);
+    setLook(patch);
+  };
+  return (
+    <Foldout title={w.backSection}>
+      <h4 className={styles.subheading}>{w.backPatternTitle}</h4>
+      <div className={styles.grid2}>
+        {BACK_PATTERNS.map((pattern) => (
+          <button key={pattern.id} type="button" className={styles.optTight} {...pressed(backPattern === pattern.id)} onClick={() => choose({ backPattern: pattern.id })}>
+            {pattern.label}
+          </button>
+        ))}
+      </div>
+      <h4 className={styles.subheading}>{w.backPalette}</h4>
+      <div className={styles.grid4}>
+        <button type="button" className={styles.optColumn} {...pressed(backPalette === '')} onClick={() => choose({ backPalette: '' })}>
+          <span aria-hidden="true" className={styles.swatchRound} style={{ background: fallback.c.backBase }}>
+            <span className={styles.swatchDot} style={{ background: fallback.c.g1 }} />
+          </span>
+          <span>{w.backSamePalette}</span>
+        </button>
+        {PALETTES.map((palette) => (
+          <button key={palette.id} type="button" className={styles.optColumn} aria-label={`${w.backPalette}: ${palette.label}`} {...pressed(backPalette === palette.id)} onClick={() => choose({ backPalette: palette.id })}>
+            <span aria-hidden="true" className={styles.swatchRound} style={{ background: palette.base }}>
+              <span className={styles.swatchDot} style={{ background: palette.gold }} />
+            </span>
+            <span>{palette.label}</span>
+          </button>
+        ))}
+      </div>
+    </Foldout>
   );
 }
 
@@ -317,6 +489,8 @@ function LookTab() {
         <ArtworkControls />
       </Section>
 
+      <ArtAdjustSection />
+
       {!isTcg && (
         <>
           {!isBlank && (
@@ -361,9 +535,13 @@ function LookTab() {
         </Section>
       )}
 
+      <CustomColorsSection />
+
       <Section tight>
         <RangeRow label={w.depth} value={look.depth} display={`${look.depth} %`} min={ranges.depth[0]} max={ranges.depth[1]} step={1} onChange={(depth) => setLook({ depth }, 'depth')} />
       </Section>
+
+      <BackSection />
 
       {compact && (
         <Section title={w.layersTitle}>
@@ -399,7 +577,6 @@ function FoilSection() {
 function SurfaceSection() {
   const { doc, setLook } = useWorkshop();
   const { look } = doc;
-  const labelId = useId();
   return (
     <Section title={w.surface}>
       <div className={styles.segments3}>
@@ -409,17 +586,7 @@ function SurfaceSection() {
           </button>
         ))}
       </div>
-      <div className={styles.switchRow}>
-        <span id={labelId} className={styles.switchLabel}>
-          <span className={styles.switchName}>{w.emboss}</span>
-          <span className={styles.switchNote}>{w.embossHint}</span>
-        </span>
-        <button type="button" role="switch" aria-checked={look.emboss} aria-labelledby={labelId} className={styles.switch} onClick={() => setLook({ emboss: !look.emboss })}>
-          <span aria-hidden="true" className={styles.switchTrack} style={{ background: look.emboss ? 'var(--gold-track)' : 'var(--option)' }}>
-            <span className={styles.switchKnob} style={{ left: look.emboss ? 26 : 3 }} />
-          </span>
-        </button>
-      </div>
+      <SwitchRow name={w.emboss} note={w.embossHint} on={look.emboss} onToggle={() => setLook({ emboss: !look.emboss })} />
     </Section>
   );
 }
@@ -451,6 +618,22 @@ function RadiusRange() {
   return <RangeRow label={w.radius} value={doc.look.radius} display={millimetres((doc.look.radius * doc.formatW) / 300, 1)} min={ranges.radius[0]} max={ranges.radius[1]} step={1} onChange={(radius) => setLook({ radius }, 'radius')} />;
 }
 
+/** Only the blank card has a format of its own, the templates have a fixed one. */
+function FormatRanges() {
+  const { doc, setFormat } = useWorkshop();
+  if (doc.family !== 'prazdna') return null;
+  return (
+    <>
+      <RangeRow label={w.formatWidth} value={doc.formatW} display={`${doc.formatW} ${cs.common.mm}`} min={ranges.format[0]} max={ranges.format[1]} step={1} onChange={(formatW) => setFormat(formatW, doc.formatH)} />
+      <RangeRow label={w.formatHeight} value={doc.formatH} display={`${doc.formatH} ${cs.common.mm}`} min={ranges.format[0]} max={ranges.format[1]} step={1} onChange={(formatH) => setFormat(doc.formatW, formatH)} />
+      <button type="button" className={styles.uploadQuiet} onClick={() => setFormat(doc.formatH, doc.formatW)}>
+        <Icon name="swap" size={18} />
+        {w.formatSwap}
+      </button>
+    </>
+  );
+}
+
 function MaterialTab() {
   const { compact } = useWorkshop();
   if (compact) {
@@ -459,6 +642,7 @@ function MaterialTab() {
         <FoilSection />
         <EdgeSection />
         <Section tight>
+          <FormatRanges />
           <ThicknessRange />
           <RadiusRange />
         </Section>
@@ -472,6 +656,7 @@ function MaterialTab() {
       <SurfaceSection />
       <EdgeSection />
       <Section title={w.shape}>
+        <FormatRanges />
         <ThicknessRange />
         <RadiusRange />
       </Section>
@@ -513,6 +698,8 @@ function TextTab() {
             </button>
           ))}
         </div>
+        <RangeRow label={w.titleScale} value={doc.look.titleScale} display={`${doc.look.titleScale} %`} min={ranges.titleScale[0]} max={ranges.titleScale[1]} step={5} onChange={(titleScale) => setLook({ titleScale }, 'title-scale')} />
+        <SwitchRow name={w.titleCaps} note={w.titleCapsHint} on={doc.look.titleCaps} onToggle={() => setLook({ titleCaps: !doc.look.titleCaps })} />
       </Section>
     </>
   );
@@ -631,7 +818,7 @@ function AbilityField({ index, ability, title, down, up, effect, namePlaceholder
 }
 
 function DataTab() {
-  const { doc, setMeaning, setContent, setAbility } = useWorkshop();
+  const { doc, record, setMeaning, setContent, setAbility } = useWorkshop();
   const { content, meaning } = doc;
   const fallback = useCardFallbacks();
   const stat = (key: keyof CardContent) => (value: number) => setContent({ [key]: value }, `stat-${key}`);
@@ -712,6 +899,209 @@ function DataTab() {
           <TextArea label={w.abilityEffect} rows={3} maxLength={textLimits.abilityText} value={first.text} placeholder={fallback.ab1t} onChange={(text) => setAbility(0, { text }, 'ability-text-0')} />
         </Section>
       )}
+
+      <Section tight>
+        <TextField label={w.setNo} maxLength={textLimits.setNo} value={content.setNo} placeholder={fallback.setNo} onChange={(setNo) => setContent({ setNo }, 'set-no')} />
+        {doc.family === 'bestie' && <TextField label={w.artist} maxLength={textLimits.artist} value={content.artist} placeholder={record.expand?.owner ? `@${record.expand.owner.handle}` : fallback.author} onChange={(artist) => setContent({ artist }, 'artist')} />}
+      </Section>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- "Prvky"
+
+/** The buttons of "Přidat prvek". An image first asks for its file. */
+export function AddItems() {
+  const { uploading, addItem, addImageItem } = useWorkshop();
+  const file = useRef<HTMLInputElement>(null);
+  return (
+    <div className={styles.addGrid}>
+      {ADD_ELEMENTS.map(({ type, label, icon }) => (
+        <button key={type} type="button" className={styles.addButton} disabled={type === 'image' && uploading} onClick={() => (type === 'image' ? file.current?.click() : addItem(type))}>
+          <Icon name={icon} strokeWidth={1.6} />
+          <span>{label}</span>
+        </button>
+      ))}
+      <HiddenFileInput inputRef={file} onFile={addImageItem} />
+    </div>
+  );
+}
+
+function ItemPicker<T extends string>({ title, options, value, onPick, draw }: { title: string; options: { id: T; label: string }[]; value: string; onPick: (id: T) => void; draw: (id: T) => ReactNode }) {
+  return (
+    <>
+      <h4 className={styles.subheading}>{title}</h4>
+      <div className={styles.iconGrid}>
+        {options.map((option) => (
+          <button key={option.id} type="button" className={styles.optIcon} aria-label={option.label} title={option.label} {...pressed(value === option.id)} onClick={() => onPick(option.id)}>
+            {draw(option.id)}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SymbolPreview({ id }: { id: ItemSymbol }) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
+      <path d={SYMBOLS[id]} fill="currentColor" fillRule="evenodd" />
+    </svg>
+  );
+}
+
+function OrnamentPreview({ id }: { id: ItemOrnament }) {
+  const art = ORNAMENTS[id];
+  return (
+    <svg width="32" height="26" viewBox={`0 0 ${art.w} ${art.h}`} aria-hidden="true">
+      {art.line && <path d={art.line} fill="none" stroke="currentColor" strokeWidth={art.w / 40} strokeLinecap="round" />}
+      {art.fill && <path d={art.fill} fill="currentColor" />}
+    </svg>
+  );
+}
+
+function ShapePreview({ id }: { id: string }) {
+  return (
+    <svg width="26" height="26" viewBox="-4 -4 108 108" aria-hidden="true">
+      <path d={shapePath(id, 100)} fill="none" stroke="currentColor" strokeWidth={7} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ItemEditor({ item }: { item: CardItem }) {
+  const { doc, record, setItem, setFlip, removeItem, duplicateItem, reorderItem } = useWorkshop();
+  const items = doc.content.elements;
+  const index = items.findIndex((candidate) => candidate.id === item.id);
+  const fallback = useCardFallbacks();
+  const set = (patch: Partial<CardItem>, group?: string) => setItem(item.id, patch, group && `item-${group}-${item.id}`);
+  const ownSize = item.type === 'text' ? [2, 40] : ranges.itemSize;
+  const moveToSide = (side: ItemSide) => {
+    setFlip(side === 'back');
+    set({ side });
+  };
+
+  return (
+    <Section title={it.properties}>
+      <div className={styles.itemActions}>
+        <button type="button" className={styles.artIcon} aria-label={it.forward} title={it.forward} disabled={index === items.length - 1} onClick={() => reorderItem(item.id, 1)}>
+          <Icon name="chevronUp" size={18} />
+        </button>
+        <button type="button" className={styles.artIcon} aria-label={it.backward} title={it.backward} disabled={index === 0} onClick={() => reorderItem(item.id, -1)}>
+          <Icon name="chevronDown" size={18} />
+        </button>
+        <button type="button" className={styles.artIcon} aria-label={it.duplicate} title={it.duplicate} disabled={items.length >= counts.elements} onClick={() => duplicateItem(item.id)}>
+          <Icon name="copy" size={18} />
+        </button>
+        <button type="button" className={styles.artIcon} aria-label={it.remove} title={it.remove} onClick={() => removeItem(item.id)}>
+          <Icon name="trash" size={18} />
+        </button>
+      </div>
+
+      {item.type === 'text' && (
+        <>
+          <TextArea label={it.textField} rows={2} maxLength={textLimits.itemText} value={item.text} onChange={(text) => set({ text }, 'text')} />
+          <h4 className={styles.subheading}>{it.font}</h4>
+          <div className={styles.grid2}>
+            {ITEM_FONTS.map((font) => (
+              <button key={font.id} type="button" className={styles.optFont} {...pressed(item.font === font.id)} onClick={() => set({ font: font.id })}>
+                <span className={styles.fontSample} style={{ fontFamily: font.family, fontWeight: font.weight, fontStyle: font.italic ? 'italic' : 'normal' }}>
+                  {w.fontSample}
+                </span>
+                <span className={styles.fontName}>{font.label}</span>
+              </button>
+            ))}
+          </div>
+          <h4 className={styles.subheading}>{it.align}</h4>
+          <div className={styles.segments3}>
+            {ITEM_ALIGNS.map((align) => (
+              <button key={align.id} type="button" className={styles.optSegment} {...pressed(item.align === align.id)} onClick={() => set({ align: align.id })}>
+                {align.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {item.type === 'symbol' && <ItemPicker title={it.symbolPick} options={ITEM_SYMBOLS} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <SymbolPreview id={id} />} />}
+      {item.type === 'ornament' && <ItemPicker title={it.ornamentPick} options={ITEM_ORNAMENTS} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <OrnamentPreview id={id} />} />}
+
+      {item.type === 'stat' && (
+        <>
+          <TextField label={it.statValue} look="display" maxLength={textLimits.itemValue} value={item.value} onChange={(value) => set({ value }, 'value')} />
+          <TextField label={it.statLabel} maxLength={textLimits.itemText} value={item.text} onChange={(text) => set({ text }, 'text')} />
+          <ItemPicker title={it.badgePick} options={ITEM_SHAPES} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <ShapePreview id={id} />} />
+        </>
+      )}
+
+      {item.type === 'shape' && (
+        <>
+          <ItemPicker title={it.shapePick} options={ITEM_SHAPES} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <ShapePreview id={id} />} />
+          <SwitchRow name={it.filled} note={it.filledHint} on={item.filled} onToggle={() => set({ filled: !item.filled })} />
+          <RangeRow label={it.ratio} value={item.ratio} display={`${item.ratio} %`} min={ranges.itemRatio[0]} max={ranges.itemRatio[1]} step={5} onChange={(ratio) => set({ ratio }, 'ratio')} />
+        </>
+      )}
+
+      {item.type === 'image' && !record.itemImages?.includes(item.file) && (
+        <p className={styles.error} role="alert">
+          {it.imageMissing}
+        </p>
+      )}
+
+      {item.type !== 'image' && <ColorField label={it.color} value={item.color} shown={item.type === 'text' ? fallback.c.txt : fallback.c.g1} onChange={(color) => set({ color }, 'color')} />}
+
+      <h4 className={styles.subheading}>{it.side}</h4>
+      <div className={styles.segments2}>
+        {enums.itemSide.map((side) => (
+          <button key={side} type="button" className={styles.optSegment} {...pressed(item.side === side)} onClick={() => moveToSide(side)}>
+            {it.sides[side]}
+          </button>
+        ))}
+      </div>
+
+      <p className={styles.note}>{it.moveHint}</p>
+      <RangeRow label={it.positionX} value={item.x} display={`${Math.round(item.x)} %`} min={ranges.itemPosition[0]} max={ranges.itemPosition[1]} step={1} onChange={(x) => set({ x }, 'x')} />
+      <RangeRow label={it.positionY} value={item.y} display={`${Math.round(item.y)} %`} min={ranges.itemPosition[0]} max={ranges.itemPosition[1]} step={1} onChange={(y) => set({ y }, 'y')} />
+      <RangeRow label={it.size} value={item.size} display={`${item.size} %`} min={ownSize[0]!} max={ownSize[1]!} step={1} onChange={(size) => set({ size }, 'size')} />
+      <RangeRow label={it.rotate} value={item.rotate} display={`${item.rotate}°`} min={ranges.itemRotate[0]} max={ranges.itemRotate[1]} step={1} onChange={(rotate) => set({ rotate }, 'rotate')} />
+      <RangeRow label={it.opacity} value={item.opacity} display={`${item.opacity} %`} min={ranges.itemOpacity[0]} max={ranges.itemOpacity[1]} step={1} onChange={(opacity) => set({ opacity }, 'opacity')} />
+    </Section>
+  );
+}
+
+function ItemsTab() {
+  const { compact, doc, selectedItem, showItem, uploadError } = useWorkshop();
+  const items = doc.content.elements;
+  const selected = items.find((item) => item.id === selectedItem);
+
+  return (
+    <>
+      {compact && (
+        <Section title={w.addElement}>
+          <AddItems />
+        </Section>
+      )}
+      <Section title={it.onCard}>
+        {uploadError && (
+          <p className={styles.error} role="alert">
+            {uploadError}
+          </p>
+        )}
+        {items.length === 0 ? (
+          <p className={styles.note}>{it.empty}</p>
+        ) : (
+          <ul className={styles.layers}>
+            {[...items].reverse().map((item) => (
+              <li key={item.id} className={styles.layer} data-on={item.id === selectedItem}>
+                <button type="button" className={styles.layerPick} style={{ opacity: item.hidden ? 0.5 : 1 }} {...pressed(item.id === selectedItem)} onClick={() => showItem(item.id)}>
+                  <Icon name={ITEM_ICONS[item.type]} size={18} strokeWidth={1.6} />
+                  <span className={styles.layerName}>{itemName(item)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+      {selected && <ItemEditor key={selected.id} item={selected} />}
     </>
   );
 }
@@ -751,6 +1141,7 @@ const TAB_ICONS: Record<TabId, IconName> = {
   material: 'sparkle',
   text: 'text',
   data: 'book',
+  prvky: 'symbol',
 };
 
 /** The tabs of the settings. The same controls serve the desktop panel and the phone sheet. */
@@ -762,6 +1153,7 @@ export function SettingsPanel() {
     { id: 'material', label: w.tabs.material },
     { id: 'text', label: w.tabs.text },
     ...(dataLabel ? [{ id: 'data' as const, label: dataLabel }] : []),
+    { id: 'prvky', label: w.tabs.prvky },
   ];
   const active = tab === 'data' && !dataLabel ? 'vzhled' : tab;
 
@@ -780,6 +1172,7 @@ export function SettingsPanel() {
         {active === 'material' && <MaterialTab />}
         {active === 'text' && <TextTab />}
         {active === 'data' && <DataTab />}
+        {active === 'prvky' && <ItemsTab />}
         <ExportSection />
       </div>
     </div>

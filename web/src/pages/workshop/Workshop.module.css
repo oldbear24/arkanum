@@ -120,6 +120,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
+  background: var(--bg-stage);
 }
 
 .left,
@@ -181,29 +182,6 @@
   gap: 12px;
 }
 
-.addGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.addButton {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 66px;
-  padding: 0;
-  border-radius: 12px;
-  border: 1px dashed var(--line-strong);
-  background: transparent;
-  color: var(--text-off);
-  font-family: var(--font-ui);
-  font-weight: 500;
-  font-size: 12px;
-}
-
 .addNote {
   font-size: 13px;
   line-height: 1.4;
@@ -228,6 +206,21 @@
     radial-gradient(circle at 18% 22%, rgba(239, 230, 208, 0.4) 0, rgba(239, 230, 208, 0.4) 1px, rgba(239, 230, 208, 0) 1.6px),
     radial-gradient(circle at 63% 71%, rgba(214, 176, 103, 0.35) 0, rgba(214, 176, 103, 0.35) 1px, rgba(214, 176, 103, 0) 1.6px);
   background-size: 210px 190px, 290px 250px;
+}
+
+/*
+ * With all three columns in one row, the card stays in view while the panels scroll. A
+ * stage taller than the window only sticks once its bottom has come into view. In the
+ * narrower layouts the panels wrap below the stage, where it would slide over them.
+ */
+@media (min-width: 1161px) {
+  .stage {
+    position: sticky;
+    top: min(0px, calc(100vh - 900px));
+    align-self: flex-start;
+    height: max(calc(100vh - 65px), 900px);
+    min-height: 0;
+  }
 }
 
 .stage[data-dropping='true'] {
@@ -335,6 +328,28 @@
 
 .toolButton[aria-pressed='true'] {
   border-color: var(--gold);
+}
+
+.turns {
+  display: flex;
+  gap: 2px;
+}
+
+.turnButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.turnButton:hover {
+  background: var(--raised);
+  color: var(--text);
 }
 
 .lightLabel {

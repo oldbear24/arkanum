@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react';
+import type { CardTurn, ItemEditing } from '../../card/Card3D';
 import type { CardParams } from '../../card/resolve';
-import type { ArtPlacement, Art, CardAbility, CardContent, CardDoc, CardLook, CardMeaning, Family } from '../../card/spec';
+import type { ArtPlacement, Art, CardAbility, CardContent, CardDoc, CardItem, CardLook, CardMeaning, Family, ItemType } from '../../card/spec';
 import type { CardRecord } from '../../lib/pb';
 import type { SaveState } from './useAutosave';
 import type { PresenceUser } from './usePresence';
 
-export type TabId = 'vzhled' | 'material' | 'text' | 'data';
+export type TabId = 'vzhled' | 'material' | 'text' | 'data' | 'prvky';
 
 /** The main illustration, or the index of a parallax layer. */
 export type ArtTarget = 'main' | number;
@@ -34,6 +35,19 @@ export interface WorkshopApi {
   setAbility: (index: number, patch: Partial<CardAbility>, group?: string) => void;
   setPlacement: (target: ArtTarget, patch: Partial<ArtPlacement>) => void;
   requestTemplate: (family: Family) => void;
+  setFormat: (formatW: number, formatH: number) => void;
+
+  selectedItem: string | null;
+  /** Picks an item in a list, and turns the card to the side the item is on. */
+  showItem: (id: string) => void;
+  addItem: (type: ItemType) => void;
+  addImageItem: (file: File) => void;
+  setItem: (id: string, patch: Partial<CardItem>, group?: string) => void;
+  removeItem: (id: string) => void;
+  duplicateItem: (id: string) => void;
+  reorderItem: (id: string, delta: number) => void;
+  /** What the card on the stage needs for picking and moving items, while their tab is open. */
+  itemEditing: ItemEditing | undefined;
 
   tab: TabId;
   setTab: (tab: TabId) => void;
@@ -49,6 +63,8 @@ export interface WorkshopApi {
   zoomBy: (delta: number) => void;
   resetKey: number;
   straighten: () => void;
+  turnBy: CardTurn | undefined;
+  turnCard: (turn: CardTurn) => void;
 
   uploading: boolean;
   uploadError: string | null;
