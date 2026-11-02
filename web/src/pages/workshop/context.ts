@@ -57,6 +57,8 @@ export interface WorkshopApi {
   setFlip: (flip: boolean) => void;
   spin: boolean;
   toggleSpin: () => void;
+  unlocked: boolean;
+  toggleUnlocked: () => void;
   light: number;
   setLight: (light: number) => void;
   zoom: number;

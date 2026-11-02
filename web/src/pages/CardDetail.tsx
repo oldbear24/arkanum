@@ -7,6 +7,7 @@ import type { CardDoc } from '../card/spec';
 import { AddToDeckDialog } from '../components/AddToDeckDialog';
 import { Icon } from '../components/Icon';
 import { Dialog, ui } from '../components/ui';
+import { UnlockSwitch } from '../components/UnlockSwitch';
 import { cs } from '../i18n/cs';
 import { profilePath, signInPath, useUser } from '../lib/auth';
 import { recordToParams, remixCard } from '../lib/cards';
@@ -210,6 +211,7 @@ export function CardDetail() {
   const [failed, setFailed] = useState(false);
   const [flip, setFlip] = useState(false);
   const [spin, setSpin] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [likesCount, setLikesCount] = useState(0);
   const [remixing, setRemixing] = useState(false);
@@ -328,7 +330,7 @@ export function CardDetail() {
             <ellipse cx="200" cy="35" rx="192" ry="27" fill="none" stroke="#d6b067" strokeOpacity="0.35" strokeWidth="1" vectorEffect="non-scaling-stroke" />
             <ellipse cx="200" cy="35" rx="150" ry="18" fill="none" stroke="#d6b067" strokeOpacity="0.2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           </svg>
-          <Card3D {...params} flip={flip} spin={spin} resetKey={resetKey} interactive="drag" />
+          <Card3D {...params} flip={flip} spin={spin} unlocked={unlocked} resetKey={resetKey} interactive="drag" />
         </div>
         <div className={styles.toolbar}>
           <div className={ui.segmented + ' ' + ui.segmentedInset}>
@@ -353,8 +355,9 @@ export function CardDetail() {
           >
             <Icon name="straighten" />
           </button>
+          <UnlockSwitch on={unlocked} onToggle={() => setUnlocked((value) => !value)} className={ui.outline} />
         </div>
-        <p className={styles.hint}>{w.dragHint}</p>
+        <p className={styles.hint}>{unlocked ? w.unlockHint : w.dragHint}</p>
       </div>
 
       <div className={styles.info}>
