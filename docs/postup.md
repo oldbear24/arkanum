@@ -28,7 +28,7 @@
 ## Vydání
 
 Vydání spouští tag `v*`. Workflow `.github/workflows/release.yml` postaví Docker image pro `linux/amd64` a `linux/arm64`,
-publikuje ho do `ghcr.io/oldbear24/arkanum` (značky jako `0.2.0`, `0.2` a `latest`) a ověří, že běží. Na obou architekturách
+publikuje ho do `ghcr.io/oldbear24/arkanum` (značky jako `0.3.0`, `0.3` a `latest`) a ověří, že běží. Na obou architekturách
 kontroluje, že `--version` vypíše číslo z tagu. Na amd64 navíc kontroluje healthcheck, API a frontend přes `compose.yaml`,
 na arm64 běží pod emulací a kontroluje se jen tenhle výpis.
 
@@ -42,7 +42,7 @@ jen binárka pro Windows, ostatní se jen kompilují.
 Verze `v0.1.1` a starší vypisují `(untracked)` místo čísla. Build bez čísla, tedy `make build` nebo `docker build` bez
 `--build-arg VERSION`, vypíše `dev`.
 
-Aktualizaci dat jsem před každým vydáním od `v0.1.1` ověřil na binárce pro Windows, před `v0.2.0` ze všech tří starších verzí.
+Aktualizaci dat jsem před každým vydáním od `v0.1.1` ověřil na binárce pro Windows, před `v0.2.0` a `v0.3.0` ze všech starších verzí.
 Ukázková data založená starší verzí zůstala po spuštění nové verze beze změny, migrace proběhla a přihlášení heslem funguje.
 Návrat na starší verzi nad stejnými daty také funguje, verze do `v0.1.1` při něm ale smažou poskytovatele OAuth2 nastavené
 v administraci. Aktualizace Docker image se takhle nezkoušela, lokálně tu Docker není.
@@ -50,8 +50,9 @@ v administraci. Aktualizace Docker image se takhle nezkoušela, lokálně tu Doc
 Verze do `v0.1.2` neznají volby z `v0.2.0`. Kartu s novou paletou, fólií nebo ořízkou po návratu odmítnou uložit, když se posílá
 jen část dat, například při nahrání ilustrace. Plné uložení z jejich dílny projde, protože neznámé hodnoty nahradí výchozími.
 
-Stejně se k volbám z další verze zachovají verze do `v0.2.0`. Plyne to z toho, že validace zná jen své výčty a neznámé klíče
-pomíjí, starší binárkou jsem to ale zatím nezkoušel. Nové klíče po návratu z karty při plném uložení zmizí.
+Stejně se k volbám z `v0.3.0` chovají všechny starší verze, ověřeno binárkami 0.1.0 až 0.2.0. Kartu s novým rámem, paletou, fólií,
+povrchem, ořízkou nebo písmem odmítnou, když se posílá jen část dat, verze `v0.2.0` navíc i s novým druhem nebo písmem prvku. Uložení
+se známými hodnotami projde. Nové klíče po návratu z karty při plném uložení zmizí.
 
 ## Co není ověřené
 
