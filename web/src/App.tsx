@@ -20,6 +20,7 @@ const Profile = named(() => import('./pages/Profile'), 'Profile');
 const WorkshopEntry = named(() => import('./pages/WorkshopEntry'), 'WorkshopEntry');
 const Workshop = named(() => import('./pages/workshop/Workshop'), 'Workshop');
 const CardDetail = named(() => import('./pages/CardDetail'), 'CardDetail');
+const Deck = named(() => import('./pages/Deck'), 'Deck');
 const DevCards = named(() => import('./pages/DevCards'), 'DevCards');
 
 export function App() {
@@ -42,6 +43,7 @@ export function App() {
             <Route path="zmena-emailu/:token" element={<ConfirmEmailChange />} />
             <Route path="dilna" element={<WorkshopEntry />} />
             <Route path="karta/:id" element={<CardDetail />} />
+            <Route path="balicky/:id" element={<Deck />} />
             {/* React Router has no partial segments, so `/@handle` is checked in the page. */}
             <Route path=":atHandle" element={<Profile />} />
             <Route path="*" element={<NotFound />} />

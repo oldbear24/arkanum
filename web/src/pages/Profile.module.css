@@ -74,6 +74,20 @@
   gap: 24px;
 }
 
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.newDeck {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
 .sectionTitle {
   font-family: var(--font-display);
   font-weight: 600;

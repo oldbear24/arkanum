@@ -8,6 +8,7 @@ import { Dialog, Field, ui } from '../components/ui';
 import { cs } from '../i18n/cs';
 import { profilePath, useUser } from '../lib/auth';
 import { avatarUrl, displayName, recordToParams } from '../lib/cards';
+import { createDeck } from '../lib/decks';
 import { fieldErrors, type FieldErrors } from '../lib/errors';
 import { useLikes } from '../lib/likes';
 import { cards, decks, isNotFound, pb, users, type DeckRecord, type UserRecord } from '../lib/pb';
@@ -146,6 +147,7 @@ export function Profile() {
   const [missing, setMissing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deckList, setDeckList] = useState<DeckRecord[]>([]);
+  const [newDeck, setNewDeck] = useState('');
 
   useEffect(() => {
     if (!handle) return;
@@ -210,6 +212,12 @@ export function Profile() {
 
   const own = viewer?.id === profile.id;
 
+  const addDeck = async (e: FormEvent) => {
+    e.preventDefault();
+    const created = await createDeck(profile.id, newDeck.trim());
+    navigate(`/balicky/${created.id}`);
+  };
+
   return (
     <main className={styles.main}>
       <header className={styles.head}>
@@ -246,9 +254,19 @@ export function Profile() {
       </section>
 
       <section aria-labelledby="profil-balicky" className={styles.section}>
-        <h2 id="profil-balicky" className={styles.sectionTitle}>
-          {cs.profile.decks}
-        </h2>
+        <div className={styles.sectionHead}>
+          <h2 id="profil-balicky" className={styles.sectionTitle}>
+            {cs.profile.decks}
+          </h2>
+          {own && (
+            <form className={styles.newDeck} onSubmit={(e) => void addDeck(e)}>
+              <Field label={cs.deck.newDeckName} maxLength={60} value={newDeck} onChange={(e) => setNewDeck(e.target.value)} />
+              <button type="submit" className={ui.outline} disabled={!newDeck.trim()}>
+                {cs.deck.create}
+              </button>
+            </form>
+          )}
+        </div>
         {deckList.length > 0 ? (
           <div className={styles.decks}>
             {deckList.map((deck) => (

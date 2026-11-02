@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { LazyCard } from '../card/LazyCard';
+import type { CardParams } from '../card/resolve';
 import { cs } from '../i18n/cs';
 import { authorOf, recordToParams, thumbnailUrl } from '../lib/cards';
 import type { CardRecord } from '../lib/pb';
@@ -14,10 +15,13 @@ interface CardTileProps {
   onToggleLike?: (cardId: string) => void;
   /** Shows a badge on cards that are not public. */
   showVisibility?: boolean;
+  flip?: boolean;
+  /** Parameters that replace those of the card, a deck uses it for its shared back. */
+  overrides?: CardParams;
 }
 
-export const CardTile = memo(function CardTile({ record, liked = false, onToggleLike, showVisibility }: CardTileProps) {
-  const params = useMemo(() => recordToParams(record), [record]);
+export const CardTile = memo(function CardTile({ record, liked = false, onToggleLike, showVisibility, flip, overrides }: CardTileProps) {
+  const params = useMemo(() => ({ ...recordToParams(record), ...overrides }), [record, overrides]);
   const href = `/karta/${record.id}`;
   const title = record.title || cs.card.defaults.titleBlank;
   const author = authorOf(record);
@@ -26,7 +30,7 @@ export const CardTile = memo(function CardTile({ record, liked = false, onToggle
     <article className={styles.tile}>
       <div className={styles.cardBox}>
         <Link to={href} className={styles.cardLink} aria-label={cs.gallery.openCard + title}>
-          <LazyCard {...params} thumbnail={thumbnailUrl(record)} />
+          <LazyCard {...params} flip={flip} thumbnail={flip ? undefined : thumbnailUrl(record)} />
         </Link>
       </div>
       <div className={styles.meta}>

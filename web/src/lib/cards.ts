@@ -111,6 +111,32 @@ export function avatarUrl(user: UserRecord, thumb = '96x96'): string | undefined
   return user.avatar ? pb.files.getURL(user, user.avatar, { thumb }) : undefined;
 }
 
+/** Copies a card into the user's cards, artwork included. The copy starts as private. */
+export async function remixCard(source: CardRecord, owner: string): Promise<CardRecord> {
+  const data = new FormData();
+  data.set('owner', owner);
+  data.set('remixOf', source.id);
+  data.set('title', source.title);
+  data.set('family', source.family);
+  data.set('formatW', String(source.formatW));
+  data.set('formatH', String(source.formatH));
+  data.set('visibility', 'private');
+  if (source.template) data.set('template', source.template);
+  for (const field of ['look', 'content', 'meaning', 'artworkTransform'] as const) {
+    data.set(field, JSON.stringify(source[field] ?? null));
+  }
+
+  const copy = async (field: string, file: string) => {
+    const response = await fetch(pb.files.getURL(source, file));
+    if (!response.ok) throw new Error(`Cannot read ${file}`);
+    data.append(field, await response.blob(), file);
+  };
+  if (source.artwork) await copy('artwork', source.artwork);
+  for (const file of source.artworkLayers ?? []) await copy('artworkLayers', file);
+
+  return cards().create(data);
+}
+
 /** Loads the system template of a family. The local copy is only used for its fields. */
 export async function fetchTemplate(family: Family): Promise<TemplateRecord> {
   const slug = templateFor(family).slug;

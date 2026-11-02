@@ -9,7 +9,7 @@
 | 3. Karta | hotovo |
 | 4. Úvod, šablony, přihlášení, profil | hotovo |
 | 5. Dílna | hotovo |
-| 6. Detail karty, lajky, remix, balíčky | čeká |
+| 6. Detail karty, lajky, remix, balíčky | hotovo |
 | 7. Export | čeká |
 | 8. Později | mimo tuto iteraci |
 
@@ -129,6 +129,17 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
   přeskládat šipkami.
 - Soubory karet nejsou v PocketBase `protected`, protože by je host bez tokenu nenačetl. Názvy souborů mají
   náhodnou příponu, takže je nejde uhodnout.
+
+### Detail karty a balíčky (fáze 6)
+
+- `/karta/:id` a `/balicky/:id` návrh nemají, odvodil jsem je z dílny a galerie.
+- Remix kopíruje kartu na klientu včetně ilustrací. Kopie je vždy soukromá, náhled se vytvoří až při publikování.
+- Na detailu přibylo mazání karty pro vlastníka, protože jinde v aplikaci mazání není. Pravidlo API ho povoluje.
+- Spoluautor má na detailu „Upravit" také, „Export" podle zadání jen vlastník.
+- `decks.back` je `{ palette, edge }`. Paleta a ořízka platí pro všechny karty v balíčku, a to i pro bestie a hrdiny,
+  jejichž rub má jinak pevné barvy. Karty, které divák nesmí vidět, se v balíčku vynechají a stránka je spočítá.
+- Pořadí karet se mění tlačítky, aby to šlo i klávesnicí a na telefonu. Skryté karty si drží své místo.
+- Na vlastním profilu přibyl formulář „Nový balíček", aby balíček nešlo založit jen přes kartu.
 
 ### Lajky
 
