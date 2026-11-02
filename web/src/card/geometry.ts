@@ -1,4 +1,4 @@
-import type { Art, CardElement, Frame, Variant } from './spec';
+import type { Art, BackPattern, CardElement, Frame, Variant } from './spec';
 
 // SVG paths of the frames, illustrations and backs, ported from design/Karta.dc.html.
 // geometry.test.ts compares the output with the prototype path by path.
@@ -58,10 +58,10 @@ export interface CardGeometry {
 
 const f = (n: number) => Math.round(n * 10) / 10;
 
-const C = (cx: number, cy: number, r: number) =>
+export const C = (cx: number, cy: number, r: number) =>
   'M' + f(cx - r) + ' ' + f(cy) + 'a' + r + ' ' + r + ' 0 1 0 ' + f(2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + f(-2 * r) + ' 0Z';
 
-const S = (cx: number, cy: number, n: number, r1: number, r2: number, rot?: number) => {
+export const S = (cx: number, cy: number, n: number, r1: number, r2: number, rot?: number) => {
   let d = '';
   const a0 = ((rot === undefined ? -90 : rot) * Math.PI) / 180;
   for (let i = 0; i < n * 2; i++) {
@@ -72,7 +72,7 @@ const S = (cx: number, cy: number, n: number, r1: number, r2: number, rot?: numb
   return d + 'Z';
 };
 
-const R = (cx: number, cy: number, n: number, r1: number, r2: number, rot?: number, r3?: number) => {
+export const R = (cx: number, cy: number, n: number, r1: number, r2: number, rot?: number, r3?: number) => {
   let d = '';
   for (let i = 0; i < n; i++) {
     const a = (((rot || 0) + (i * 360) / n) * Math.PI) / 180;
@@ -107,7 +107,7 @@ const D = (x: number, y: number, s: number) =>
   'M' + x + ' ' + f(y - s * 1.5) + 'C' + f(x + s * 0.5) + ' ' + f(y - s * 0.5) + ' ' + f(x + s) + ' ' + f(y - s * 0.1) + ' ' + f(x + s) + ' ' + f(y + s * 0.3) +
   'A' + s + ' ' + s + ' 0 0 1 ' + f(x - s) + ' ' + f(y + s * 0.3) + 'C' + f(x - s) + ' ' + f(y - s * 0.1) + ' ' + f(x - s * 0.5) + ' ' + f(y - s * 0.5) + ' ' + x + ' ' + f(y - s * 1.5) + 'Z';
 
-const RR = (x: number, y: number, w: number, h: number, r: number) =>
+export const RR = (x: number, y: number, w: number, h: number, r: number) =>
   'M' + (x + r) + ' ' + y + 'H' + (x + w - r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + w) + ' ' + (y + r) + 'V' + (y + h - r) +
   'A' + r + ' ' + r + ' 0 0 1 ' + (x + w - r) + ' ' + (y + h) + 'H' + (x + r) + 'A' + r + ' ' + r + ' 0 0 1 ' + x + ' ' + (y + h - r) + 'V' + (y + r) +
   'A' + r + ' ' + r + ' 0 0 1 ' + (x + r) + ' ' + y + 'Z';
@@ -121,7 +121,7 @@ const HX = (cx: number, cy: number, r: number) => {
   return d + 'Z';
 };
 
-const DI = (cx: number, cy: number, r: number) => 'M' + cx + ' ' + (cy - r) + 'L' + (cx + r) + ' ' + cy + 'L' + cx + ' ' + (cy + r) + 'L' + (cx - r) + ' ' + cy + 'Z';
+export const DI = (cx: number, cy: number, r: number) => 'M' + cx + ' ' + (cy - r) + 'L' + (cx + r) + ' ' + cy + 'L' + cx + ' ' + (cy + r) + 'L' + (cx - r) + ' ' + cy + 'Z';
 
 const dots = (list: [number, number][], r?: number) => list.map((q) => C(q[0], q[1], r || 0.9)).join('');
 
@@ -239,9 +239,14 @@ const WINDOW_BOX: Record<'tarot' | 'bestie' | 'hrdina', WindowBox> = {
   hrdina: { x: 22, y: 70, w: 256, h: 180 },
 };
 
-export function buildGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, blankHeight = 514): CardGeometry {
-  if (variant === 'prazdna') return buildBlank(blankHeight, radius);
+export function buildGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, blankHeight = 514, backPattern: BackPattern = 'mandala'): CardGeometry {
+  const geometry = variant === 'prazdna' ? buildBlank(blankHeight, radius) : buildFixed(variant, frame, art, element, rarity, radius);
+  if (backPattern === 'mandala') return geometry;
+  const H = variant === 'prazdna' ? blankHeight : variant === 'bestie' || variant === 'hrdina' ? 419 : 514;
+  return { ...geometry, b: buildBack(backPattern, H, radius) };
+}
 
+function buildFixed(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number): CardGeometry {
   const tcg = variant === 'bestie' || variant === 'hrdina';
   const br = Math.max(3, radius - 6);
   const br2 = Math.max(2, radius - 10);
@@ -325,6 +330,68 @@ export function buildGeometry(variant: Variant, frame: Frame, art: Art, element:
   }
 
   return { g, a: withEmptyArt(a), b, box };
+}
+
+/**
+ * The other backs of a card, not part of the prototype. All of them read the same when
+ * turned upside down, so that the back of a tarot card gives nothing away.
+ */
+function buildBack(pattern: Exclude<BackPattern, 'mandala'>, H: number, radius: number): BackGeometry {
+  const br = Math.max(3, radius - 6);
+  const br2 = Math.max(2, radius - 10);
+  const m1 = f(Math.min(12, H * 0.06));
+  const m2 = f(m1 + Math.min(6, H * 0.03));
+  const border = RR(m1, m1, f(300 - 2 * m1), f(H - 2 * m1), br) + RR(m2, m2, f(300 - 2 * m2), f(H - 2 * m2), br2);
+  const cx = 150;
+  const cy = f(H / 2);
+  const reach = Math.min(100, H * 0.28);
+
+  if (pattern === 'prazdny') return { line: border, thin: '', fill: '', dark: '' };
+
+  if (pattern === 'slunce') {
+    return {
+      line: border + C(cx, cy, f(reach * 0.46)),
+      thin: R(cx, cy, 32, f(reach * 0.56), f(reach), 0, f(reach * 0.78)) + C(cx, cy, f(reach * 1.1)),
+      fill: S(cx, cy, 16, f(reach * 0.4), f(reach * 0.24)) + S(44, 44, 4, 8, 2.4) + S(256, 44, 4, 8, 2.4) + S(44, f(H - 44), 4, 8, 2.4) + S(256, f(H - 44), 4, 8, 2.4),
+      dark: C(cx, cy, f(reach * 0.12)),
+    };
+  }
+
+  const inset = m2 + 12;
+  const usable = H - 2 * inset;
+
+  if (pattern === 'kosoctverce') {
+    // A lattice clipped to the frame by construction, every line ends on its border.
+    const stepX = 39;
+    const stepY = Math.max(16, usable / Math.max(1, Math.round(usable / 58)));
+    let thin = '';
+    let fill = '';
+    for (let row = 0; inset + row * stepY <= H - inset + 0.01; row++) {
+      for (let col = 0; col <= 6; col++) {
+        const x = f(33 + col * stepX);
+        const y = f(inset + row * stepY);
+        if (row % 2 === col % 2) fill += DI(x, y, 3.4);
+        if (col < 6 && inset + (row + 1) * stepY <= H - inset + 0.01) {
+          const x2 = f(x + stepX);
+          const y2 = f(y + stepY);
+          thin += row % 2 === col % 2 ? 'M' + x + ' ' + y + 'L' + x2 + ' ' + y2 : 'M' + x + ' ' + y2 + 'L' + x2 + ' ' + y;
+        }
+      }
+    }
+    return { line: border, thin, fill, dark: '' };
+  }
+
+  // Stars in staggered rows, centred on the card.
+  const rows = Math.max(1, Math.floor(usable / 34));
+  const stepY = usable / rows;
+  let fill = '';
+  for (let row = 0; row <= rows; row++) {
+    const odd = row % 2 === 1;
+    for (let col = 0; col < (odd ? 5 : 6); col++) {
+      fill += S(f((odd ? 66 : 45) + col * 42), f(inset + row * stepY), odd ? 8 : 4, odd ? 6 : 7, odd ? 2.4 : 2);
+    }
+  }
+  return { line: border, thin: '', fill, dark: '' };
 }
 
 /** Geometry of the blank card, not part of the prototype. It adapts to any aspect ratio. */

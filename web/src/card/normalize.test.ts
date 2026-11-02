@@ -15,7 +15,7 @@ describe('normalizeCard', () => {
     expect(card.look.visible).toEqual({ art: true, frame: true, text: true, foil: true });
     expect(card.content.abilities).toHaveLength(2);
     expect(card.meaning.arcana).toBe('velka');
-    expect(card.artworkTransform).toEqual({ x: 0, y: 0, zoom: 1, layers: [] });
+    expect(card.artworkTransform).toEqual({ x: 0, y: 0, zoom: 1, rotate: 0, flipX: false, layers: [] });
   });
 
   it.each([null, undefined, 42, 'x', []])('survives %j as input', (input) => {
@@ -130,22 +130,82 @@ describe('normalizeCard', () => {
     expect(normalizeCard({ meaning: { keywords: 'x' } }).meaning.keywords).toEqual(['naděje', 'inspirace', 'klid']);
   });
 
-  it('keeps only object elements up to the limit', () => {
-    const elements = [{ type: 'text' }, 'x', null, [], ...Array.from({ length: 100 }, () => ({ type: 'tvar' }))];
+  it('keeps only elements of a known type up to the limit', () => {
+    const elements = [{ type: 'text' }, 'x', null, [], { type: 'video' }, ...Array.from({ length: 100 }, () => ({ type: 'shape' }))];
     const card = normalizeCard({ content: { elements } });
     expect(card.content.elements).toHaveLength(counts.elements);
-    expect(card.content.elements[0]).toEqual({ type: 'text' });
+    expect(card.content.elements[0]?.type).toBe('text');
+    expect(card.content.elements[1]?.type).toBe('shape');
+  });
+
+  it('fills an element in from the defaults of its type', () => {
+    const [text, symbol] = normalizeCard({ content: { elements: [{ type: 'text', id: 'a' }, { type: 'symbol', id: 'b' }] } }).content.elements;
+    expect(text).toMatchObject({ id: 'a', side: 'face', x: 50, y: 50, size: 8, opacity: 100, color: '', kind: '', font: 'cormorant' });
+    expect(text?.text).not.toBe('');
+    expect(symbol).toMatchObject({ id: 'b', size: 24, kind: 'hvezda', text: '' });
+  });
+
+  it('clamps the numbers of an element and refuses unknown values', () => {
+    const [item] = normalizeCard({
+      content: {
+        elements: [{ id: 'a', type: 'shape', x: 900, y: -900, size: 999, rotate: 720, opacity: 0, ratio: 9999, side: 'hrana', kind: 'logo', color: 'red', font: 'comic', align: 'justify', hidden: 'yes', filled: 'no' }],
+      },
+    }).content.elements;
+    expect(item).toMatchObject({ x: ranges.itemPosition[1], y: ranges.itemPosition[0], size: ranges.itemSize[1], rotate: 180, opacity: ranges.itemOpacity[0], ratio: ranges.itemRatio[1] });
+    expect(item).toMatchObject({ side: 'face', kind: 'kruh', color: '', font: 'cormorant', align: 'center', hidden: false, filled: true });
+  });
+
+  it('shortens the texts of an element', () => {
+    const [item] = normalizeCard({ content: { elements: [{ type: 'stat', text: 'x'.repeat(999), value: 'y'.repeat(99), file: 'z'.repeat(999), id: 'i'.repeat(99) }] } }).content.elements;
+    expect(item?.text).toHaveLength(textLimits.itemText);
+    expect(item?.value).toHaveLength(textLimits.itemValue);
+    expect(item?.file).toHaveLength(textLimits.itemFile);
+    expect(item?.id).toHaveLength(textLimits.itemId);
+  });
+
+  it('gives every element an id of its own', () => {
+    const ids = normalizeCard({ content: { elements: [{ type: 'text' }, { type: 'text', id: 'a' }, { type: 'text', id: 'a' }] } }).content.elements.map((item) => item.id);
+    expect(new Set(ids).size).toBe(3);
+    expect(ids[1]).toBe('a');
+  });
+
+  it('keeps a valid colour of an element', () => {
+    expect(normalizeCard({ content: { elements: [{ type: 'text', color: '#D6B067' }] } }).content.elements[0]?.color).toBe('#D6B067');
+  });
+
+  it('accepts only plain colours as custom colours', () => {
+    const { colors } = normalizeCard({ look: { colors: { base: '#112233', sky: 'url(#x)', metal: '#12345', text: 12 } } }).look;
+    expect(colors).toEqual({ base: '#112233', sky: '', metal: '', text: '' });
+  });
+
+  it('clamps the new look options', () => {
+    const { look } = normalizeCard({ look: { titleScale: 999, fullArt: true, titleCaps: false, artFilter: { brightness: 0, contrast: 999, saturate: -1, hue: 999 } } });
+    expect(look).toMatchObject({ titleScale: 150, fullArt: true, titleCaps: false, artFilter: { brightness: 50, contrast: 150, saturate: 0, hue: 180 } });
+  });
+
+  it('keeps the back palette empty or known', () => {
+    expect(normalizeCard({ look: { backPalette: '' } }).look.backPalette).toBe('');
+    expect(normalizeCard({ look: { backPalette: 'krev' } }).look.backPalette).toBe('krev');
+    expect(normalizeCard({ look: { backPalette: 'modra' } }).look.backPalette).toBe('');
+    expect(normalizeCard({ look: { backPattern: 'kostky' } }).look.backPattern).toBe('mandala');
+  });
+
+  it('shortens the artist', () => {
+    expect(normalizeCard({ content: { artist: 'a'.repeat(999) } }).content.artist).toHaveLength(textLimits.artist);
   });
 
   it('clamps the artwork transform', () => {
     const card = normalizeCard({
-      artworkTransform: { x: 500, y: -500, zoom: 99, layers: [{ x: 10, y: 20, zoom: 2 }, { zoom: 0 }, 'x', {}] },
+      artworkTransform: { x: 500, y: -500, zoom: 99, rotate: 999, flipX: 'ano', layers: [{ x: 10, y: 20, zoom: 2, rotate: -90, flipX: true }, { zoom: 0 }, 'x', {}] },
     });
+    const none = { rotate: 0, flipX: false };
     expect(card.artworkTransform).toEqual({
       x: 100,
       y: -100,
       zoom: 4,
-      layers: [{ x: 10, y: 20, zoom: 2 }, { x: 0, y: 0, zoom: 1 }, { x: 0, y: 0, zoom: 1 }],
+      rotate: 180,
+      flipX: false,
+      layers: [{ x: 10, y: 20, zoom: 2, rotate: -90, flipX: true }, { x: 0, y: 0, zoom: 1, ...none }, { x: 0, y: 0, zoom: 1, ...none }],
     });
   });
 

@@ -224,7 +224,8 @@ export function Deck() {
   const owner = deck.expand?.owner;
   const back = normalizeDeckBack(deck.back);
   const hidden = deck.cards.length - cardsInOrder.length;
-  const overrides: CardParams = { backPalette: back.palette, edge: back.edge };
+  // The back of a deck is one for all of its cards, so their own backs give way to it.
+  const overrides: CardParams = { backPalette: back.palette, edge: back.edge, backPattern: 'mandala' };
 
   const changeBack = (patch: { palette?: Palette; edge?: Edge }) => {
     const next = { ...back, ...patch };

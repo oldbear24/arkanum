@@ -210,6 +210,7 @@ export function CardDetail() {
   const [failed, setFailed] = useState(false);
   const [flip, setFlip] = useState(false);
   const [spin, setSpin] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   const [likesCount, setLikesCount] = useState(0);
   const [remixing, setRemixing] = useState(false);
   const [remixFailed, setRemixFailed] = useState(false);
@@ -327,7 +328,7 @@ export function CardDetail() {
             <ellipse cx="200" cy="35" rx="192" ry="27" fill="none" stroke="#d6b067" strokeOpacity="0.35" strokeWidth="1" vectorEffect="non-scaling-stroke" />
             <ellipse cx="200" cy="35" rx="150" ry="18" fill="none" stroke="#d6b067" strokeOpacity="0.2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           </svg>
-          <Card3D {...params} flip={flip} spin={spin} interactive="drag" />
+          <Card3D {...params} flip={flip} spin={spin} resetKey={resetKey} interactive="drag" />
         </div>
         <div className={styles.toolbar}>
           <div className={ui.segmented + ' ' + ui.segmentedInset}>
@@ -340,6 +341,17 @@ export function CardDetail() {
           </div>
           <button type="button" className={ui.iconButton} aria-pressed={spin} aria-label={w.spinLabel} onClick={() => setSpin((value) => !value)}>
             <Icon name="rotate" />
+          </button>
+          <button
+            type="button"
+            className={ui.iconButton}
+            aria-label={w.straightenLabel}
+            onClick={() => {
+              setResetKey((key) => key + 1);
+              setSpin(false);
+            }}
+          >
+            <Icon name="straighten" />
           </button>
         </div>
         <p className={styles.hint}>{w.dragHint}</p>

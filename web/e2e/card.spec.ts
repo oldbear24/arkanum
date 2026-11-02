@@ -37,16 +37,36 @@ test('dragging rotates all the way round and keeps the angle', async ({ page }) 
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x + 100, y, { steps: 5 });
-  await expect.poll(() => variable(card, '--ry')).toBe('55.00deg');
+  await expect.poll(() => variable(card, '--orient')).toBe('rotate3d(0.0000, 1.0000, 0.0000, 55.00deg)');
 
   // The pointer capture keeps it going outside of the card.
   await page.mouse.move(x + 400, y, { steps: 5 });
-  await expect.poll(() => variable(card, '--ry')).toBe('220.00deg');
+  await expect.poll(() => variable(card, '--orient')).toBe('rotate3d(0.0000, -1.0000, 0.0000, 140.00deg)');
   await page.mouse.up();
 
   await page.mouse.move(x, y + 10);
   await page.waitForTimeout(100);
-  expect(await variable(card, '--ry')).toBe('220.00deg');
+  expect(await variable(card, '--orient')).toBe('rotate3d(0.0000, -1.0000, 0.0000, 140.00deg)');
+});
+
+test('dragging has no limit up and down and follows the pointer on a card upside down', async ({ page }) => {
+  const box = await open(page, 'interactive=drag');
+  const card = scene(page);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  // Far over the old limit of 65°.
+  await page.mouse.move(x, y - 300, { steps: 8 });
+  await expect.poll(() => variable(card, '--orient')).toBe('rotate3d(1.0000, 0.0000, 0.0000, 165.00deg)');
+
+  // The card is upside down, and the side facing the viewer still goes where the pointer goes.
+  await page.mouse.move(x + 60, y - 300, { steps: 4 });
+  await expect.poll(() => variable(card, '--orient')).not.toBe('rotate3d(1.0000, 0.0000, 0.0000, 165.00deg)');
+  const facing = await card.locator('> div').nth(1).evaluate((element) => -new DOMMatrixReadOnly(getComputedStyle(element).transform).m31);
+  await page.mouse.up();
+  expect(facing).toBeGreaterThan(0.3);
 });
 
 test('the card really is 3D: the front faces away when rotated', async ({ page }) => {

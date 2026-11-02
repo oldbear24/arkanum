@@ -5,14 +5,19 @@ import {
   ranges,
   templateFor,
   textLimits,
+  type ArtFilter,
   type ArtPlacement,
   type ArtworkTransform,
   type CardAbility,
   type CardContent,
   type CardDoc,
+  type CardItem,
   type CardLook,
   type CardMeaning,
+  type CustomColors,
   type Family,
+  type ItemType,
+  type Palette,
 } from './spec';
 
 type Raw = Record<string, unknown>;
@@ -47,6 +52,26 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+/** Anything but a plain colour would end up in the styles of the card, so it has to go. */
+function color(value: unknown): string {
+  return typeof value === 'string' && HEX_COLOR.test(value) ? value : '';
+}
+
+function normalizeColors(raw: Raw): CustomColors {
+  return { base: color(raw.base), sky: color(raw.sky), metal: color(raw.metal), text: color(raw.text) };
+}
+
+function normalizeFilter(raw: Raw, d: ArtFilter): ArtFilter {
+  return {
+    brightness: clampNumber(raw.brightness, ranges.artBrightness, d.brightness),
+    contrast: clampNumber(raw.contrast, ranges.artContrast, d.contrast),
+    saturate: clampNumber(raw.saturate, ranges.artSaturate, d.saturate),
+    hue: clampNumber(raw.hue, ranges.artHue, d.hue),
+  };
+}
+
 function normalizeLook(raw: Raw, family: Family): CardLook {
   const d = templateFor(family).defaults.look;
   const visible = asObject(raw.visible);
@@ -65,6 +90,13 @@ function normalizeLook(raw: Raw, family: Family): CardLook {
     radius: clampNumber(raw.radius, ranges.radius, d.radius),
     depth: clampNumber(raw.depth, ranges.depth, d.depth),
     font: pick(raw.font, enums.font, d.font),
+    titleScale: clampNumber(raw.titleScale, ranges.titleScale, d.titleScale),
+    titleCaps: bool(raw.titleCaps, d.titleCaps),
+    fullArt: bool(raw.fullArt, d.fullArt),
+    artFilter: normalizeFilter(asObject(raw.artFilter), d.artFilter),
+    colors: normalizeColors(asObject(raw.colors)),
+    backPalette: pick<Palette | ''>(raw.backPalette, enums.palette, d.backPalette),
+    backPattern: pick(raw.backPattern, enums.backPattern, d.backPattern),
     visible: {
       art: bool(visible.art, d.visible.art),
       frame: bool(visible.frame, d.visible.frame),
@@ -86,6 +118,74 @@ function normalizeAbilities(raw: unknown, defaults: CardAbility[]): CardAbility[
   });
 }
 
+const ITEM_KINDS: Partial<Record<ItemType, readonly string[]>> = {
+  symbol: enums.itemSymbol,
+  ornament: enums.itemOrnament,
+  shape: enums.itemShape,
+  stat: enums.itemShape,
+};
+
+/** What a new item of a type starts from. Also fills in whatever a stored one misses. */
+export function itemDefaults(type: ItemType): Omit<CardItem, 'id' | 'type'> {
+  const common = { side: 'face', x: 50, y: 50, rotate: 0, opacity: 100, color: '', hidden: false, text: '', value: '', font: 'cormorant', align: 'center', kind: '', filled: true, ratio: 100, file: '' } as const;
+  switch (type) {
+    case 'text':
+      return { ...common, size: 8, text: cs.workshop.items.defaultText };
+    case 'image':
+      return { ...common, size: 50 };
+    case 'symbol':
+      return { ...common, size: 24, kind: 'hvezda' };
+    case 'ornament':
+      return { ...common, size: 60, kind: 'linka' };
+    case 'stat':
+      return { ...common, size: 24, kind: 'stit', text: cs.workshop.items.defaultStatLabel, value: '5' };
+    case 'shape':
+      return { ...common, size: 40, kind: 'kruh' };
+  }
+}
+
+function normalizeItem(raw: Raw, index: number, taken: Set<string>): CardItem | null {
+  if (!enums.itemType.includes(raw.type as ItemType)) return null;
+  const type = raw.type as ItemType;
+  const d = itemDefaults(type);
+  const kinds = ITEM_KINDS[type];
+
+  // The list refers to items by their id, so it has to be there and be unique.
+  let id = text(raw.id, textLimits.itemId, '');
+  if (!id || taken.has(id)) id = `i${index}`;
+  taken.add(id);
+
+  return {
+    id,
+    type,
+    side: pick(raw.side, enums.itemSide, d.side),
+    x: clampNumber(raw.x, ranges.itemPosition, d.x),
+    y: clampNumber(raw.y, ranges.itemPosition, d.y),
+    size: clampNumber(raw.size, ranges.itemSize, d.size),
+    rotate: clampNumber(raw.rotate, ranges.itemRotate, d.rotate),
+    opacity: clampNumber(raw.opacity, ranges.itemOpacity, d.opacity),
+    color: color(raw.color),
+    hidden: bool(raw.hidden, d.hidden),
+    text: text(raw.text, textLimits.itemText, d.text),
+    value: text(raw.value, textLimits.itemValue, d.value),
+    font: pick(raw.font, enums.itemFont, d.font),
+    align: pick(raw.align, enums.itemAlign, d.align),
+    kind: kinds ? pick(raw.kind, kinds, d.kind) : '',
+    filled: bool(raw.filled, d.filled),
+    ratio: clampNumber(raw.ratio, ranges.itemRatio, d.ratio),
+    file: text(raw.file, textLimits.itemFile, d.file),
+  };
+}
+
+function normalizeItems(raw: unknown): CardItem[] {
+  const taken = new Set<string>();
+  return (Array.isArray(raw) ? raw : [])
+    .filter((item): item is Raw => typeof item === 'object' && item !== null && !Array.isArray(item))
+    .map((item, i) => normalizeItem(item, i, taken))
+    .filter((item) => item !== null)
+    .slice(0, counts.elements);
+}
+
 function normalizeContent(raw: Raw, family: Family, look: CardLook): CardContent {
   const d = templateFor(family).defaults.content;
   const fallbackNumeral = family === 'tarot' ? cs.card.arts[look.art].numeral : d.numeral;
@@ -101,10 +201,9 @@ function normalizeContent(raw: Raw, family: Family, look: CardLook): CardContent
     s3: clampNumber(raw.s3, ranges.s3, d.s3),
     rarity: Math.round(clampNumber(raw.rarity, ranges.rarity, d.rarity)),
     setNo: text(raw.setNo, textLimits.setNo, d.setNo),
+    artist: text(raw.artist, textLimits.artist, d.artist),
     abilities: normalizeAbilities(raw.abilities, d.abilities),
-    elements: (Array.isArray(raw.elements) ? raw.elements : [])
-      .filter((item): item is Raw => typeof item === 'object' && item !== null && !Array.isArray(item))
-      .slice(0, counts.elements),
+    elements: normalizeItems(raw.elements),
   };
 }
 
@@ -129,13 +228,15 @@ function normalizeMeaning(raw: Raw, family: Family): CardMeaning {
   };
 }
 
-const NO_PLACEMENT: ArtPlacement = { x: 0, y: 0, zoom: 1 };
+const NO_PLACEMENT: ArtPlacement = { x: 0, y: 0, zoom: 1, rotate: 0, flipX: false };
 
 function normalizePlacement(raw: Raw): ArtPlacement {
   return {
     x: clampNumber(raw.x, ranges.artOffset, NO_PLACEMENT.x),
     y: clampNumber(raw.y, ranges.artOffset, NO_PLACEMENT.y),
     zoom: clampNumber(raw.zoom, ranges.artZoom, NO_PLACEMENT.zoom),
+    rotate: clampNumber(raw.rotate, ranges.artRotate, NO_PLACEMENT.rotate),
+    flipX: bool(raw.flipX, NO_PLACEMENT.flipX),
   };
 }
 

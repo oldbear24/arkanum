@@ -1,4 +1,5 @@
-import type { Art, CardElement, CardFont, Edge, Family, Foil, Frame, LayerVisibility, Palette, Surface, Arcana } from '../../card/spec';
+import { enums } from '../../card/spec';
+import type { Art, BackPattern, CardElement, CardFont, CardItem, Edge, Family, Foil, Frame, ItemAlign, ItemFont, ItemOrnament, ItemShape, ItemSymbol, ItemType, LayerVisibility, Palette, Surface, Arcana } from '../../card/spec';
 import { WIN } from '../../card/geometry';
 import { PAL } from '../../card/resolve';
 import type { IconName } from '../../components/Icon';
@@ -6,6 +7,8 @@ import { cs } from '../../i18n/cs';
 import type { TabId } from './context';
 
 const w = cs.workshop;
+
+export const BACK_PATTERNS: { id: BackPattern; label: string }[] = enums.backPattern.map((id) => ({ id, label: w.backPatterns[id] }));
 
 export const VARIANT_OPTIONS: { id: Family; label: string; icon: string }[] = [
   { id: 'tarot', label: cs.family.tarot, icon: 'M7 3H17V21H7ZM12 8L13 11L16 12L13 13L12 16L11 13L8 12L11 11Z' },
@@ -83,14 +86,58 @@ export const LAYER_ICONS: Record<LayerGroup, IconName> = {
   base: 'layers',
 };
 
-export const ADD_ELEMENTS: { label: string; icon: IconName }[] = [
-  { label: w.addElements.text, icon: 'text' },
-  { label: w.addElements.image, icon: 'image' },
-  { label: w.addElements.symbol, icon: 'symbol' },
-  { label: w.addElements.ornament, icon: 'ornament' },
-  { label: w.addElements.stat, icon: 'stats' },
-  { label: w.addElements.shape, icon: 'shape' },
+export const ADD_ELEMENTS: { type: ItemType; label: string; icon: IconName }[] = [
+  { type: 'text', label: w.addElements.text, icon: 'text' },
+  { type: 'image', label: w.addElements.image, icon: 'image' },
+  { type: 'symbol', label: w.addElements.symbol, icon: 'symbol' },
+  { type: 'ornament', label: w.addElements.ornament, icon: 'ornament' },
+  { type: 'stat', label: w.addElements.stat, icon: 'stats' },
+  { type: 'shape', label: w.addElements.shape, icon: 'shape' },
 ];
+
+export const ITEM_ICONS: Record<ItemType, IconName> = {
+  text: 'text',
+  image: 'image',
+  symbol: 'symbol',
+  ornament: 'ornament',
+  stat: 'stats',
+  shape: 'shape',
+};
+
+const i = w.items;
+
+export const ITEM_SYMBOLS = enums.itemSymbol.map((id) => ({ id, label: i.symbols[id] }));
+export const ITEM_ORNAMENTS = enums.itemOrnament.map((id) => ({ id, label: i.ornaments[id] }));
+export const ITEM_SHAPES = enums.itemShape.map((id) => ({ id, label: i.shapes[id] }));
+
+export const ITEM_FONTS: { id: ItemFont; label: string; family: string; weight: number; italic?: boolean }[] = [
+  { id: 'cinzel', label: i.fonts.cinzel, family: "'Cinzel', Georgia, serif", weight: 600 },
+  { id: 'cormorant', label: i.fonts.cormorant, family: "'Cormorant Garamond', Georgia, serif", weight: 600 },
+  { id: 'kurziva', label: i.fonts.kurziva, family: "'Cormorant Garamond', Georgia, serif", weight: 600, italic: true },
+  { id: 'aboreto', label: i.fonts.aboreto, family: "'Aboreto', Georgia, serif", weight: 400 },
+  { id: 'gotika', label: i.fonts.gotika, family: "'Grenze Gotisch', Georgia, serif", weight: 600 },
+  { id: 'jost', label: i.fonts.jost, family: "'Jost', system-ui, sans-serif", weight: 500 },
+];
+
+export const ITEM_ALIGNS: { id: ItemAlign; label: string }[] = enums.itemAlign.map((id) => ({ id, label: i.aligns[id] }));
+
+/** How the lists call an item. A text goes by its own first words. */
+export function itemName(item: CardItem): string {
+  switch (item.type) {
+    case 'text':
+      return item.text.trim().split('\n')[0] || i.names.text;
+    case 'stat':
+      return [item.text, item.value].filter(Boolean).join(' ') || i.names.stat;
+    case 'symbol':
+      return i.symbols[item.kind as ItemSymbol] ?? i.names.symbol;
+    case 'ornament':
+      return i.ornaments[item.kind as ItemOrnament] ?? i.names.ornament;
+    case 'shape':
+      return i.shapes[item.kind as ItemShape] ?? i.names.shape;
+    case 'image':
+      return i.names.image;
+  }
+}
 
 export const ARTS: { id: Art; label: string; numeral: string }[] = (['hvezda', 'mesic', 'slunce', 'mag'] as const).map((id) => ({
   id,
@@ -110,6 +157,10 @@ export const PALETTES: { id: Palette; label: string; base: string; gold: string 
   { id: 'krev', label: w.palettes.krev, base: PAL.krev.base, gold: '#dca55a' },
   { id: 'smaragd', label: w.palettes.smaragd, base: PAL.smaragd.base, gold: '#d3b56f' },
   { id: 'pergamen', label: w.palettes.pergamen, base: PAL.pergamen.base, gold: '#4b3520' },
+  { id: 'ametyst', label: w.palettes.ametyst, base: PAL.ametyst.base, gold: PAL.ametyst.g1 },
+  { id: 'safir', label: w.palettes.safir, base: PAL.safir.base, gold: PAL.safir.g1 },
+  { id: 'obsidian', label: w.palettes.obsidian, base: PAL.obsidian.base, gold: PAL.obsidian.g1 },
+  { id: 'jantar', label: w.palettes.jantar, base: PAL.jantar.base, gold: PAL.jantar.g1 },
 ];
 
 export const ELEMENTS: { id: CardElement; label: string; color: string }[] = [
@@ -131,6 +182,9 @@ export const FOILS: { id: Foil; label: string; short: string; swatch: string }[]
     swatch:
       'radial-gradient(circle at 30% 35%, #ffffff 0, #ffffff 1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 70% 60%, #ffe2aa 0, #ffe2aa 1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 45% 80%, #b4d6ff 0, #b4d6ff 1px, rgba(255,255,255,0) 2px), linear-gradient(135deg, #1b1740, #3a2a6a)',
   },
+  { id: 'stribrna', label: w.foils.stribrna, short: w.foils.stribrna, swatch: 'linear-gradient(135deg, #5d6470 0%, #f7f9fc 48%, #6f7682 100%)' },
+  { id: 'hranol', label: w.foils.hranol, short: w.foils.hranol, swatch: 'repeating-linear-gradient(115deg, #ff5caa 0, #ffd666 5px, #68ffc4 10px, #5cb2ff 15px, #c478ff 20px, #ff5caa 25px)' },
+  { id: 'perlet', label: w.foils.perlet, short: w.foils.perlet, swatch: 'linear-gradient(135deg, #f4dfe8 0%, #e2f0ff 50%, #e8ffef 100%)' },
 ];
 
 export const SURFACES: { id: Surface; label: string }[] = [
@@ -144,6 +198,8 @@ export const EDGES: { id: Edge; label: string; short: string; swatch?: string }[
   { id: 'cerna', label: w.edges.cerna, short: w.edges.cerna, swatch: '#141416' },
   { id: 'bila', label: w.edges.bila, short: w.edges.bila, swatch: '#ece6d8' },
   { id: 'ram', label: w.edges.ram, short: w.edges.ramShort },
+  { id: 'stribrna', label: w.edges.stribrna, short: w.edges.stribrna, swatch: 'linear-gradient(90deg, #7f858f, #e4e7ec, #7f858f)' },
+  { id: 'medena', label: w.edges.medena, short: w.edges.medena, swatch: 'linear-gradient(90deg, #84492a, #e3a26f, #84492a)' },
 ];
 
 export const FONTS: { id: CardFont; label: string; family: string; weight: number }[] = [

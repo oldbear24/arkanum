@@ -29,6 +29,51 @@ test('exports a PNG in double resolution', async ({ page }) => {
   expect(size.height).toBe(Math.round((1200 * 514) / 300));
 });
 
+test('the export carries the added items', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  // A red shape in a colour of its own, and an image that has to travel inside of the export.
+  await page.getByRole('complementary', { name: 'Šablona a vrstvy' }).getByRole('button', { name: 'Tvar', exact: true }).click();
+  await page.getByLabel('Barva', { exact: true }).fill('#ff0000');
+  await page.getByLabel('Vodorovně').fill('50');
+  await page.getByLabel('Svisle').fill('50');
+  await page.getByRole('complementary', { name: 'Šablona a vrstvy' }).locator('input[type="file"]').setInputFiles({
+    name: 'erb.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'),
+  });
+  await expect(page.locator('[data-item] image')).toHaveCount(1);
+  await page.getByLabel('Vodorovně').fill('90');
+  await page.getByLabel('Svisle').fill('10');
+  await page.getByLabel('Velikost').fill('5');
+  await waitSaved(page);
+
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: /^PNG/ }).click();
+  const bytes = await bytesOf(await pending);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+
+  const { width, height } = pngSize(bytes);
+  const pixel = await page.evaluate(
+    async ([data, x, y]) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${data}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      context?.drawImage(image, 0, 0);
+      return Array.from(context?.getImageData(Number(x), Number(y), 1, 1).data ?? []);
+    },
+    [bytes.toString('base64'), width / 2, Math.round(height / 2)] as const,
+  );
+  expect(pixel[0]).toBeGreaterThan(200);
+  expect(pixel[1]).toBeLessThan(90);
+  expect(pixel[2]).toBeLessThan(90);
+});
+
 test('exports a print PDF with real size, bleed and two pages', async ({ page }) => {
   await signIn(page, 'demo');
   await createCard(page, 'Bestie');

@@ -1,12 +1,12 @@
 import { useState, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Card3D } from '../../card/Card3D';
-import { Icon } from '../../components/Icon';
+import { Card3D, type CardTurn } from '../../card/Card3D';
+import { Icon, type IconName } from '../../components/Icon';
 import { ui } from '../../components/ui';
 import { cs } from '../../i18n/cs';
 import { useWorkshop } from './context';
-import { ADD_ELEMENTS, LAYERS } from './constants';
-import { LayerList, SettingsPanel, TemplatePicker } from './panels';
+import { LAYERS } from './constants';
+import { AddItems, LayerList, SettingsPanel, TemplatePicker } from './panels';
 import { CardControls, kindLine, SaveBadge } from './shared';
 import styles from './Workshop.module.css';
 
@@ -85,21 +85,14 @@ function LeftPanel() {
       <section className={styles.layersSection}>
         <div className={styles.layersHead}>
           <h2 className={styles.panelHeading}>{w.layersTitle}</h2>
-          <span className={styles.layerCount}>{w.layerCount(LAYERS[doc.family].length)}</span>
+          <span className={styles.layerCount}>{w.layerCount(LAYERS[doc.family].length + doc.content.elements.length)}</span>
         </div>
         <LayerList />
       </section>
       <section className={styles.addSection}>
         <h2 className={styles.panelHeading}>{w.addElement}</h2>
-        <div className={styles.addGrid}>
-          {ADD_ELEMENTS.map((element) => (
-            <button key={element.label} type="button" className={styles.addButton} disabled title={w.addElementSoon}>
-              <Icon name={element.icon} strokeWidth={1.6} />
-              <span>{element.label}</span>
-            </button>
-          ))}
-        </div>
-        <p className={styles.addNote}>{w.addElementSoon}</p>
+        <AddItems />
+        <p className={styles.addNote}>{w.addElementHint}</p>
       </section>
     </aside>
   );
@@ -111,7 +104,7 @@ function formatLine(formatW: number, formatH: number, family: string) {
 }
 
 function Stage() {
-  const { doc, params, flip, spin, light, setLight, zoom, zoomBy, resetKey, uploadArtwork } = useWorkshop();
+  const { doc, params, flip, spin, light, setLight, zoom, zoomBy, resetKey, turnBy, itemEditing, uploadArtwork } = useWorkshop();
   const [dropping, setDropping] = useState(false);
 
   const onDragOver = (e: DragEvent) => {
@@ -150,13 +143,14 @@ function Stage() {
           <ellipse cx="200" cy="35" rx="192" ry="27" fill="none" stroke="#d6b067" strokeOpacity="0.35" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           <ellipse cx="200" cy="35" rx="150" ry="18" fill="none" stroke="#d6b067" strokeOpacity="0.2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         </svg>
-        <Card3D {...params} light={light} flip={flip} spin={spin} resetKey={resetKey} interactive="drag" />
+        <Card3D {...params} light={light} flip={flip} spin={spin} resetKey={resetKey} turnBy={turnBy} editing={itemEditing} interactive="drag" />
       </div>
 
       <div className={styles.toolbar}>
         <CardControls className={styles.sideSwitch} />
         <SpinButton />
         <StraightenButton />
+        <TurnButtons />
         <label className={styles.lightLabel}>
           <Icon name="sun" size={18} />
           {w.light}
@@ -175,6 +169,31 @@ function SpinButton() {
       <Icon name="rotate" size={18} />
       {w.spin}
     </button>
+  );
+}
+
+/** The pose in steps, for a keyboard or for setting an exact angle. */
+const TURN_STEP = 30;
+
+const TURNS: { label: string; icon: IconName; turn: CardTurn }[] = [
+  { label: w.turnLeft, icon: 'chevronLeft', turn: { y: -TURN_STEP } },
+  { label: w.turnRight, icon: 'chevronRight', turn: { y: TURN_STEP } },
+  { label: w.turnUp, icon: 'chevronUp', turn: { x: TURN_STEP } },
+  { label: w.turnDown, icon: 'chevronDown', turn: { x: -TURN_STEP } },
+  { label: w.rollLeft, icon: 'rotateLeft', turn: { z: -TURN_STEP } },
+  { label: w.rollRight, icon: 'rotate', turn: { z: TURN_STEP } },
+];
+
+function TurnButtons() {
+  const { turnCard } = useWorkshop();
+  return (
+    <div role="group" aria-label={w.turnGroup} className={styles.turns}>
+      {TURNS.map(({ label, icon, turn }) => (
+        <button key={label} type="button" className={styles.turnButton} aria-label={label} title={label} onClick={() => turnCard({ ...turn })}>
+          <Icon name={icon} size={18} strokeWidth={2} />
+        </button>
+      ))}
+    </div>
   );
 }
 

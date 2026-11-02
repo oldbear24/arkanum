@@ -1,5 +1,6 @@
 import { memo, type CSSProperties } from 'react';
 import { cs } from '../i18n/cs';
+import { CardItems } from './CardItems';
 import { restingMotion } from './motion';
 import type { ArtLayer, CardParams, ResolvedCard } from './resolve';
 import { goldPaint, useCardIds, useResolvedCard, type CardIds } from './useResolvedCard';
@@ -29,6 +30,12 @@ const HOLO_IMAGE =
 const SPARK_IMAGE =
   'radial-gradient(circle, rgba(255,255,255,0.95) 0, rgba(255,255,255,0.95) 0.05em, rgba(255,255,255,0) 0.09em), radial-gradient(circle, rgba(255,226,170,0.9) 0, rgba(255,226,170,0.9) 0.04em, rgba(255,226,170,0) 0.08em), radial-gradient(circle, rgba(180,214,255,0.9) 0, rgba(180,214,255,0.9) 0.045em, rgba(180,214,255,0) 0.085em)';
 
+const PRISM_IMAGE =
+  'repeating-linear-gradient(115deg, rgba(255,92,170,0.7) 0, rgba(255,214,102,0.7) 1.4em, rgba(104,255,196,0.7) 2.8em, rgba(92,178,255,0.7) 4.2em, rgba(196,120,255,0.7) 5.6em, rgba(255,92,170,0.7) 7em)';
+
+const PEARL_IMAGE =
+  'linear-gradient(115deg, rgba(255,255,255,0) 8%, rgba(255,226,240,0.9) 30%, rgba(226,240,255,0.9) 50%, rgba(232,255,240,0.9) 70%, rgba(255,255,255,0) 92%)';
+
 const holoStyle: CSSProperties = {
   ...OVERLAY,
   backgroundImage: HOLO_IMAGE,
@@ -37,6 +44,10 @@ const holoStyle: CSSProperties = {
   mixBlendMode: 'color-dodge',
   opacity: 'var(--holo-o)',
 };
+
+const prismStyle: CSSProperties = { ...holoStyle, backgroundImage: PRISM_IMAGE, backgroundSize: '160% 160%' };
+
+const pearlStyle: CSSProperties = { ...holoStyle, backgroundImage: PEARL_IMAGE, backgroundSize: '220% 220%', mixBlendMode: 'soft-light' };
 
 const sparkStyle: CSSProperties = {
   ...OVERLAY,
@@ -64,7 +75,7 @@ const PARALLAX_VARS: Record<number, [string, string][]> = {
 const ARTWORK_OVERSCAN = 16;
 
 function CustomArt({ card }: { card: ResolvedCard }) {
-  const { box, artwork } = card;
+  const { artBox: box, artwork } = card;
   const vars = PARALLAX_VARS[artwork.length] ?? PARALLAX_VARS[3]!;
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
@@ -75,9 +86,11 @@ function CustomArt({ card }: { card: ResolvedCard }) {
         const [varX, varY] = vars[i]!;
         const dx = (layer.x / 100) * box.w;
         const dy = (layer.y / 100) * box.h;
+        const rotation = layer.rotate ? ` rotate(${layer.rotate})` : '';
+        const scale = layer.flipX ? `${-layer.zoom} ${layer.zoom}` : `${layer.zoom}`;
         return (
           <g key={i} style={{ transform: `translate(var(${varX}), var(${varY}))` }}>
-            <g transform={`translate(${cx + dx} ${cy + dy}) scale(${layer.zoom}) translate(${-cx} ${-cy})`}>
+            <g transform={`translate(${cx + dx} ${cy + dy})${rotation} scale(${scale}) translate(${-cx} ${-cy})`}>
               <image
                 href={layer.url}
                 x={box.x - ARTWORK_OVERSCAN}
@@ -117,6 +130,31 @@ function BuiltinArt({ card, ids }: { card: ResolvedCard; ids: CardIds }) {
   );
 }
 
+function ArtFilterDefs({ card, id }: { card: ResolvedCard; id: string }) {
+  const { artFilter: filter, H } = card;
+  if (!filter) return null;
+  const brightness = String(filter.brightness / 100);
+  const contrast = filter.contrast / 100;
+  const slope = String(contrast);
+  const intercept = String((1 - contrast) / 2);
+  return (
+    <filter id={id} filterUnits="userSpaceOnUse" x="0" y="0" width="300" height={H} colorInterpolationFilters="sRGB">
+      <feColorMatrix type="hueRotate" values={String(filter.hue)} />
+      <feColorMatrix type="saturate" values={String(filter.saturate / 100)} />
+      <feComponentTransfer>
+        <feFuncR type="linear" slope={brightness} />
+        <feFuncG type="linear" slope={brightness} />
+        <feFuncB type="linear" slope={brightness} />
+      </feComponentTransfer>
+      <feComponentTransfer>
+        <feFuncR type="linear" slope={slope} intercept={intercept} />
+        <feFuncG type="linear" slope={slope} intercept={intercept} />
+        <feFuncB type="linear" slope={slope} intercept={intercept} />
+      </feComponentTransfer>
+    </filter>
+  );
+}
+
 function FaceSvg({ card, ids }: { card: ResolvedCard; ids: CardIds }) {
   const { H, g, c } = card;
   const paint = goldPaint(ids);
@@ -140,6 +178,13 @@ function FaceSvg({ card, ids }: { card: ResolvedCard; ids: CardIds }) {
           <stop offset="0.62" stopColor={card.g1} />
           <stop offset="1" stopColor={card.g0} />
         </linearGradient>
+        <linearGradient id={ids.metal} data-metal="" x1={rest.mx1} y1="0" x2={rest.mx2} y2="1">
+          <stop offset="0" stopColor={card.g0} />
+          <stop offset="0.38" stopColor={card.g1} />
+          <stop offset="0.5" stopColor={card.g2} />
+          <stop offset="0.62" stopColor={card.g1} />
+          <stop offset="1" stopColor={card.g0} />
+        </linearGradient>
         <linearGradient id={ids.sky} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={c.sky0} />
           <stop offset="1" stopColor={c.sky1} />
@@ -150,21 +195,24 @@ function FaceSvg({ card, ids }: { card: ResolvedCard; ids: CardIds }) {
           <stop offset="1" stopColor={c.glow} stopOpacity="0" />
         </radialGradient>
         <clipPath id={ids.clip}>
-          <path d={g.win} />
+          <path d={card.fullArt ? `M0 0H300V${H}H0Z` : g.win} />
         </clipPath>
+        <ArtFilterDefs card={card} id={ids.filter} />
         <filter id={ids.emb}>
           <feDropShadow dx="0" dy="0.8" stdDeviation="0.4" floodColor="#000000" floodOpacity="0.7" />
         </filter>
       </defs>
 
       <g clipPath={`url(#${ids.clip})`} opacity={card.showArt ? 1 : 0}>
-        <rect x="0" y="0" width="300" height={H} fill={`url(#${ids.sky})`} />
-        {card.artwork.length > 0 ? <CustomArt card={card} /> : <BuiltinArt card={card} ids={ids} />}
+        <g filter={card.artFilter ? `url(#${ids.filter})` : undefined}>
+          <rect x="0" y="0" width="300" height={H} fill={`url(#${ids.sky})`} />
+          {card.artwork.length > 0 ? <CustomArt card={card} /> : <BuiltinArt card={card} ids={ids} />}
+        </g>
       </g>
 
       <g opacity={card.showFrame ? 1 : 0} filter={card.emboss ? `url(#${ids.emb})` : 'none'}>
         <path d={g.panel} fill={c.panelFill} stroke={paint(c.panelStroke)} strokeWidth={0.9} />
-        <path d={g.win} fill="none" stroke={gold} strokeWidth={2} />
+        {!card.fullArt && <path d={g.win} fill="none" stroke={gold} strokeWidth={2} />}
         <path d={g.border} fill="none" stroke={gold} strokeWidth={1.6} />
         <path d={g.border2} fill="none" stroke={paint(c.border2)} strokeWidth={0.8} />
         <path d={g.plaque} fill={c.plaque} stroke={gold} strokeWidth={1.2} />
@@ -220,7 +268,7 @@ function TarotLikeText({ card }: { card: ResolvedCard }) {
           top: t.top,
           height: t.h,
           whiteSpace: 'nowrap',
-          textTransform: 'uppercase',
+          textTransform: card.titleCaps ? 'uppercase' : 'none',
           fontFamily: card.ff,
           fontWeight: card.fw,
           fontSize: `${t.fs}em`,
@@ -309,13 +357,13 @@ function BestieText({ card }: { card: ResolvedCard }) {
           height: '7.6%',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textTransform: 'uppercase',
+          textTransform: card.titleCaps ? 'uppercase' : 'none',
           fontFamily: card.ff,
           fontWeight: card.fw,
           fontSize: `${card.nameFs}em`,
           letterSpacing: '0.12em',
           paddingLeft: '0.12em',
-          color: INK,
+          color: card.ink,
         }}
       >
         {card.title}
@@ -383,12 +431,12 @@ function HrdinaText({ card }: { card: ResolvedCard }) {
           alignItems: 'center',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textTransform: 'uppercase',
+          textTransform: card.titleCaps ? 'uppercase' : 'none',
           fontFamily: card.ff,
           fontWeight: card.fw,
           fontSize: `${card.heroFs}em`,
           letterSpacing: '0.06em',
-          color: INK,
+          color: card.ink,
         }}
       >
         {card.title}
@@ -512,7 +560,7 @@ function BlankText({ card }: { card: ResolvedCard }) {
           top: percent(windowEnd),
           height: percent(H - windowEnd - box.y),
           whiteSpace: 'nowrap',
-          textTransform: 'uppercase',
+          textTransform: card.titleCaps ? 'uppercase' : 'none',
           fontFamily: card.ff,
           fontWeight: card.fw,
           fontSize: `${t.fs}em`,
@@ -528,8 +576,9 @@ function BlankText({ card }: { card: ResolvedCard }) {
 }
 
 /** The SVG, the text and the foil overlays. The motion comes in through CSS variables. */
-export const FaceLayers = memo(function FaceLayers({ card }: { card: ResolvedCard }) {
+export const FaceLayers = memo(function FaceLayers({ card, editable = false, selected = null }: { card: ResolvedCard; editable?: boolean; selected?: string | null }) {
   const ids = useCardIds();
+  const holo = card.foil === 'hranol' ? prismStyle : card.foil === 'perlet' ? pearlStyle : holoStyle;
   return (
     <>
       <FaceSvg card={card} ids={ids} />
@@ -538,7 +587,8 @@ export const FaceLayers = memo(function FaceLayers({ card }: { card: ResolvedCar
         {card.variant === 'bestie' && <BestieText card={card} />}
         {card.variant === 'hrdina' && <HrdinaText card={card} />}
       </div>
-      <div aria-hidden="true" style={holoStyle} />
+      <CardItems items={card.items} side="face" ink={{ base: card.c.base, text: card.c.txt, metal: `url(#${ids.metal})` }} editable={editable} selected={selected} />
+      <div aria-hidden="true" style={holo} />
       <div aria-hidden="true" style={sparkStyle} />
       <div aria-hidden="true" style={glareStyle} />
     </>

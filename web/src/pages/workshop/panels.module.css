@@ -333,6 +333,134 @@
   border: 1px solid var(--line-accent);
 }
 
+/* Sections beyond the basics */
+.foldout {
+  border-bottom: 1px solid var(--line);
+}
+
+.foldoutHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 20px;
+  color: var(--text-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.foldoutHead::-webkit-details-marker {
+  display: none;
+}
+
+.foldoutHead:hover {
+  color: var(--text);
+}
+
+.foldout[open] > .foldoutHead svg {
+  transform: rotate(180deg);
+}
+
+.foldoutBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 20px 18px;
+}
+
+/* Colours */
+.colorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.colorControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.colorInput {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 64px;
+  height: 44px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--field);
+  cursor: pointer;
+}
+
+/* Freely placed items */
+.addGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.addButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 66px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.addButton:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--gold);
+}
+
+.addButton:disabled {
+  color: var(--text-off);
+  cursor: wait;
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+}
+
+.optIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--option);
+  color: var(--gold);
+}
+
+.optIcon:hover {
+  border-color: var(--line-accent);
+}
+
+.optIcon[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: var(--option-on);
+}
+
+.itemActions {
+  display: flex;
+  gap: 4px;
+}
+
 /* Artwork */
 .artInfo {
   display: flex;
@@ -396,6 +524,11 @@
 .uploadQuiet:hover {
   color: var(--text);
   border-color: var(--gold);
+}
+
+.uploadQuiet[aria-pressed='true'] {
+  border-color: var(--gold);
+  color: var(--text);
 }
 
 .upload:disabled,
@@ -829,6 +962,20 @@
 
 .compact .sectionTight {
   gap: 10px;
+}
+
+.compact .foldout {
+  border-bottom: 0;
+}
+
+.compact .foldoutHead {
+  min-height: 44px;
+  padding: 0;
+}
+
+.compact .foldoutBody {
+  gap: 10px;
+  padding: 2px 0 0;
 }
 
 .compact .grid2,

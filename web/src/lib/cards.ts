@@ -1,5 +1,5 @@
 import { normalizeCard } from '../card/normalize';
-import type { ArtLayer, CardParams } from '../card/resolve';
+import type { ArtLayer, CardParams, PlacedItem } from '../card/resolve';
 import { templateFor, type ArtworkTransform, type CardDoc, type Family, type TemplateDefaults } from '../card/spec';
 import { cards, pb, templates, type CardRecord, type TemplateRecord, type UserRecord } from './pb';
 
@@ -41,7 +41,12 @@ export function artworkLayers(record: Pick<CardRecord, 'id' | 'collectionId' | '
   return [];
 }
 
-export function docToParams(doc: CardDoc, options: { author?: string; artwork?: ArtLayer[] } = {}): CardParams {
+/** Items with the addresses of their images. An image whose file is gone gets none. */
+export function placedItems(record: Pick<CardRecord, 'id' | 'collectionId' | 'collectionName' | 'itemImages'>, doc: CardDoc): PlacedItem[] {
+  return doc.content.elements.map((item) => (item.type === 'image' && record.itemImages?.includes(item.file) ? { ...item, url: pb.files.getURL(record, item.file) } : item));
+}
+
+export function docToParams(doc: CardDoc, options: { author?: string; artwork?: ArtLayer[]; items?: PlacedItem[] } = {}): CardParams {
   const { look, content } = doc;
   const [first, second] = content.abilities;
   return {
@@ -59,6 +64,13 @@ export function docToParams(doc: CardDoc, options: { author?: string; artwork?: 
     radius: look.radius,
     depth: look.depth,
     font: look.font,
+    titleScale: look.titleScale,
+    titleCaps: look.titleCaps,
+    fullArt: look.fullArt,
+    artFilter: look.artFilter,
+    colors: look.colors,
+    backPalette: look.backPalette || undefined,
+    backPattern: look.backPattern,
     showArt: look.visible.art,
     showFrame: look.visible.frame,
     showText: look.visible.text,
@@ -81,8 +93,9 @@ export function docToParams(doc: CardDoc, options: { author?: string; artwork?: 
     ab2: second?.name,
     ab2p: second?.power,
     ab2t: second?.text,
-    author: options.author,
+    author: content.artist || options.author,
     artwork: options.artwork,
+    items: options.items ?? content.elements,
     formatW: doc.formatW,
     formatH: doc.formatH,
   };
@@ -96,7 +109,7 @@ export function authorOf(record: CardRecord): string | undefined {
 /** Card parameters of a stored card, ready for Card3D, CardFace or LazyCard. */
 export function recordToParams(record: CardRecord): CardParams {
   const doc = normalizeCard(record);
-  return docToParams(doc, { author: authorOf(record), artwork: artworkLayers(record, doc.artworkTransform) });
+  return docToParams(doc, { author: authorOf(record), artwork: artworkLayers(record, doc.artworkTransform), items: placedItems(record, doc) });
 }
 
 export function thumbnailUrl(record: CardRecord): string | undefined {
@@ -133,8 +146,17 @@ export async function remixCard(source: CardRecord, owner: string): Promise<Card
   };
   if (source.artwork) await copy('artwork', source.artwork);
   for (const file of source.artworkLayers ?? []) await copy('artworkLayers', file);
+  const images = source.itemImages ?? [];
+  for (const file of images) await copy('itemImages', file);
 
-  return cards().create(data);
+  const created = await cards().create(data);
+  if (images.length === 0) return created;
+
+  // Every uploaded file gets a new name, and the items have to follow it.
+  const renamed = new Map(images.map((file, i) => [file, created.itemImages[i] ?? '']));
+  const { content } = normalizeCard(source);
+  const elements = content.elements.map((item) => (item.file ? { ...item, file: renamed.get(item.file) ?? '' } : item));
+  return cards().update(created.id, { content: { ...content, elements } });
 }
 
 /** Loads the system template of a family. The local copy is only used for its fields. */

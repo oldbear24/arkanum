@@ -9,6 +9,9 @@ export function useResolvedCard(params: CardParams): ResolvedCard {
 
 export interface CardIds {
   gold: string;
+  /** The gold of the items. It runs across the box of each one, not across the card. */
+  metal: string;
+  filter: string;
   sky: string;
   glow: string;
   clip: string;
@@ -19,7 +22,7 @@ export interface CardIds {
 export function useCardIds(): CardIds {
   const uid = 'k' + useId().replace(/[^a-zA-Z0-9]/g, '');
   return useMemo(
-    () => ({ gold: uid + 'g', sky: uid + 's', glow: uid + 'w', clip: uid + 'c', emb: uid + 'e' }),
+    () => ({ gold: uid + 'g', metal: uid + 'm', filter: uid + 'f', sky: uid + 's', glow: uid + 'w', clip: uid + 'c', emb: uid + 'e' }),
     [uid],
   );
 }

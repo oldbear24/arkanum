@@ -4,20 +4,33 @@
     "variant": ["tarot", "bestie", "hrdina", "orakulum", "prazdna"],
     "art": ["hvezda", "mesic", "slunce", "mag"],
     "frame": ["secese", "deco", "gotika", "minimal"],
-    "palette": ["pulnoc", "krev", "smaragd", "pergamen"],
+    "palette": ["pulnoc", "krev", "smaragd", "pergamen", "ametyst", "safir", "obsidian", "jantar"],
     "element": ["mlha", "ohen", "les", "blesk", "stin"],
-    "foil": ["zadna", "zlata", "duha", "kosmos"],
+    "foil": ["zadna", "zlata", "duha", "kosmos", "stribrna", "hranol", "perlet"],
     "surface": ["mat", "saten", "lesk"],
-    "edge": ["zlata", "cerna", "bila", "ram"],
+    "edge": ["zlata", "cerna", "bila", "ram", "stribrna", "medena"],
     "font": ["cinzel", "cormorant", "aboreto", "gotika"],
     "arcana": ["velka", "mala"],
-    "visibility": ["private", "unlisted", "public"]
+    "visibility": ["private", "unlisted", "public"],
+    "backPattern": ["mandala", "hvezdy", "kosoctverce", "slunce", "prazdny"],
+    "itemType": ["text", "image", "symbol", "ornament", "stat", "shape"],
+    "itemSide": ["face", "back"],
+    "itemFont": ["cinzel", "cormorant", "kurziva", "aboreto", "gotika", "jost"],
+    "itemAlign": ["left", "center", "right"],
+    "itemSymbol": ["hvezda", "hvezda8", "mesic", "slunce", "oko", "srdce", "mec", "pohar", "pentakl", "koruna", "klic", "plamen", "kapka", "list", "blesk", "stit"],
+    "itemOrnament": ["linka", "vlnka", "roh", "vavrin", "paprsky", "oblouk", "hvezdy", "ramecek"],
+    "itemShape": ["kruh", "ctverec", "zaobleny", "kosoctverec", "sestiuhelnik", "stit", "oblouk"]
   },
   "ranges": {
     "foilI": [0, 100],
     "thick": [1, 8],
     "radius": [0, 30],
     "depth": [0, 100],
+    "titleScale": [50, 150],
+    "artBrightness": [50, 150],
+    "artContrast": [50, 150],
+    "artSaturate": [0, 200],
+    "artHue": [-180, 180],
     "hp": [10, 200],
     "level": [1, 10],
     "cost": [0, 10],
@@ -28,7 +41,13 @@
     "power": [0, 200],
     "format": [30, 200],
     "artOffset": [-100, 100],
-    "artZoom": [1, 4]
+    "artZoom": [1, 4],
+    "artRotate": [-180, 180],
+    "itemPosition": [-20, 120],
+    "itemSize": [2, 150],
+    "itemRotate": [-180, 180],
+    "itemOpacity": [5, 100],
+    "itemRatio": [5, 400]
   },
   "text": {
     "title": 28,
@@ -38,14 +57,20 @@
     "abilityName": 22,
     "abilityText": 200,
     "setNo": 24,
+    "artist": 40,
     "upright": 1000,
     "reversed": 1000,
-    "keyword": 24
+    "keyword": 24,
+    "itemId": 24,
+    "itemText": 200,
+    "itemValue": 8,
+    "itemFile": 160
   },
   "counts": {
     "abilities": 2,
     "keywords": 12,
     "elements": 64,
-    "artworkLayers": 3
+    "artworkLayers": 3,
+    "itemImages": 8
   }
 }

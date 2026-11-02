@@ -11,7 +11,7 @@
 | 5. Dílna | hotovo |
 | 6. Detail karty, lajky, remix, balíčky | hotovo |
 | 7. Export | hotovo |
-| 8. Později | nezačato, patří sem volné prvky z „Přidat prvek", GLB a moderace galerie |
+| 8. Později | volné prvky z „Přidat prvek" hotové, zbývá GLB a moderace galerie |
 
 ## Prostředí
 
@@ -54,6 +54,7 @@ Docker image se takhle nezkoušela, lokálně tu Docker není.
   provozem je potřeba 3D kartu prohlédnout na iPhonu nebo Macu.
 - **Firefox.** Prohlížeč se na tomhle stroji nepodařilo spustit (systém odmítá `firefox.exe` s `Permission denied`).
 - **E-maily** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo.
+- **Otáčení dvěma prsty** je ověřené jen simulovanými událostmi ukazatele v unit testu, ne na skutečném telefonu.
 - **Skutečný Discord.** Přihlášení prochází celé proti falešnému serveru, včetně kódu poskytovatele v PocketBase
   a vyskakovacího okna v prohlížeči (`web/e2e/discord.spec.ts`), a falešný server jen napodobuje odpovědi Discordu.
   Se skutečným se nezkoušelo, protože tu nejsou přístupové údaje. Nevyzkoušené je i stažení avataru, falešný server
@@ -199,6 +200,43 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 - **Náhled** se vytvoří při publikování. Navíc oproti zadání se u sdílené karty obnoví 5 s po poslední úpravě, jinak
   by galerie ukazovala starou podobu. Když se náhled nepovede, publikování přesto proběhne a galerie kartu nakreslí sama.
 - GLB je podle zadání až v pozdější fázi, tlačítko je vypnuté.
+
+### Volné otáčení
+
+- **Karta se otáčí v quaternionu, ne dvěma úhly** (`web/src/card/rotation.ts`). S `rotateX` a `rotateY` za sebou by tažení
+  vodorovně na kartě vzhůru nohama běželo pozpátku a na ležící kartě by se karta točila jako kolo, proto měl návrh svislý
+  náklon omezený na ±65°. Teď každý pohyb otáčí kolem os obrazovky, takže povrch jde vždy za kurzorem a žádná mez není.
+- CSS proměnné `--rx` a `--ry` zůstaly pro náklon, otáčení a obrácení, volná rotace přibyla jako `--orient`. Přechod na rub
+  tak dál běží přes `rotateY`. Paralaxa, lesk a jiskry se u volně otočené karty řídí tím, odkud se na ni divák opravdu
+  dívá. Bez volné rotace počítají přesně jako návrh, což dál hlídá `prototype.test.ts`.
+- **Natočení v rovině karty:** Shift a tažení, na dotyku dva prsty. Bez toho by šlo kartu natočit jen krouživým pohybem.
+- **Tlačítka po 30°** vedle karty má dílna na desktopu. Bez nich by klávesnice kartu otočit vůbec neuměla. Se sníženým
+  pohybem fungují také, jen bez animace, protože jde o jednorázový krok a ne o pohyb.
+- Na mobil a na detail karty přibylo tlačítko „Vyrovnat", protože volně otočenou kartu jinak nešlo snadno vrátit.
+- Setrvačnost po puštění jsem nedělal, zadání ji nechce a při úpravách by překážela.
+
+### Další možnosti úprav
+
+- **Volné prvky z „Přidat prvek"** jsou hotové, patřily do fáze 8. Jsou uložené v `content.elements`. V kódu se jmenují
+  `item`, protože `element` už na kartě znamená mlhu nebo oheň. Kreslí se nad potiskem a pod fólií, takže na ně fólie
+  působí stejně jako na zbytek karty. Všechny míry jsou v procentech a `em`, proto sedí i v exportu.
+- Prvek může ležet **na líci i na rubu**. Nový prvek jde na stranu, kterou má uživatel před sebou. Vlastní nahraný rub jako
+  samostatné pole proto není, stačí obrázek jako prvek na rubu.
+- **Posun tažením na kartě** funguje jen s otevřenou záložkou „Prvky", jinak by velký prvek bránil v otáčení. Pohyb se přepočítává
+  podle natočení karty (`screenToCard`). Skoro z profilu se ignoruje, protože tam nic neznamená. Velikost a natočení se nastavují
+  posuvníky, úchyty na kartě jsem nedělal.
+- **Obrázky prvků** mají vlastní pole `itemImages` (migrace `1793600003`, nejvýš 8 souborů). Smazání prvku smaže i soubor, stejně
+  jako u ilustrace, a Zpět vrátí prvek bez obrázku s vysvětlením. Soubory po vráceném přidání se uklidí při dalším nahrání.
+  Remix soubory kopíruje a přepíše jejich nová jména v prvcích.
+- **Názvy v „Přidat prvek"** drží návrh, proto se ikonky v aplikaci jmenují „Symbol". Kresby jsou vlastní, viz `itemArt.ts`.
+- **Přibylo navíc oproti návrhu:** palety Ametyst, Safír, Obsidián a Jantar, fólie Stříbrná, Hranol a Perleť, ořízka Stříbrná
+  a Měděná, čtyři vlastní barvy nad paletou, ilustrace přes celou kartu, jas, kontrast, sytost a odstín ilustrace, natočení a
+  zrcadlení nahraného obrázku, velikost a velká písmena nadpisu, vzor a barvy rubu, číslo v sadě, ilustrátor a změna formátu
+  prázdné karty v dílně. `prototype.test.ts` ověřuje jen hodnoty z návrhu, nové si filtruje pryč.
+- Výchozí vzhled panelu odpovídá návrhu víc, než by vypadalo: rozšiřující sekce (úpravy ilustrace, vlastní barvy, rub) jsou
+  sbalené. **Střed dílny je na širokém displeji přilepený,** jinak by se karta s dlouhým panelem odsunula mimo obrazovku.
+- Vlastní barvy projdou jen ve tvaru `#rrggbb`, a to na klientu i v Go hooku, protože končí přímo ve stylech karty.
+- **Balíček** dál určuje jednotný rub: u svých karet přebije vzor i prvky na rubu, jinak by rub prozrazoval, která karta je která.
 
 ### Přístupnost
 

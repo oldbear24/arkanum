@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
-import { normalizeCard } from '../../card/normalize';
-import { counts, type ArtPlacement, type Art, type CardAbility, type CardContent, type CardDoc, type CardLook, type CardMeaning, type Family } from '../../card/spec';
+import type { CardTurn, ItemEditing } from '../../card/Card3D';
+import { itemDefaults, normalizeCard } from '../../card/normalize';
+import { counts, ranges, type ArtPlacement, type Art, type CardAbility, type CardContent, type CardDoc, type CardItem, type CardLook, type CardMeaning, type Family, type ItemType } from '../../card/spec';
 import { Dialog, ui } from '../../components/ui';
 import { cs } from '../../i18n/cs';
 import { signInPath, useUser } from '../../lib/auth';
-import { artworkLayers, docToParams } from '../../lib/cards';
+import { artworkLayers, docToParams, placedItems } from '../../lib/cards';
 import { cards, isNotFound, templates, type CardRecord } from '../../lib/pb';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { NotFound } from '../NotFound';
@@ -21,13 +22,36 @@ import { WorkshopMobile } from './WorkshopMobile';
 const EXPAND = 'owner,editors';
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-const NO_PLACEMENT: ArtPlacement = { x: 0, y: 0, zoom: 1 };
+const NO_PLACEMENT: ArtPlacement = { x: 0, y: 0, zoom: 1, rotate: 0, flipX: false };
 const PREVIEW_REFRESH_MS = 5000;
+/** New items start around the middle of the card, slightly apart to not hide each other. */
+const NEW_ITEM_SPREAD = 6;
 
 function uploadProblem(file: File): string | null {
   if (!IMAGE_TYPES.includes(file.type)) return cs.workshop.uploadBadType;
   if (file.size > MAX_UPLOAD) return cs.workshop.uploadTooLarge;
   return null;
+}
+
+/** The height of an image in percent of its width, so that its box fits it exactly. */
+async function imageRatio(file: File): Promise<number> {
+  const fallback = itemDefaults('image').ratio;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const ratio = (bitmap.height / bitmap.width) * 100;
+    bitmap.close();
+    return Math.max(ranges.itemRatio[0], Math.min(ranges.itemRatio[1], Math.round(ratio)));
+  } catch {
+    return fallback;
+  }
+}
+
+function newItemId(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function clampPosition(value: number): number {
+  return Math.round(Math.max(ranges.itemPosition[0], Math.min(ranges.itemPosition[1], value)) * 100) / 100;
 }
 
 function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
@@ -44,6 +68,8 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
   const [light, setLight] = useState(30);
   const [zoom, setZoom] = useState(100);
   const [resetKey, setResetKey] = useState(0);
+  const [turnBy, setTurnBy] = useState<CardTurn | undefined>(undefined);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -151,6 +177,99 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     [change],
   );
 
+  const setFormat = useCallback((formatW: number, formatH: number) => change({ ...docRef.current, formatW, formatH }, 'format'), [change]);
+
+  const setItems = useCallback(
+    (update: (items: CardItem[]) => CardItem[], group?: string) => {
+      const current = docRef.current;
+      change({ ...current, content: { ...current.content, elements: update(current.content.elements) } }, group);
+    },
+    [change],
+  );
+
+  const setItem = useCallback(
+    (id: string, patch: Partial<CardItem>, group?: string) => setItems((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)), group),
+    [setItems],
+  );
+
+  const flipRef = useRef(flip);
+  flipRef.current = flip;
+
+  /** Puts a new item on the side in view, on a card that holds still and faces the user. */
+  const placeItem = useCallback(
+    (type: ItemType, patch: Partial<CardItem> = {}) => {
+      const count = docRef.current.content.elements.length;
+      const d = itemDefaults(type);
+      const item: CardItem = { ...d, id: newItemId(), type, side: flipRef.current ? 'back' : 'face', y: d.y + ((count % 5) - 2) * NEW_ITEM_SPREAD, ...patch };
+      setItems((items) => [...items, item]);
+      setSelectedItem(item.id);
+      setTab('prvky');
+      setSpin(false);
+      setResetKey((key) => key + 1);
+    },
+    [setItems],
+  );
+
+  const addItem = useCallback(
+    (type: ItemType) => {
+      setUploadError(null);
+      if (docRef.current.content.elements.length >= counts.elements) {
+        setTab('prvky');
+        setUploadError(cs.workshop.items.tooManyItems);
+        return;
+      }
+      placeItem(type);
+    },
+    [placeItem],
+  );
+
+  const showItem = useCallback((id: string) => {
+    const item = docRef.current.content.elements.find((candidate) => candidate.id === id);
+    if (!item) return;
+    setSelectedItem(id);
+    setTab('prvky');
+    setFlip(item.side === 'back');
+  }, []);
+
+  const duplicateItem = useCallback(
+    (id: string) => {
+      const items = docRef.current.content.elements;
+      const source = items.find((item) => item.id === id);
+      if (!source || items.length >= counts.elements) return;
+      const copy = { ...source, id: newItemId(), x: clampPosition(source.x + 4), y: clampPosition(source.y + 4) };
+      setItems((list) => list.flatMap((item) => (item.id === id ? [item, copy] : [item])));
+      setSelectedItem(copy.id);
+    },
+    [setItems],
+  );
+
+  const reorderItem = useCallback(
+    (id: string, delta: number) => {
+      setItems((items) => {
+        const from = items.findIndex((item) => item.id === id);
+        const to = from + delta;
+        if (from < 0 || to < 0 || to >= items.length) return items;
+        const next = [...items];
+        [next[from], next[to]] = [next[to]!, next[from]!];
+        return next;
+      });
+    },
+    [setItems],
+  );
+
+  const moveItem = useCallback(
+    (id: string, dx: number, dy: number) => {
+      const item = docRef.current.content.elements.find((candidate) => candidate.id === id);
+      if (item) setItem(id, { x: clampPosition(item.x + dx), y: clampPosition(item.y + dy) }, `item-move-${id}`);
+    },
+    [setItem],
+  );
+
+  const itemEditing = useMemo<ItemEditing | undefined>(
+    () => (tab === 'prvky' ? { selected: selectedItem, onSelect: setSelectedItem, onMove: moveItem } : undefined),
+    [moveItem, selectedItem, tab],
+  );
+
   const requestTemplate = useCallback(
     (family: Family) => {
       const current = docRef.current;
@@ -196,7 +315,7 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
   }, [redo, undo]);
 
   const uploadTo = useCallback(
-    async (field: string, file: File, afterSave?: () => void) => {
+    async (field: string, file: File, afterSave?: (saved: CardRecord) => void) => {
       const problem = uploadProblem(file);
       setUploadError(problem);
       if (problem) return;
@@ -206,7 +325,7 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
         data.append(field, file);
         const saved = await cards().update(cardId, data, { expand: EXPAND });
         setRecord(saved);
-        afterSave?.();
+        afterSave?.(saved);
       } catch {
         setUploadError(cs.workshop.uploadFailed);
       } finally {
@@ -299,9 +418,62 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     [patchFiles, setLayerPlacements],
   );
 
+  const addImageItem = useCallback(
+    (file: File) => {
+      void (async () => {
+        const images = recordRef.current.itemImages ?? [];
+        const used = new Set(docRef.current.content.elements.map((item) => item.file));
+        // What no item uses comes from an undone step. The new item clears the steps to redo.
+        const unused = images.filter((name) => !used.has(name));
+        if (images.length - unused.length >= counts.itemImages) {
+          setTab('prvky');
+          setUploadError(cs.workshop.items.tooManyImages);
+          return;
+        }
+        if (docRef.current.content.elements.length >= counts.elements) {
+          setTab('prvky');
+          setUploadError(cs.workshop.items.tooManyItems);
+          return;
+        }
+        setTab('prvky');
+        if (unused.length > 0 && !uploadProblem(file)) {
+          try {
+            setRecord(await cards().update(cardId, { 'itemImages-': unused }, { expand: EXPAND }));
+          } catch {
+            setUploadError(cs.workshop.uploadFailed);
+            return;
+          }
+        }
+        const ratio = await imageRatio(file);
+        await uploadTo('itemImages+', file, (saved) => {
+          const name = (saved.itemImages ?? []).find((candidate) => !images.includes(candidate));
+          if (name) placeItem('image', { file: name, ratio });
+        });
+      })();
+    },
+    [cardId, placeItem, uploadTo],
+  );
+
+  const removeItem = useCallback(
+    (id: string) => {
+      const items = docRef.current.content.elements;
+      const item = items.find((candidate) => candidate.id === id);
+      if (!item) return;
+      const drop = () => {
+        setItems((list) => list.filter((candidate) => candidate.id !== id));
+        setSelectedItem((selected) => (selected === id ? null : selected));
+      };
+      // Like the illustration, an image goes for good. Its file may still serve a copy of the item.
+      const lastUse = item.file && !items.some((other) => other.id !== id && other.file === item.file);
+      if (lastUse && recordRef.current.itemImages?.includes(item.file)) void patchFiles({ 'itemImages-': item.file }, drop);
+      else drop();
+    },
+    [patchFiles, setItems],
+  );
+
   const params = useMemo(() => {
     const author = record.expand?.owner?.handle;
-    return docToParams(doc, { author: author ? `@${author}` : undefined, artwork: artworkLayers(record, doc.artworkTransform) });
+    return docToParams(doc, { author: author ? `@${author}` : undefined, artwork: artworkLayers(record, doc.artworkTransform), items: placedItems(record, doc) });
   }, [doc, record]);
 
   const paramsRef = useRef(params);
@@ -333,7 +505,7 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
   }, [autosave, cardId, publishing]);
 
   // A card that others can see keeps its gallery preview fresh, a moment after the last local edit.
-  const previewState = JSON.stringify([normalizeCard(doc), record.artwork, record.artworkLayers]);
+  const previewState = JSON.stringify([normalizeCard(doc), record.artwork, record.artworkLayers, record.itemImages]);
   const previewOf = useRef(previewState);
   const isShared = record.visibility !== 'private';
   useEffect(() => {
@@ -404,6 +576,16 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     setAbility,
     setPlacement,
     requestTemplate,
+    setFormat,
+    selectedItem,
+    showItem,
+    addItem,
+    addImageItem,
+    setItem,
+    removeItem,
+    duplicateItem,
+    reorderItem,
+    itemEditing,
     tab,
     setTab,
     selectedLayer,
@@ -421,6 +603,8 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
       setResetKey((key) => key + 1);
       setSpin(false);
     },
+    turnBy,
+    turnCard: setTurnBy,
     uploading,
     uploadError,
     uploadArtwork,
