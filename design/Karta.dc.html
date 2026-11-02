@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>3D karta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aboreto&amp;family=Cinzel:wght@500;600;700&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&amp;family=Grenze+Gotisch:wght@500;600&amp;family=Jost:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="box-sizing: border-box; width: 100%; padding: {{v.pad}}px; container-type: inline-size; font-family: 'Jost', system-ui, sans-serif; color: #efe6d0;">
+<div onPointerMove="{{onMove}}" onPointerLeave="{{onLeave}}" onPointerDown="{{onDown}}" onPointerUp="{{onUp}}" onPointerCancel="{{onUp}}" role="img" aria-label="{{v.aria}}" style="position: relative; width: 100%; aspect-ratio: {{v.ar}}; perspective: calc(100cqw * 3.4); touch-action: {{v.touch}}; cursor: {{v.cursor}}; font-size: calc(100cqw / 18.75); user-select: none;">
+<div aria-hidden="true" style="position: absolute; left: 12%; right: 12%; bottom: -6%; height: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,0.65), rgba(0,0,0,0)); transform: translateX({{v.shX}}em) scaleX({{v.shS}}); opacity: {{v.shO}};"></div>
+<div style="position: absolute; inset: 0; transform-style: preserve-3d; transform: {{v.tf}}; transition: {{v.tr}};">
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c0}}; transform: translateZ({{v.e.z0}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c1}}; transform: translateZ({{v.e.z1}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c2}}; transform: translateZ({{v.e.z2}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c3}}; transform: translateZ({{v.e.z3}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c4}}; transform: translateZ({{v.e.z4}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c5}}; transform: translateZ({{v.e.z5}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c6}}; transform: translateZ({{v.e.z6}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c7}}; transform: translateZ({{v.e.z7}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c8}}; transform: translateZ({{v.e.z8}});"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; border-radius: {{v.rad}}; background: {{v.e.c9}}; transform: translateZ({{v.e.z9}});"></div>
+<div style="position: absolute; inset: 0; border-radius: {{v.rad}}; overflow: hidden; backface-visibility: hidden; transform: translateZ({{v.half}}); background: {{v.c.base}};">
+<svg viewBox="0 0 300 {{v.H}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block;">
+<defs>
+<linearGradient id="{{v.idGold}}" gradientUnits="userSpaceOnUse" x1="{{v.gx1}}" y1="0" x2="{{v.gx2}}" y2="{{v.H}}">
+<stop offset="0" stop-color="{{v.g0}}"></stop>
+<stop offset="0.38" stop-color="{{v.g1}}"></stop>
+<stop offset="0.5" stop-color="{{v.g2}}"></stop>
+<stop offset="0.62" stop-color="{{v.g1}}"></stop>
+<stop offset="1" stop-color="{{v.g0}}"></stop>
+</linearGradient>
+<linearGradient id="{{v.idSky}}" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="{{v.c.sky0}}"></stop>
+<stop offset="1" stop-color="{{v.c.sky1}}"></stop>
+</linearGradient>
+<radialGradient id="{{v.idGlow}}">
+<stop offset="0" stop-color="{{v.c.glow}}" stop-opacity="0.6"></stop>
+<stop offset="0.55" stop-color="{{v.c.glow}}" stop-opacity="0.18"></stop>
+<stop offset="1" stop-color="{{v.c.glow}}" stop-opacity="0"></stop>
+</radialGradient>
+<clipPath id="{{v.idClip}}"><path d="{{v.g.win}}"></path></clipPath>
+<filter id="{{v.idEmb}}">
+<feDropShadow dx="0" dy="0.8" stdDeviation="0.4" flood-color="#000000" flood-opacity="0.7"></feDropShadow>
+</filter>
+</defs>
+<g clip-path="url(#{{v.idClip}})" opacity="{{v.artO}}">
+<rect x="0" y="0" width="300" height="{{v.H}}" fill="url(#{{v.idSky}})"></rect>
+<g transform="translate({{v.pbx}} {{v.pby}})">
+<path d="{{v.a.dots}}" fill="{{v.c.dots}}" opacity="0.85"></path>
+<path d="{{v.a.thin}}" fill="none" stroke="{{v.c.thin}}" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"></path>
+</g>
+<g transform="translate({{v.pfx}} {{v.pfy}})">
+<path d="{{v.a.glow}}" fill="url(#{{v.idGlow}})"></path>
+<path d="{{v.a.under}}" fill="none" stroke="{{v.c.under}}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.a.fill}}" fill="{{v.c.fill}}"></path>
+<path d="{{v.a.line}}" fill="none" stroke="{{v.c.line}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.a.core}}" fill="#fffdf2" opacity="0.92"></path>
+<path d="{{v.a.eyes}}" fill="{{v.c.eyes}}"></path>
+</g>
+</g>
+<g opacity="{{v.frameO}}" filter="{{v.embF}}">
+<path d="{{v.g.panel}}" fill="{{v.c.panelFill}}" stroke="{{v.c.panelStroke}}" stroke-width="0.9"></path>
+<path d="{{v.g.win}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="2"></path>
+<path d="{{v.g.border}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.6"></path>
+<path d="{{v.g.border2}}" fill="none" stroke="{{v.c.border2}}" stroke-width="0.8"></path>
+<path d="{{v.g.plaque}}" fill="{{v.c.plaque}}" stroke="url(#{{v.idGold}})" stroke-width="1.2"></path>
+<path d="{{v.g.acc}}" fill="{{v.c.acc}}" stroke="url(#{{v.idGold}})" stroke-width="1.2"></path>
+<path d="{{v.g.acc2}}" fill="{{v.c.acc2}}" stroke="url(#{{v.idGold}})" stroke-width="1"></path>
+<path d="{{v.g.corner}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.corner}}" transform="translate(300 0) scale(-1 1)" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.corner}}" transform="translate(0 {{v.H}}) scale(1 -1)" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.corner}}" transform="translate(300 {{v.H}}) scale(-1 -1)" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.cornerF}}" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.cornerF}}" transform="translate(300 0) scale(-1 1)" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.cornerF}}" transform="translate(0 {{v.H}}) scale(1 -1)" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.cornerF}}" transform="translate(300 {{v.H}}) scale(-1 -1)" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.ornS}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1" stroke-linecap="round"></path>
+<path d="{{v.g.ornF}}" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.icoF}}" fill="{{v.c.ico}}"></path>
+<path d="{{v.g.icoS}}" fill="none" stroke="{{v.c.ico}}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.sicoF}}" fill="{{v.c.sico}}"></path>
+<path d="{{v.g.sicoS}}" fill="none" stroke="{{v.c.sico}}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="{{v.g.rarF}}" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.g.rarO}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="0.8"></path>
+</g>
+</svg>
+<div style="position: absolute; inset: 0; pointer-events: none; opacity: {{v.textO}};">
+<sc-if value="{{v.isTarot}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; right: 0; top: 6.2%; height: 4.8%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 600; font-size: 1.02em; letter-spacing: 0.24em; padding-left: 0.24em; color: {{v.c.txt}};">{{v.numeral}}</div>
+</sc-if>
+<sc-if value="{{v.isTarotLike}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 12%; right: 12%; top: {{v.t.top}}; height: {{v.t.h}}; display: flex; align-items: center; justify-content: center; white-space: nowrap; text-transform: uppercase; font-family: {{v.ff}}; font-weight: {{v.fw}}; font-size: {{v.t.fs}}em; letter-spacing: {{v.t.ls}}em; padding-left: {{v.t.ls}}em; color: {{v.c.txt}};">{{v.title}}</div>
+</sc-if>
+<sc-if value="{{v.isOracle}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 8%; right: 8%; top: 91.6%; height: 3.6%; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: {{v.subFs}}em; color: {{v.c.txt}};">{{v.subtitle}}</div>
+</sc-if>
+<sc-if value="{{v.isBestie}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 8.7%; top: 5.4%; height: 4.4%; display: flex; align-items: center; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.54em; letter-spacing: 0.1em; color: {{v.c.txt}};">ÚR. {{v.level}}</div>
+<div style="position: absolute; left: 12%; right: 12%; top: 53.9%; height: 7.6%; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; text-transform: uppercase; font-family: {{v.ff}}; font-weight: {{v.fw}}; font-size: {{v.nameFs}}em; letter-spacing: 0.12em; padding-left: 0.12em; color: #f6ecd2;">{{v.title}}</div>
+<div style="position: absolute; left: 10%; right: 10%; top: 62.1%; height: 3.8%; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 0.62em; color: {{v.el.l}};">{{v.subtitle}}</div>
+<div style="position: absolute; left: 11%; width: 66%; top: 67.8%; height: 8.1%; display: flex; flex-direction: column; justify-content: center; gap: 0.1em; overflow: hidden;">
+<div style="font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.58em; color: #f6ecd2; white-space: nowrap;">{{v.ab1}}</div>
+<div style="font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 0.54em; line-height: 1.15; color: #cfc7b2;">{{v.ab1t}}</div>
+</div>
+<div style="position: absolute; left: 81%; width: 7.4%; top: 69%; height: 5.3%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.6em; color: #f6ecd2;">{{v.ab1p}}</div>
+<div style="position: absolute; left: 11%; width: 66%; top: 77.3%; height: 8.1%; display: flex; flex-direction: column; justify-content: center; gap: 0.1em; overflow: hidden;">
+<div style="font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.58em; color: #f6ecd2; white-space: nowrap;">{{v.ab2}}</div>
+<div style="font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 0.54em; line-height: 1.15; color: #cfc7b2;">{{v.ab2t}}</div>
+</div>
+<div style="position: absolute; left: 81%; width: 7.4%; top: 78.5%; height: 5.3%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.6em; color: #f6ecd2;">{{v.ab2p}}</div>
+<div style="position: absolute; left: 19.3%; width: 15%; top: 87.8%; height: 5.3%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.66em; color: #f6ecd2;">{{v.hp}}</div>
+<div style="position: absolute; left: 46.3%; width: 15%; top: 87.8%; height: 5.3%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.66em; color: #f6ecd2;">{{v.s1}}</div>
+<div style="position: absolute; left: 73.3%; width: 15%; top: 87.8%; height: 5.3%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.66em; color: #f6ecd2;">{{v.s2}}</div>
+<div style="position: absolute; left: 8%; right: 8%; top: 94.4%; height: 2.6%; display: flex; align-items: center; justify-content: space-between; font-family: 'Jost', sans-serif; font-weight: 500; font-size: 0.36em; letter-spacing: 0.06em; color: #a29b8a;"><span>il. {{v.author}}</span><span>{{v.setNo}}</span></div>
+</sc-if>
+<sc-if value="{{v.isHrdina}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 10%; width: 62%; top: 5.7%; height: 6.9%; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-transform: uppercase; font-family: {{v.ff}}; font-weight: {{v.fw}}; font-size: {{v.heroFs}}em; letter-spacing: 0.06em; color: #f6ecd2;">{{v.title}}</div>
+<div style="position: absolute; left: 79.7%; width: 11.3%; top: 5%; height: 8.1%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1em; color: #fff3da;">{{v.cost}}</div>
+<div style="position: absolute; left: 10%; right: 10%; top: 13.6%; height: 2.6%; display: flex; align-items: center; justify-content: space-between; gap: 1em; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.4em; letter-spacing: 0.16em; text-transform: uppercase; color: {{v.c.txt}};"><span>{{v.cls}}</span><span>{{v.setNo}}</span></div>
+<div style="position: absolute; left: 10%; right: 10%; top: 63.4%; height: 21.4%; display: flex; flex-direction: column; justify-content: center; gap: 0.3em; overflow: hidden; color: #2a2018;">
+<p style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 0.64em; line-height: 1.2;"><strong style="font-weight: 700;">{{v.ab1}}.</strong> {{v.ab1t}}</p>
+<p style="margin: 0; padding-top: 0.4em; border-top: 1px solid rgba(42,32,24,0.25); font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500; font-size: 0.56em; line-height: 1.2; color: #5e4c38;">{{v.subtitle}}</p>
+</div>
+<div style="position: absolute; left: 28.3%; width: 10%; top: 88.3%; height: 5.7%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.72em; color: #f6ecd2;">{{v.s1}}</div>
+<div style="position: absolute; left: 45%; width: 10%; top: 88.3%; height: 5.7%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.72em; color: #f6ecd2;">{{v.s2}}</div>
+<div style="position: absolute; left: 61.7%; width: 10%; top: 88.3%; height: 5.7%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.72em; color: #f6ecd2;">{{v.s3}}</div>
+<div style="position: absolute; left: 25%; right: 25%; top: 95.3%; height: 2.4%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 0.32em; letter-spacing: 0.12em; color: {{v.c.txt}};"><span>SÍLA</span><span>OBRANA</span><span>MAGIE</span></div>
+</sc-if>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(115deg, rgba(255,255,255,0) 18%, rgba(255,92,170,0.75) 30%, rgba(255,214,102,0.75) 40%, rgba(104,255,196,0.75) 50%, rgba(92,178,255,0.75) 60%, rgba(196,120,255,0.75) 70%, rgba(255,255,255,0) 82%); background-size: 280% 280%; background-position: {{v.hx}}% {{v.hy}}%; mix-blend-mode: color-dodge; opacity: {{v.holoO}};"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle, rgba(255,255,255,0.95) 0, rgba(255,255,255,0.95) 0.05em, rgba(255,255,255,0) 0.09em), radial-gradient(circle, rgba(255,226,170,0.9) 0, rgba(255,226,170,0.9) 0.04em, rgba(255,226,170,0) 0.08em), radial-gradient(circle, rgba(180,214,255,0.9) 0, rgba(180,214,255,0.9) 0.045em, rgba(180,214,255,0) 0.085em); background-size: 2.7em 3.3em, 3.9em 2.6em, 5.3em 4.4em; background-position: {{v.spPos}}; mix-blend-mode: screen; opacity: {{v.spO}};"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle at {{v.gx}}% {{v.gy}}%, rgba(255,255,255,{{v.ga}}) 0%, rgba(255,255,255,0) 58%); mix-blend-mode: soft-light;"></div>
+</div>
+<div style="position: absolute; inset: 0; border-radius: {{v.rad}}; overflow: hidden; backface-visibility: hidden; transform: rotateY(180deg) translateZ({{v.half}}); background: {{v.c.backBase}};">
+<svg viewBox="0 0 300 {{v.H}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block;">
+<path d="{{v.b.thin}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="0.9" opacity="0.75"></path>
+<path d="{{v.b.line}}" fill="none" stroke="url(#{{v.idGold}})" stroke-width="1.5"></path>
+<path d="{{v.b.fill}}" fill="url(#{{v.idGold}})"></path>
+<path d="{{v.b.dark}}" fill="{{v.c.backBase}}"></path>
+</svg>
+<sc-if value="{{v.isTcg}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 70%; height: 5%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.95em; letter-spacing: 0.32em; padding-left: 0.32em; color: {{v.c.txt}};">ARKÁNUM</div>
+</sc-if>
+<div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle at {{v.bgx}}% {{v.gy}}%, rgba(255,255,255,{{v.ga}}) 0%, rgba(255,255,255,0) 58%); mix-blend-mode: soft-light;"></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["tarot","bestie","hrdina","orakulum"],"default":"tarot","section":"Karta"},"art":{"editor":"enum","options":["hvezda","mesic","slunce","mag"],"default":"hvezda","section":"Karta"},"frame":{"editor":"enum","options":["secese","deco","gotika","minimal"],"default":"secese","section":"Karta"},"palette":{"editor":"enum","options":["pulnoc","krev","smaragd","pergamen"],"default":"pulnoc","section":"Karta"},"element":{"editor":"enum","options":["mlha","ohen","les","blesk","stin"],"default":"mlha","section":"Karta"},"foil":{"editor":"enum","options":["zadna","zlata","duha","kosmos"],"default":"zlata","section":"Materiál"},"foilI":{"editor":"range","min":0,"max":100,"step":1,"default":65,"section":"Materiál"},"edge":{"editor":"enum","options":["zlata","cerna","bila","ram"],"default":"zlata","section":"Materiál"},"thick":{"editor":"range","min":1,"max":8,"step":0.5,"default":4,"section":"Materiál"},"flip":{"editor":"boolean","default":false,"section":"3D"},"spin":{"editor":"boolean","default":false,"section":"3D"},"interactive":{"editor":"enum","options":["tilt","drag","none"],"default":"tilt","section":"3D"},"surface":{"editor":null},"radius":{"editor":null},"emboss":{"editor":null},"depth":{"editor":null},"light":{"editor":null},"pad":{"editor":null},"font":{"editor":null},"cardTitle":{"editor":null},"numeral":{"editor":null},"subtitle":{"editor":null},"rarity":{"editor":null},"level":{"editor":null},"hp":{"editor":null},"ab1":{"editor":null},"ab1p":{"editor":null},"ab1t":{"editor":null},"ab2":{"editor":null},"ab2p":{"editor":null},"ab2t":{"editor":null},"cls":{"editor":null},"cost":{"editor":null},"s1":{"editor":null},"s2":{"editor":null},"s3":{"editor":null},"author":{"editor":null},"setNo":{"editor":null},"showArt":{"editor":null},"showFrame":{"editor":null},"showText":{"editor":null},"showFoil":{"editor":null},"shadow":{"editor":null},"resetKey":{"editor":null},"$preview":{"width":356,"height":570}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = Object.assign({}, this.state, { rx: 0, ry: 0, gx: 50, gy: 30, active: false, drag: false, spin: 0 });
+    this.uid = 'k' + Math.random().toString(36).slice(2, 9);
+    this.cacheKey = '';
+    this.cache = null;
+    this.raf = null;
+    this.ds = null;
+    this.onMove = (e) => {
+      const mode = this.mode();
+      if (mode === 'none') return;
+      const r = e.currentTarget.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      if (mode === 'drag') {
+        if (this.state.drag && this.ds) {
+          const dx = e.clientX - this.ds.x;
+          const dy = e.clientY - this.ds.y;
+          this.setState({ ry: this.ds.ry + dx * 0.55, rx: Math.max(-65, Math.min(65, this.ds.rx - dy * 0.4)), gx: px * 100, gy: py * 100, active: true });
+        } else {
+          this.setState({ gx: px * 100, gy: py * 100, active: true });
+        }
+        return;
+      }
+      this.setState({ rx: (py - 0.5) * 24, ry: (0.5 - px) * 30, gx: px * 100, gy: py * 100, active: true });
+    };
+    this.onLeave = () => {
+      if (this.mode() === 'drag') {
+        if (!this.state.drag) this.setState({ active: false });
+        return;
+      }
+      this.setState({ rx: 0, ry: 0, active: false });
+    };
+    this.onDown = (e) => {
+      if (this.mode() !== 'drag') return;
+      this.ds = { x: e.clientX, y: e.clientY, rx: this.state.rx, ry: this.state.ry };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (err) {
+        this.ds.free = true;
+      }
+      this.setState({ drag: true, active: true });
+    };
+    this.onUp = (e) => {
+      if (!this.state.drag) return;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (err) {
+        this.ds = null;
+      }
+      this.setState({ drag: false, active: false });
+    };
+  }
+
+  mode() {
+    const m = this.props.interactive;
+    return m === 'drag' || m === 'none' ? m : 'tilt';
+  }
+
+  componentDidMount() {
+    if (super.componentDidMount) super.componentDidMount();
+    this.syncSpin();
+  }
+
+  componentDidUpdate(prev, prevState, snap) {
+    if (super.componentDidUpdate) super.componentDidUpdate(prev, prevState, snap);
+    if (!!prev.spin !== !!this.props.spin) this.syncSpin();
+    if (!!prev.flip !== !!this.props.flip || prev.resetKey !== this.props.resetKey) {
+      this.setState({ rx: 0, ry: 0, spin: 0 });
+    }
+  }
+
+  componentWillUnmount() {
+    if (super.componentWillUnmount) super.componentWillUnmount();
+    this.stopSpin();
+  }
+
+  syncSpin() {
+    if (this.props.spin) {
+      if (this.raf) return;
+      let last = 0;
+      const tick = (t) => {
+        const dt = last ? Math.min(64, t - last) : 16;
+        last = t;
+        if (!this.state.drag) this.setState((st) => ({ spin: (st.spin + dt * 0.036) % 360 }));
+        this.raf = requestAnimationFrame(tick);
+      };
+      this.raf = requestAnimationFrame(tick);
+    } else {
+      this.stopSpin();
+    }
+  }
+
+  stopSpin() {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = null;
+  }
+
+  mix(a, b, t) {
+    const pa = parseInt(a.slice(1), 16);
+    const pb = parseInt(b.slice(1), 16);
+    const ch = (sh) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+    return '#' + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1);
+  }
+
+  build(variant, frame, art, element, rarity, radius) {
+    const f = (n) => Math.round(n * 10) / 10;
+    const C = (cx, cy, r) => 'M' + f(cx - r) + ' ' + f(cy) + 'a' + r + ' ' + r + ' 0 1 0 ' + f(2 * r) + ' 0a' + r + ' ' + r + ' 0 1 0 ' + f(-2 * r) + ' 0Z';
+    const S = (cx, cy, n, r1, r2, rot) => {
+      let d = '';
+      const a0 = (rot === undefined ? -90 : rot) * Math.PI / 180;
+      for (let i = 0; i < n * 2; i++) {
+        const r = i % 2 === 0 ? r1 : r2;
+        const a = a0 + i * Math.PI / n;
+        d += (i === 0 ? 'M' : 'L') + f(cx + r * Math.cos(a)) + ' ' + f(cy + r * Math.sin(a));
+      }
+      return d + 'Z';
+    };
+    const R = (cx, cy, n, r1, r2, rot, r3) => {
+      let d = '';
+      for (let i = 0; i < n; i++) {
+        const a = ((rot || 0) + i * 360 / n) * Math.PI / 180;
+        const re = r3 !== undefined && i % 2 === 1 ? r3 : r2;
+        d += 'M' + f(cx + r1 * Math.cos(a)) + ' ' + f(cy + r1 * Math.sin(a)) + 'L' + f(cx + re * Math.cos(a)) + ' ' + f(cy + re * Math.sin(a));
+      }
+      return d;
+    };
+    const WR = (cx, cy, n, r1, r2, rot) => {
+      let d = '';
+      for (let i = 0; i < n; i++) {
+        const a = ((rot || 0) + i * 360 / n) * Math.PI / 180;
+        const ux = Math.cos(a);
+        const uy = Math.sin(a);
+        const P = (r, o) => f(cx + ux * r - uy * o) + ' ' + f(cy + uy * r + ux * o);
+        const m = (r2 - r1) / 3;
+        d += 'M' + P(r1, 0) + 'C' + P(r1 + m, 4.5) + ' ' + P(r1 + 2 * m, -4.5) + ' ' + P(r2, 0);
+      }
+      return d;
+    };
+    const W = (x0, x1, y, amp, len) => {
+      let d = 'M' + x0 + ' ' + y;
+      for (let x = x0; x < x1; x += len) {
+        d += 'q' + f(len / 4) + ' ' + (-amp) + ' ' + f(len / 2) + ' 0t' + f(len / 2) + ' 0';
+      }
+      return d;
+    };
+    const D = (x, y, s) => 'M' + x + ' ' + f(y - s * 1.5) + 'C' + f(x + s * 0.5) + ' ' + f(y - s * 0.5) + ' ' + f(x + s) + ' ' + f(y - s * 0.1) + ' ' + f(x + s) + ' ' + f(y + s * 0.3) + 'A' + s + ' ' + s + ' 0 0 1 ' + f(x - s) + ' ' + f(y + s * 0.3) + 'C' + f(x - s) + ' ' + f(y - s * 0.1) + ' ' + f(x - s * 0.5) + ' ' + f(y - s * 0.5) + ' ' + x + ' ' + f(y - s * 1.5) + 'Z';
+    const RR = (x, y, w, h, r) => 'M' + (x + r) + ' ' + y + 'H' + (x + w - r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + w) + ' ' + (y + r) + 'V' + (y + h - r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + w - r) + ' ' + (y + h) + 'H' + (x + r) + 'A' + r + ' ' + r + ' 0 0 1 ' + x + ' ' + (y + h - r) + 'V' + (y + r) + 'A' + r + ' ' + r + ' 0 0 1 ' + (x + r) + ' ' + y + 'Z';
+    const HX = (cx, cy, r) => {
+      let d = '';
+      for (let i = 0; i < 6; i++) {
+        const a = (-90 + i * 60) * Math.PI / 180;
+        d += (i ? 'L' : 'M') + f(cx + r * Math.cos(a)) + ' ' + f(cy + r * Math.sin(a));
+      }
+      return d + 'Z';
+    };
+    const DI = (cx, cy, r) => 'M' + cx + ' ' + (cy - r) + 'L' + (cx + r) + ' ' + cy + 'L' + cx + ' ' + (cy + r) + 'L' + (cx - r) + ' ' + cy + 'Z';
+    const dots = (list, r) => list.map((q) => C(q[0], q[1], r || 0.9)).join('');
+
+    const ART = {
+      hvezda: () => ({
+        glow: C(150, 176, 80),
+        fill: S(150, 176, 8, 44, 13) + [[82, 114], [222, 110], [62, 200], [240, 204], [98, 262], [204, 266], [150, 288]].map((q) => S(q[0], q[1], 4, 8, 2.3)).join(''),
+        line: C(150, 176, 50) + 'M14 322Q92 300 150 310T290 300M228 304C227 296 228 290 230 282M229 293Q219 285 214 289Q221 295 229 293ZM229 287Q238 277 244 281Q238 289 229 287Z',
+        thin: R(150, 176, 16, 58, 94, 11.25, 78) + W(10, 292, 340, 3, 24) + W(16, 292, 356, 2.6, 22) + W(10, 292, 372, 2.2, 20) + W(18, 292, 388, 1.8, 18) + W(10, 292, 404, 1.4, 16),
+        dots: dots([[60, 92], [110, 88], [196, 86], [248, 98], [46, 150], [256, 150], [120, 228], [184, 232], [72, 250], [236, 250], [52, 284], [262, 280], [128, 122], [178, 124], [90, 160], [214, 160]])
+      }),
+      mesic: () => ({
+        glow: C(150, 170, 78),
+        fill: 'M150 126A44 44 0 0 0 150 214A56 56 0 0 1 150 126Z' + D(100, 238, 4) + D(200, 234, 4) + D(124, 260, 3.4) + D(176, 262, 3.4) + D(150, 248, 4.4),
+        line: 'M48 330V252h7v-7h7v7h7v-7h7v7h7v-7h7v7V330M210 330V252h7v-7h7v7h7v-7h7v7h7v-7h7v7V330M136 420C128 398 170 386 156 364C146 348 160 332 152 314M166 420C160 398 188 386 170 364C160 348 168 332 158 314',
+        thin: C(150, 170, 44) + R(150, 170, 24, 52, 64, 7.5, 58) + 'M10 314Q150 300 290 314M65 268h8v14h-8ZM227 268h8v14h-8Z' + W(10, 292, 394, 2.4, 22) + W(16, 292, 406, 2, 20) + W(10, 292, 418, 1.6, 18),
+        dots: dots([[62, 94], [238, 96], [48, 150], [254, 146], [92, 120], [208, 118], [70, 210], [232, 206], [118, 296], [186, 292]])
+      }),
+      slunce: () => ({
+        glow: C(150, 178, 86),
+        fill: C(150, 178, 30) + C(82, 302, 5.5) + C(150, 296, 6) + C(218, 302, 5.5),
+        line: C(150, 178, 40) + R(150, 178, 16, 48, 88, 0) + 'M10 318H290M10 342H290' + S(82, 302, 12, 14, 8.5) + S(150, 296, 12, 15, 9) + S(218, 302, 12, 14, 8.5),
+        thin: WR(150, 178, 16, 48, 78, 11.25) + 'M10 330H290M54 318V330M94 318V330M134 318V330M174 318V330M214 318V330M254 318V330M34 330V342M74 330V342M114 330V342M154 330V342M194 330V342M234 330V342M274 330V342' + W(10, 292, 364, 2, 22) + W(16, 292, 380, 1.8, 20) + W(10, 292, 396, 1.6, 18) + W(16, 292, 412, 1.4, 16),
+        dots: dots([[58, 96], [242, 96], [46, 250], [256, 250], [90, 262], [212, 262]])
+      }),
+      mag: () => ({
+        glow: C(150, 150, 74),
+        fill: C(150, 131, 4.5) + C(150, 252, 4) + C(210, 259, 2.2) + S(126, 282, 5, 8, 3.2),
+        line: 'M150 96C140 84 118 84 118 96C118 108 140 108 150 96C160 84 182 84 182 96C182 108 160 108 150 96ZM150 136V248M54 294H246V302H54ZM64 302V344M236 302V344M80 266H100Q100 280 90 283Q80 280 80 266ZM90 283V292M83 292H97M172 258V292M164 285H180M210 261V292M210 270L204 265M210 279L216 274' + C(126, 282, 10),
+        thin: R(150, 131, 12, 10, 28, 0, 20) + [66, 100, 134, 168, 202, 236].map((x) => C(x, 386, 7) + C(x, 386, 3) + 'M' + (x - 14) + ' 400Q' + (x - 7) + ' 392 ' + x + ' 400').join('') + W(10, 292, 414, 1.6, 18),
+        dots: dots([[60, 100], [240, 100], [48, 170], [252, 170], [86, 220], [214, 220], [110, 150], [190, 150]])
+      }),
+      oracle: () => ({
+        glow: C(150, 262, 70),
+        fill: 'M150 92A16 16 0 0 0 150 124A20 20 0 0 1 150 92ZM150 336C160 336 164 344 162 350C158 358 142 358 138 350C136 344 140 336 150 336Z' + C(150, 258, 4),
+        line: 'M40 318H260M150 336C150 312 150 290 150 264M150 292C136 282 122 284 116 292C126 300 140 300 150 292ZM150 278C164 268 178 270 184 278C174 286 160 286 150 278Z',
+        thin: C(150, 300, 42) + C(150, 300, 66) + C(150, 300, 90) + 'M150 356C146 370 140 378 132 388M150 356C154 372 162 380 170 392M150 356V398',
+        dots: dots([[70, 110], [230, 104], [96, 150], [206, 146], [60, 200], [242, 196]])
+      }),
+      bestie: () => ({
+        glow: C(152, 136, 74),
+        under: 'M54 174C58.5 174 58.5 190 54 190C49.5 190 49.5 174 54 174ZM236 176C240.5 176 240.5 192 236 192C231.5 192 231.5 176 236 176Z',
+        fill: 'M150 88C176 108 186 134 176 154C168 170 140 174 129 161C116 146 122 124 137 111C143 105 148 99 150 88Z',
+        line: 'M131 163C111 181 95 175 83 189C75 199 81 211 93 209M46 236Q48 210 54 190M58 236Q58 216 64 202M246 236Q242 212 236 192M258 236Q258 218 262 204',
+        thin: 'M10 196C70 186 110 204 150 196S230 186 290 196' + W(10, 292, 210, 1.6, 18) + 'M60 222H96M120 228H170M196 220H238',
+        dots: dots([[98, 108], [206, 96], [222, 150], [80, 140], [190, 186], [116, 198], [240, 120]], 1.7),
+        core: C(152, 141, 12.5),
+        eyes: C(146.5, 141, 2.3) + C(158.5, 141, 2.3)
+      }),
+      hrdina: () => ({
+        glow: C(150, 168, 80),
+        under: 'M95 231L203 93L206 90L205 96L99 234ZM96 212L115 228M97 233L89 243M205 231L97 93L94 90L95 96L201 234ZM204 212L185 228M203 233L211 243' + C(87, 245, 3) + C(213, 245, 3),
+        fill: 'M124 134H176V168C176 192 162 204 150 212C138 204 124 192 124 168Z',
+        line: 'M124 134H176V168C176 192 162 204 150 212C138 204 124 192 124 168Z' + C(150, 154, 7) + 'M150 161V192M150 178H158M150 186H156',
+        thin: 'M58 250V156A92 92 0 0 1 242 156V250M78 250V162A72 72 0 0 1 222 162V250M100 112V250M120 98V250M140 92V250M160 92V250M180 98V250M200 112V250M82 140H218M78 196H222M78 226H222',
+        dots: dots([[60, 96], [240, 92], [44, 160], [256, 156], [70, 214], [232, 210]], 1.3)
+      })
+    };
+
+    const tcg = variant === 'bestie' || variant === 'hrdina';
+    const br = Math.max(3, radius - 6);
+    const br2 = Math.max(2, radius - 10);
+    const g = { win: '', border: '', border2: '', plaque: '', panel: '', acc: '', acc2: '', corner: '', cornerF: '', ornS: '', ornF: '', icoF: '', icoS: '', sicoF: '', sicoS: '', rarF: '', rarO: '' };
+    const backTcg = {
+      line: RR(8, 8, 284, 403, br) + RR(16, 16, 268, 387, br2) + C(150, 190, 58) + C(150, 190, 66),
+      thin: R(150, 190, 32, 72, 86, 0) + C(150, 190, 94) + RR(26, 26, 248, 367, 4),
+      fill: S(150, 190, 8, 46, 18) + DI(40, 40, 5) + DI(260, 40, 5) + DI(40, 379, 5) + DI(260, 379, 5),
+      dark: C(150, 190, 9)
+    };
+    let a;
+    let b;
+    if (!tcg) {
+      const WIN = {
+        secese: 'M34 420L34 190A116 116 0 0 1 266 190L266 420Z',
+        gotika: 'M34 420L34 232A170 170 0 0 1 150 70.8A170 170 0 0 1 266 232L266 420Z',
+        deco: 'M34 420L34 96L46 96L46 84L58 84L58 72L242 72L242 84L254 84L254 96L266 96L266 420Z',
+        minimal: 'M34 420L34 72L266 72L266 420Z'
+      };
+      const PLQ = {
+        secese: 'M58 438H242L256 457L242 476H58L44 457Z',
+        gotika: 'M64 438H236Q258 457 236 476H64Q42 457 64 438Z',
+        deco: 'M50 438H250V476H50Z',
+        minimal: 'M84 474H216'
+      };
+      const CRN = {
+        secese: ['M24 74C24 46 46 24 74 24M32 56C32 42 42 32 56 32C50 36 44 42 42 50M74 24C82 18 90 20 94 26M24 74C18 82 20 90 26 94', C(31, 31, 2.4) + 'M94 26Q100 22 104 27Q99 31 94 26ZM26 94Q22 100 27 104Q31 99 26 94Z'],
+        gotika: ['M24 70Q24 24 70 24M24 50Q24 24 50 24', C(37, 37, 3.2) + C(46, 31, 2) + C(31, 46, 2)],
+        deco: ['M24 64V24H64M30 54V30H54M36 44V36H44', 'M24 24H30V30H24Z'],
+        minimal: ['M24 44V24H44', '']
+      };
+      const ORS = {
+        secese: 'M60 44H94M206 44H240',
+        gotika: 'M64 44Q80 37 95 44M205 44Q220 37 236 44',
+        deco: 'M54 40H95M58 48H95M205 40H246M205 48H242',
+        minimal: ''
+      };
+      const ORF = {
+        secese: DI(102, 44, 3.4) + DI(198, 44, 3.4) + C(54, 44, 1.6) + C(246, 44, 1.6),
+        gotika: DI(102, 44, 3.4) + DI(198, 44, 3.4),
+        deco: DI(102, 44, 3.4) + DI(198, 44, 3.4),
+        minimal: ''
+      };
+      g.win = WIN[frame];
+      g.border = RR(12, 12, 276, 490, br);
+      g.border2 = RR(18, 18, 264, 478, br2);
+      g.plaque = variant === 'orakulum' ? '' : PLQ[frame];
+      g.corner = CRN[frame][0];
+      g.cornerF = CRN[frame][1];
+      if (variant === 'orakulum') {
+        g.ornS = 'M98 466H140M160 466H202M126 44H140M160 44H174';
+        g.ornF = S(150, 44, 4, 6.5, 2) + DI(150, 466, 3);
+      } else {
+        g.ornS = ORS[frame];
+        g.ornF = ORF[frame];
+      }
+      a = variant === 'orakulum' ? ART.oracle() : ART[art]();
+      let ring = '';
+      for (let i = 0; i < 12; i++) {
+        const an = (15 + i * 30) * Math.PI / 180;
+        ring += S(150 + 78 * Math.cos(an), 257 + 78 * Math.sin(an), 4, 5, 1.6);
+      }
+      b = {
+        line: RR(12, 12, 276, 490, br) + RR(18, 18, 264, 478, br2) + C(150, 257, 64) + C(150, 257, 104),
+        thin: RR(30, 30, 240, 454, 3) + C(150, 257, 36) + C(150, 257, 92) + R(150, 257, 24, 18, 30, 0, 25) + R(150, 257, 12, 108, 124, 15) + R(150, 257, 12, 68, 88, 0),
+        fill: C(150, 257, 11) + ring + 'M136 128A14 14 0 0 0 164 128A18 18 0 0 1 136 128ZM136 386A14 14 0 0 1 164 386A18 18 0 0 0 136 386Z' + S(44, 44, 4, 8, 2.4) + S(256, 44, 4, 8, 2.4) + S(44, 470, 4, 8, 2.4) + S(256, 470, 4, 8, 2.4),
+        dark: ''
+      };
+    } else if (variant === 'bestie') {
+      g.win = 'M34 52H266L278 64V224L266 236H34L22 224V64Z';
+      g.border = RR(8, 8, 284, 403, br);
+      g.border2 = RR(14, 14, 272, 391, br2);
+      g.plaque = 'M40 226H260L270 242L260 258H40L30 242Z';
+      g.panel = RR(22, 280, 256, 80, 6);
+      g.acc = C(150, 32, 16) + DI(254, 300, 11) + DI(254, 340, 11);
+      g.acc2 = RR(34, 368, 70, 22, 11) + RR(115, 368, 70, 22, 11) + RR(196, 368, 70, 22, 11);
+      g.corner = 'M18 36V18H36';
+      g.ornS = 'M84 32H130M170 32H216M34 320H266';
+      const ICO = {
+        mlha: ['', W(142, 157, 26.5, 1.5, 5) + W(142, 157, 32, 1.5, 5) + W(142, 157, 37.5, 1.5, 5)],
+        ohen: ['M150 21C156 27 159 31 157 36C156 40 152 43 150 43C146 43 142 40 143 35C144 32 146 31 147 27C149 30 150 32 150 34C152 30 152 26 150 21Z', ''],
+        les: ['M141 41C141 29 149 22 159 23C160 33 152 41 141 41Z', ''],
+        blesk: ['M152 20L142 34H149L146 44L157 29H150Z', ''],
+        stin: ['M154 23A9 9 0 0 0 154 41A12 12 0 0 1 154 23Z', '']
+      };
+      g.icoF = ICO[element][0];
+      g.icoS = ICO[element][1];
+      g.sicoF = 'M50 384C44.5 380 44 375.5 46.5 374.5C48.2 373.8 49.4 375 50 376.2C50.6 375 51.8 373.8 53.5 374.5C56 375.5 55.5 380 50 384Z';
+      g.sicoS = 'M127 383L136 374M127 379L131 383M125.5 384.5L127 383M207 373.5H217V378.5C217 381.5 214.5 383.5 212 384.5C209.5 383.5 207 381.5 207 378.5Z';
+      let rf = '';
+      let ro = '';
+      for (let i = 0; i < 5; i++) {
+        const stp = S(222 + i * 10, 32, 5, 4.4, 1.8);
+        if (i < rarity) rf += stp;
+        else ro += stp;
+      }
+      g.rarF = rf;
+      g.rarO = ro;
+      a = ART.bestie();
+      b = backTcg;
+    } else {
+      g.win = 'M30 70H270L278 78V242L270 250H30L22 242V78Z';
+      g.border = RR(8, 8, 284, 403, br);
+      g.border2 = RR(14, 14, 272, 391, br2);
+      g.plaque = 'M22 24H222L230 38.5L222 53H22Z';
+      g.panel = RR(22, 262, 256, 94, 4);
+      g.acc = HX(256, 38, 17);
+      g.acc2 = HX(100, 382, 15) + HX(150, 382, 15) + HX(200, 382, 15);
+      g.corner = 'M18 36V18H36';
+      a = ART.hrdina();
+      b = backTcg;
+    }
+    a = Object.assign({ glow: '', under: '', fill: '', line: '', thin: '', dots: '', core: '', eyes: '' }, a);
+    return { g: g, a: a, b: b };
+  }
+
+  renderVals() {
+    const p = this.props;
+    const s = this.state;
+    const pick = (val, list, def) => (list.indexOf(val) >= 0 ? val : def);
+    const num = (val, def) => {
+      const n = Number(val);
+      return val === undefined || val === null || val === '' || isNaN(n) ? def : n;
+    };
+    const txt = (val, def) => (val === undefined || val === null || val === '' ? def : String(val));
+    const on = (val) => (val === undefined || val === null ? true : !!val);
+    const f1 = (n) => Math.round(n * 10) / 10;
+    const em = (n) => n.toFixed(3) + 'em';
+    const mode = this.mode();
+
+    const variant = pick(p.variant, ['tarot', 'bestie', 'hrdina', 'orakulum'], 'tarot');
+    const tcg = variant === 'bestie' || variant === 'hrdina';
+    const H = tcg ? 419 : 514;
+    const art = pick(p.art, ['hvezda', 'mesic', 'slunce', 'mag'], 'hvezda');
+    const frame = pick(p.frame, ['secese', 'deco', 'gotika', 'minimal'], variant === 'orakulum' ? 'minimal' : 'secese');
+    const palette = pick(p.palette, ['pulnoc', 'krev', 'smaragd', 'pergamen'], variant === 'orakulum' ? 'pergamen' : 'pulnoc');
+    const element = pick(p.element, ['mlha', 'ohen', 'les', 'blesk', 'stin'], 'mlha');
+    const foil = pick(p.foil, ['zadna', 'zlata', 'duha', 'kosmos'], 'zlata');
+    const surface = pick(p.surface, ['mat', 'saten', 'lesk'], 'saten');
+    const edge = pick(p.edge, ['zlata', 'cerna', 'bila', 'ram'], tcg ? 'cerna' : variant === 'orakulum' ? 'bila' : 'zlata');
+    const rarity = Math.max(0, Math.min(5, Math.round(num(p.rarity, 3))));
+    const radius = Math.max(0, Math.min(30, num(p.radius, 14)));
+    const thick = Math.max(0.5, Math.min(10, num(p.thick, 4)));
+    const I = Math.max(0, Math.min(100, num(p.foilI, 65))) / 100;
+    const depth = Math.max(0, Math.min(100, num(p.depth, 55))) / 100;
+    const light = Math.max(0, Math.min(100, num(p.light, 30)));
+    const showArt = on(p.showArt);
+    const showFrame = on(p.showFrame);
+    const showText = on(p.showText);
+    const showFoil = on(p.showFoil);
+    const emboss = on(p.emboss);
+    const shadow = on(p.shadow);
+
+    const key = [variant, frame, art, element, rarity, radius].join('|');
+    if (key !== this.cacheKey) {
+      this.cacheKey = key;
+      this.cache = this.build(variant, frame, art, element, rarity, radius);
+    }
+    const geo = this.cache;
+
+    const PAL = {
+      pulnoc: { base: '#14112a', sky0: '#241d4d', sky1: '#100d22', g0: '#7d5f28', g1: '#d6b067', g2: '#fff3cf', ink: '#f1e6c8', glow: '#d6b067', light: false },
+      krev: { base: '#230a11', sky0: '#43141f', sky1: '#17060b', g0: '#7e5523', g1: '#dca55a', g2: '#ffe9c2', ink: '#f4e0cb', glow: '#e08a5a', light: false },
+      smaragd: { base: '#0b1f1b', sky0: '#163a31', sky1: '#081512', g0: '#76612c', g1: '#d3b56f', g2: '#fbf1cc', ink: '#e9e4cb', glow: '#7fd1b6', light: false },
+      pergamen: { base: '#ece1c8', sky0: '#f6efde', sky1: '#e0cfab', g0: '#2b1d10', g1: '#4b3520', g2: '#c0913d', ink: '#3b2a19', glow: '#c0913d', light: true }
+    };
+    const EL = {
+      mlha: { c: '#5fc4b8', d: '#123634', l: '#c4f3ec', n: 'Mlha' },
+      ohen: { c: '#ee7a45', d: '#3e170b', l: '#ffd9c2', n: 'Oheň' },
+      les: { c: '#7cbf5a', d: '#183012', l: '#dcf3cc', n: 'Les' },
+      blesk: { c: '#e6c548', d: '#352c0b', l: '#fff2be', n: 'Blesk' },
+      stin: { c: '#a58be6', d: '#21183b', l: '#e6dcff', n: 'Stín' }
+    };
+    const P = PAL[palette];
+    const E = EL[element];
+    const ids = { gold: this.uid + 'g', sky: this.uid + 's', glow: this.uid + 'w', clip: this.uid + 'c', emb: this.uid + 'e' };
+    const goldUrl = 'url(#' + ids.gold + ')';
+    let c;
+    if (!tcg) {
+      c = { base: P.base, backBase: P.base, sky0: P.sky0, sky1: P.sky1, g0: P.g0, g1: P.g1, g2: P.g2, glow: P.glow, fill: goldUrl, line: goldUrl, thin: goldUrl, under: goldUrl, dots: P.ink, eyes: 'none', border2: goldUrl, plaque: P.base, panelFill: 'none', panelStroke: 'none', acc: 'none', acc2: 'none', ico: 'none', sico: 'none', txt: P.g1, light: P.light };
+    } else if (variant === 'bestie') {
+      c = { base: '#15171c', backBase: '#14161b', sky0: E.d, sky1: '#0b0c10', g0: '#6f5626', g1: '#c9a862', g2: '#fff0c6', glow: E.c, fill: E.l, line: E.l, thin: E.c, under: E.l, dots: E.l, eyes: E.d, border2: E.c, plaque: '#15171c', panelFill: '#1c1f26', panelStroke: this.mix(E.c, '#15171c', 0.45), acc: E.d, acc2: '#1c1f26', ico: E.l, sico: '#d9bb78', txt: '#d9bb78', light: false };
+    } else {
+      c = { base: '#1a1512', backBase: '#16130f', sky0: '#3b2a1f', sky1: '#120d0a', g0: '#6f5626', g1: '#c9a862', g2: '#fff0c6', glow: '#e0a85a', fill: '#8e2a36', line: goldUrl, thin: goldUrl, under: goldUrl, dots: '#e9c98a', eyes: 'none', border2: '#5d4a33', plaque: '#1a1512', panelFill: '#e9dfc7', panelStroke: goldUrl, acc: '#8e2a36', acc2: '#2a211c', ico: 'none', sico: 'none', txt: '#d9bb78', light: false };
+    }
+
+    const EDGE = {
+      zlata: ['#6f5424', '#9a7637', '#c49a4f', '#dfbd73', '#f0d796', '#f0d796', '#dfbd73', '#c49a4f', '#9a7637', '#6f5424'],
+      cerna: ['#050506', '#0c0c0f', '#141418', '#1b1b20', '#212127', '#212127', '#1b1b20', '#141418', '#0c0c0f', '#050506'],
+      bila: ['#b5ad9d', '#c8c0b0', '#d9d2c3', '#e6e0d2', '#efeadf', '#efeadf', '#e6e0d2', '#d9d2c3', '#c8c0b0', '#b5ad9d']
+    };
+    const shade = [0.55, 0.4, 0.25, 0.1, 0, 0, 0.1, 0.25, 0.4, 0.55];
+    const ec = edge === 'ram' ? shade.map((t) => this.mix(c.base, '#000000', t)) : EDGE[edge];
+    const half = thick / 32;
+    const e = {};
+    for (let i = 0; i < 10; i++) {
+      e['c' + i] = ec[i];
+      e['z' + i] = (-half * 0.94 + i * (half * 1.88 / 9)).toFixed(3) + 'em';
+    }
+
+    const ARTS = { hvezda: ['Hvězda', 'XVII'], mesic: ['Měsíc', 'XVIII'], slunce: ['Slunce', 'XIX'], mag: ['Mág', 'I'] };
+    const DEF_TITLE = { tarot: ARTS[art][0], orakulum: 'Trpělivost', bestie: 'Bludička', hrdina: 'Strážkyně brány' };
+    const DEF_SUB = { tarot: '', orakulum: 'Co má vyrůst, nespěchá.', bestie: 'bažinný přízrak · ' + E.n, hrdina: 'Brána se otevře jen tomu, kdo zná heslo.' };
+    const title = txt(p.cardTitle, DEF_TITLE[variant]);
+    const subtitle = txt(p.subtitle, DEF_SUB[variant]);
+    const FONTS = {
+      cinzel: ["'Cinzel', Georgia, serif", 600, 1],
+      cormorant: ["'Cormorant Garamond', Georgia, serif", 700, 1.12],
+      aboreto: ["'Aboreto', 'Cinzel', Georgia, serif", 400, 0.92],
+      gotika: ["'Grenze Gotisch', Georgia, serif", 600, 1.08]
+    };
+    const F = FONTS[p.font] || FONTS.cinzel;
+    const len = Math.max(1, title.length);
+    const tLs = len > 10 ? 0.08 : 0.18;
+    const tFs = Math.min(1.14 * F[2], 12.4 / (len * (0.74 + tLs)));
+    const nameFs = Math.min(1.0 * F[2], 11.2 / (len * 0.86));
+    const heroFs = Math.min(0.92 * F[2], 11 / (len * 0.78));
+    const subFs = Math.min(0.66, 14 / (Math.max(1, subtitle.length) * 0.42));
+
+    const active = s.active || s.drag;
+    const rad = Math.PI / 180;
+    const sy = Math.sin((s.ry + s.spin) * rad);
+    const sx = Math.sin(s.rx * rad);
+    const gx = active ? s.gx : Math.max(0, Math.min(100, light + 35 * sy));
+    const gy = active ? s.gy : 24;
+    const rotY = s.ry + s.spin + (p.flip ? 180 : 0);
+    const lift = active && mode === 'tilt' ? 0.7 : 0;
+    const hl = foil === 'zadna' ? 0.12 : foil === 'zlata' ? 0.55 + 0.45 * I : 0.3 + 0.3 * I;
+    const shift = (gx / 100) * 300;
+    const holoBase = foil === 'duha' ? 0.16 + 0.44 * I : foil === 'kosmos' ? 0.08 + 0.22 * I : 0;
+    const holoO = holoBase * (c.light ? 0.45 : 1) * (active ? 1 : 0.7) * (showFoil ? 1 : 0);
+    const spO = foil === 'kosmos' && showFoil ? (0.3 + 0.6 * I) * (0.55 + 0.45 * Math.abs(Math.sin((s.ry + s.rx + s.spin) * rad * 3))) : 0;
+    const ga = (surface === 'mat' ? 0.14 : surface === 'lesk' ? 0.62 : 0.34) * (active ? 1 : 0.55);
+    const KIND = { tarot: 'tarotová karta', bestie: 'karta bytosti', hrdina: 'karta hrdiny', orakulum: 'věštecká karta' };
+
+    const v = {
+      pad: num(p.pad, 28),
+      ar: tcg ? '300 / 419' : '300 / 514',
+      H: H,
+      touch: mode === 'drag' ? 'none' : 'pan-y',
+      cursor: mode === 'drag' ? (s.drag ? 'grabbing' : 'grab') : 'default',
+      aria: title + ' – ' + KIND[variant] + (p.flip ? ', rubová strana' : ''),
+      tf: 'translateZ(' + lift + 'em) rotateX(' + s.rx.toFixed(2) + 'deg) rotateY(' + rotY.toFixed(2) + 'deg)',
+      tr: s.drag || p.spin ? 'none' : active ? 'transform 120ms ease-out' : 'transform 700ms cubic-bezier(.2,.8,.2,1)',
+      rad: em(radius / 16),
+      half: em(half),
+      e: e,
+      c: c,
+      g: geo.g,
+      a: geo.a,
+      b: geo.b,
+      idGold: ids.gold,
+      idSky: ids.sky,
+      idGlow: ids.glow,
+      idClip: ids.clip,
+      idEmb: ids.emb,
+      gx1: f1(shift - 230),
+      gx2: f1(shift + 230),
+      g0: c.g0,
+      g1: c.g1,
+      g2: this.mix(c.g1, c.g2, hl),
+      artO: showArt ? 1 : 0,
+      frameO: showFrame ? 1 : 0,
+      textO: showText ? 1 : 0,
+      embF: emboss ? 'url(#' + ids.emb + ')' : 'none',
+      pfx: f1(-sy * 14 * depth),
+      pfy: f1(sx * 14 * depth),
+      pbx: f1(-sy * 5 * depth),
+      pby: f1(sx * 5 * depth),
+      isTarot: variant === 'tarot',
+      isOracle: variant === 'orakulum',
+      isTarotLike: !tcg,
+      isBestie: variant === 'bestie',
+      isHrdina: variant === 'hrdina',
+      isTcg: tcg,
+      title: title,
+      numeral: txt(p.numeral, ARTS[art][1]),
+      subtitle: subtitle,
+      ff: F[0],
+      fw: F[1],
+      t: { top: variant === 'orakulum' ? '83.6%' : '85.2%', h: variant === 'orakulum' ? '5.6%' : '7.4%', fs: tFs.toFixed(3), ls: tLs },
+      nameFs: nameFs.toFixed(3),
+      heroFs: heroFs.toFixed(3),
+      subFs: subFs.toFixed(3),
+      el: E,
+      level: txt(p.level, '2'),
+      hp: txt(p.hp, '70'),
+      ab1: txt(p.ab1, variant === 'hrdina' ? 'Hradba' : 'Mámení'),
+      ab1p: txt(p.ab1p, '20'),
+      ab1t: txt(p.ab1t, variant === 'hrdina' ? 'Když vstoupí do hry, tvé ostatní bytosti získají +1 obranu.' : 'Soupeř příští kolo útočí naslepo.'),
+      ab2: txt(p.ab2, 'Bažinné světlo'),
+      ab2p: txt(p.ab2p, '50'),
+      ab2t: txt(p.ab2t, 'Odhoď kartu a zasáhni libovolnou bytost.'),
+      s1: txt(p.s1, variant === 'hrdina' ? '4' : '3'),
+      s2: txt(p.s2, variant === 'hrdina' ? '6' : '2'),
+      s3: txt(p.s3, '2'),
+      cost: txt(p.cost, '5'),
+      cls: txt(p.cls, 'Paladin · Legenda'),
+      author: txt(p.author, '@noctua'),
+      setNo: txt(p.setNo, variant === 'hrdina' ? 'ARK · 031/120' : 'ARK · 014/120'),
+      hx: f1(gx),
+      hy: f1(gy),
+      gx: f1(gx),
+      gy: f1(gy),
+      bgx: f1(100 - gx),
+      ga: ga.toFixed(3),
+      holoO: holoO.toFixed(3),
+      spO: spO.toFixed(3),
+      spPos: em(s.ry * 0.05 + s.spin * 0.02) + ' ' + em(-s.rx * 0.05) + ', ' + em(-s.ry * 0.03) + ' ' + em(s.rx * 0.04) + ', ' + em(s.ry * 0.08) + ' ' + em(s.rx * 0.02),
+      shX: f1(Math.max(-1.2, Math.min(1.2, -sy * 1.2))),
+      shS: (1 - Math.min(0.45, Math.abs(Math.sin(rotY * rad)) * 0.5)).toFixed(3),
+      shO: shadow ? (active ? 0.85 : 0.65) : 0
+    };
+    return { v: v, onMove: this.onMove, onLeave: this.onLeave, onDown: this.onDown, onUp: this.onUp };
+  }
+}
+</script>
+</body>
+</html>

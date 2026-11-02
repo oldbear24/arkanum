@@ -1,0 +1,55 @@
+/* Visual tokens from the design handover. */
+:root {
+  --bg: #0f0d1e;
+  --bg-stage: #0b0a17;
+  --panel: #13112a;
+  --panel-2: #16132b;
+  --panel-inset: #110f22;
+  --panel-toolbar: #17142c;
+  --field: #100e20;
+  --raised: #1d1936;
+  --option: #1b1833;
+  --option-on: #2a2552;
+  --layer-on: #221e40;
+
+  --line: #2b2650;
+  --line-strong: #3a3468;
+  --line-soft: #2e2950;
+  --line-accent: #4a4380;
+
+  --text: #efe6d0;
+  --text-2: #c4bbd6;
+  --text-3: #a49cbd;
+  --text-muted: #b9b0cc;
+  --text-lead: #d2c9e0;
+  --text-off: #8a83a6;
+
+  --gold: #d6b067;
+  --on-gold: #1b1405;
+  --link: #e6c37a;
+  --link-hover: #f6dfa8;
+  --gold-track: #8a6a2f;
+
+  --saved-dot: #7fd3a6;
+  --saved-text: #a6e3c2;
+  --saved-bg: #14261f;
+  --warn-dot: #e6c548;
+  --warn-text: #f2dd8c;
+  --warn-bg: #2a2410;
+  --danger-dot: #ee7a45;
+  --danger-text: #ffc2a3;
+  --danger-bg: #311810;
+
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: 'Jost', system-ui, sans-serif;
+
+  --page-max: 1280px;
+  --page-gutter: clamp(16px, 4vw, 48px);
+
+  --stars-image:
+    radial-gradient(circle at 18% 22%, rgba(239, 230, 208, 0.45) 0, rgba(239, 230, 208, 0.45) 1px, rgba(239, 230, 208, 0) 1.6px),
+    radial-gradient(circle at 63% 71%, rgba(214, 176, 103, 0.4) 0, rgba(214, 176, 103, 0.4) 1px, rgba(214, 176, 103, 0) 1.6px),
+    radial-gradient(circle at 82% 34%, rgba(239, 230, 208, 0.3) 0, rgba(239, 230, 208, 0.3) 0.8px, rgba(239, 230, 208, 0) 1.4px);
+  --stars-size: 240px 200px, 330px 270px, 190px 250px;
+}

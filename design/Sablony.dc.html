@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Arkánum – výběr šablony</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aboreto&amp;family=Cinzel:wght@500;600;700&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&amp;family=Grenze+Gotisch:wght@500;600&amp;family=Jost:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0f0d1e}
+a{color:#e6c37a}a:hover{color:#f6dfa8}
+:focus-visible{outline:2px solid #e6c37a;outline-offset:3px}
+</style>
+</helmet>
+<div style="min-height: 100vh; background-color: #0f0d1e; background-image: radial-gradient(circle at 18% 22%, rgba(239,230,208,0.45) 0, rgba(239,230,208,0.45) 1px, rgba(239,230,208,0) 1.6px), radial-gradient(circle at 63% 71%, rgba(214,176,103,0.4) 0, rgba(214,176,103,0.4) 1px, rgba(214,176,103,0) 1.6px), radial-gradient(circle at 82% 34%, rgba(239,230,208,0.3) 0, rgba(239,230,208,0.3) 0.8px, rgba(239,230,208,0) 1.4px); background-size: 240px 200px, 330px 270px, 190px 250px; color: #efe6d0; font-family: 'Jost', system-ui, sans-serif;">
+
+<header style="border-bottom: 1px solid #2b2650; background: rgba(15,13,30,0.88);">
+<div style="max-width: 1280px; margin: 0 auto; padding: 12px clamp(16px, 4vw, 48px); display: flex; align-items: center; flex-wrap: wrap; gap: 10px 28px;">
+<a href="Main.dc.html" aria-label="Arkánum – úvod" style="display: flex; align-items: center; gap: 12px; min-height: 44px; color: #efe6d0; text-decoration: none;">
+<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true" style="display: block;"><circle cx="16" cy="16" r="14.5" fill="none" stroke="#d6b067" stroke-width="1.2"></circle><path d="M16 4.5L18.2 13.8L27.5 16L18.2 18.2L16 27.5L13.8 18.2L4.5 16L13.8 13.8Z" fill="#d6b067"></path><circle cx="16" cy="16" r="2.2" fill="#0f0d1e"></circle></svg>
+<span style="font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 19px; letter-spacing: 0.22em;">ARKÁNUM</span>
+</a>
+<nav aria-label="Hlavní navigace" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: #c4bbd6; text-decoration: none; font-weight: 500; font-size: 15px;">Galerie</a>
+<a href="Sablony.dc.html" aria-current="page" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; background: #1d1936; color: #efe6d0; text-decoration: none; font-weight: 500; font-size: 15px;">Šablony</a>
+<a href="Dilna.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: #c4bbd6; text-decoration: none; font-weight: 500; font-size: 15px;">Dílna</a>
+</nav>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+<button type="button" aria-label="Hledat šablony" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2b2650; background: transparent; color: #c4bbd6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L20.5 20.5"></path></svg></button>
+<button type="button" aria-label="Můj účet" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #3a3468; background: #1d1936; color: #efe6d0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20C5.6 16.4 8.5 14.5 12 14.5S18.4 16.4 19.5 20"></path></svg></button>
+</div>
+</div>
+</header>
+
+<section aria-labelledby="sablony-h1" style="max-width: 1280px; margin: 0 auto; padding: 56px clamp(16px, 4vw, 48px) 28px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 40px;">
+<div style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+<p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: #d6b067;">Nová karta</p>
+<h1 id="sablony-h1" style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: clamp(34px, 4.4vw, 56px); line-height: 1.08;">Vyber šablonu</h1>
+<p style="margin: 0; max-width: 46ch; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 22px; line-height: 1.45; color: #d2c9e0;">Šablona určí formát, rozložení a pole, která karta potřebuje. Všechno ostatní – rám, barvy, fólii i písmo – pak doladíš v dílně.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{cats}}" as="o" hint-placeholder-count="3">
+<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; font-family: 'Jost', sans-serif; font-weight: 500; font-size: 15px; cursor: pointer;">{{o.label}}</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Rodiny šablon" style="max-width: 1280px; margin: 0 auto; padding: 8px clamp(16px, 4vw, 48px) 32px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(540px, 100%), 1fr)); gap: 24px;">
+<sc-for list="{{fams}}" as="fam" hint-placeholder-count="4">
+<article style="display: flex; flex-wrap: wrap; background: #16132b; border: 1px solid #2b2650; border-radius: 20px; overflow: hidden;">
+<div style="flex: 1 1 260px; min-width: 0; position: relative; min-height: 330px; background: #110f22;">
+<sc-for list="{{fam.cards}}" as="card" hint-placeholder-count="2">
+<div style="position: absolute; left: 50%; top: 50%; width: {{card.w}}; z-index: {{card.z}}; transform: translate(-50%, -50%) translateX({{card.dx}}) translateY({{card.dy}}) rotate({{card.rot}}deg);">
+<dc-import name="Karta" variant="{{card.variant}}" art="{{card.art}}" palette="{{card.palette}}" frame="{{card.frame}}" foil="{{card.foil}}" element="{{card.element}}" card-title="{{card.title}}" subtitle="{{card.subtitle}}" flip="{{card.flip}}" pad="{{ 0 }}" hint-size="100%,250px"></dc-import>
+</div>
+</sc-for>
+</div>
+<div style="flex: 1 1 260px; min-width: 0; padding: 26px 26px 28px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px;">
+<h2 style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: 28px;">{{fam.name}}</h2>
+<span style="font-size: 13px; color: #a49cbd;">{{fam.format}}</span>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.55; color: #c4bbd6;">{{fam.desc}}</p>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{fam.specs}}" as="spec" hint-placeholder-count="3">
+<li style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: #efe6d0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d6b067" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 18px; margin-top: 2px;"><path d="M5 12.5L10 17L19 7"></path></svg><span>{{spec.text}}</span></li>
+</sc-for>
+</ul>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 8px;">
+<a href="Dilna.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 24px; background: #d6b067; color: #1b1405; text-decoration: none; font-weight: 600; font-size: 15px;">Použít šablonu</a>
+</div>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="prazdna-nadpis" style="max-width: 1280px; margin: 0 auto; padding: 8px clamp(16px, 4vw, 48px) 40px;">
+<div style="display: flex; flex-wrap: wrap; gap: 32px; padding: clamp(20px, 3vw, 36px); border-radius: 20px; border: 1px dashed #4a4380; background: rgba(22,19,43,0.7);">
+<div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h2 id="prazdna-nadpis" style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: 28px;">Prázdná karta</h2>
+<p style="margin: 0; max-width: 52ch; font-size: 15px; line-height: 1.55; color: #c4bbd6;">Začni od nuly s vlastním formátem, vrstvami a poli. Hodí se pro herní prototypy, pozvánky i karty, pro které žádná šablona neexistuje.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #a49cbd;">Formát</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{formats}}" as="o" hint-placeholder-count="5">
+<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-height: 56px; padding: 6px 16px; border-radius: 12px; border: 1px solid {{o.bd}}; background: {{o.bg}}; color: {{o.fg}}; text-align: left; cursor: pointer;"><span style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 15px;">{{o.label}}</span><span style="font-family: 'Jost', sans-serif; font-size: 12px; color: #a49cbd;">{{o.dims}}</span></button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{fmt.custom}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 12px;">
+<div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 6px;">
+<label for="f-sirka" style="font-size: 14px; color: #c4bbd6;">Šířka v mm</label>
+<input id="f-sirka" type="number" min="30" max="200" value="{{fmt.cw}}" onChange="{{onCw}}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #3a3468; background: #100e20; color: #efe6d0; font-family: 'Jost', sans-serif; font-size: 15px;">
+</div>
+<div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 6px;">
+<label for="f-vyska" style="font-size: 14px; color: #c4bbd6;">Výška v mm</label>
+<input id="f-vyska" type="number" min="30" max="200" value="{{fmt.ch}}" onChange="{{onCh}}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #3a3468; background: #100e20; color: #efe6d0; font-family: 'Jost', sans-serif; font-size: 15px;">
+</div>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #a49cbd;">Orientace</h3>
+<div style="display: inline-flex; align-self: flex-start; gap: 4px; padding: 3px; border-radius: 26px; background: #0f0d1e; border: 1px solid #2b2650;">
+<sc-for list="{{orients}}" as="o" hint-placeholder-count="2">
+<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: {{o.bg}}; color: {{o.fg}}; font-family: 'Jost', sans-serif; font-weight: 500; font-size: 15px; cursor: pointer;">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px;">
+<a href="Dilna.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 24px; background: #d6b067; color: #1b1405; text-decoration: none; font-weight: 600; font-size: 15px;">Vytvořit prázdnou kartu</a>
+</div>
+</div>
+<div style="flex: 1 1 280px; min-width: 0; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;">
+<div style="box-sizing: border-box; width: {{fmt.pw}}px; max-width: 100%; aspect-ratio: {{fmt.ar}}; border-radius: 12px; border: 1.5px dashed #d6b067; background: #13112a; display: flex; align-items: center; justify-content: center;">
+<span style="font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: 15px; letter-spacing: 0.08em; color: #d6b067;">{{fmt.dims}}</span>
+</div>
+<p style="margin: 0; font-size: 13px; color: #a49cbd;">Náhled poměru stran</p>
+</div>
+</div>
+</section>
+
+<footer style="border-top: 1px solid #2b2650; margin-top: 32px;">
+<div style="max-width: 1280px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: #a49cbd;">
+<span style="font-family: 'Cinzel', Georgia, serif; font-weight: 600; letter-spacing: 0.22em; color: #c4bbd6;">ARKÁNUM</span>
+<span>Dílna vlastních karet · data a účty běží na PocketBase</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = Object.assign({}, this.state, { cat: 'vse', format: 'tarot', orient: 'vyska', cw: 80, ch: 125 });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const sel = (on) => ({ bg: on ? '#2a2552' : '#1b1833', bd: on ? '#d6b067' : '#2e2950', fg: on ? '#efe6d0' : '#c4bbd6', pressed: on ? 'true' : 'false' });
+    const FAMS = [
+      {
+        id: 'tarot', cat: 'vestecke', name: 'Tarot', format: '70 × 120 mm',
+        desc: 'Klasický věštecký balíček: 22 karet velké arkány a 56 malé. Římské číslování a souměrná rubová strana, aby obrácená karta nic neprozradila.',
+        specs: ['Číslo arkány a název', 'Význam ve vzpřímené i obrácené poloze', 'Čtyři rámy a čtyři palety'],
+        cards: [
+          { variant: 'tarot', art: 'mag', palette: 'krev', frame: 'gotika', foil: 'zlata', w: '126px', dx: '-66%', dy: '5%', rot: -12, z: 1 },
+          { variant: 'tarot', art: 'mesic', palette: 'smaragd', frame: 'deco', foil: 'kosmos', w: '126px', dx: '66%', dy: '5%', rot: 12, z: 1 },
+          { variant: 'tarot', art: 'hvezda', palette: 'pulnoc', frame: 'secese', foil: 'duha', w: '144px', dx: '0%', dy: '0%', rot: 0, z: 2 }
+        ]
+      },
+      {
+        id: 'bestie', cat: 'herni', name: 'Bestie', format: '63 × 88 mm',
+        desc: 'Bytosti pro vlastní karetní hru. Element určuje barvy rámu, schopnosti mají sílu a karta nese úroveň, raritu i číslo v sadě.',
+        specs: ['Element, životy, útok a obrana', 'Dvě schopnosti se silou', 'Rarita a číslo v sadě'],
+        cards: [
+          { variant: 'bestie', element: 'mlha', foil: 'kosmos', flip: true, w: '168px', dx: '30%', dy: '3%', rot: 9, z: 1 },
+          { variant: 'bestie', element: 'ohen', foil: 'duha', title: 'Světlonoška', subtitle: 'lampová víla · Oheň', w: '174px', dx: '-26%', dy: '0%', rot: -5, z: 2 }
+        ]
+      },
+      {
+        id: 'hrdina', cat: 'herni', name: 'Hrdina', format: '63 × 88 mm',
+        desc: 'Postavy pro RPG kampaně a deskovky. Cena v rohu, schopnost s citátem a tři vlastnosti, které se dají kdykoli přepočítat.',
+        specs: ['Cena, síla, obrana a magie', 'Schopnost a citát', 'Třída a rarita'],
+        cards: [
+          { variant: 'hrdina', foil: 'zlata', flip: true, w: '168px', dx: '30%', dy: '3%', rot: 9, z: 1 },
+          { variant: 'hrdina', foil: 'duha', w: '174px', dx: '-26%', dy: '0%', rot: -5, z: 2 }
+        ]
+      },
+      {
+        id: 'orakulum', cat: 'vestecke', name: 'Orákulum', format: '70 × 120 mm',
+        desc: 'Minimalistické karty s jedním slovem a krátkým poselstvím. Pro afirmace, denní výklady i dárkové balíčky.',
+        specs: ['Klíčové slovo a poselství', 'Výklad karty', 'Světlé i tmavé palety'],
+        cards: [
+          { variant: 'orakulum', palette: 'pulnoc', frame: 'secese', foil: 'zlata', title: 'Důvěra', subtitle: 'Nech věci dozrát.', w: '134px', dx: '34%', dy: '3%', rot: 9, z: 1 },
+          { variant: 'orakulum', palette: 'pergamen', frame: 'minimal', foil: 'zadna', w: '142px', dx: '-30%', dy: '0%', rot: -5, z: 2 }
+        ]
+      }
+    ];
+    const cats = [['vse', 'Vše'], ['vestecke', 'Věštecké'], ['herni', 'Herní']].map((o) => {
+      const on = st.cat === o[0];
+      return { label: o[1], pressed: on ? 'true' : 'false', pick: () => this.setState({ cat: o[0] }), bg: on ? '#d6b067' : 'transparent', fg: on ? '#1b1405' : '#c4bbd6', bd: on ? '#d6b067' : '#3a3468' };
+    });
+    const fams = FAMS.filter((f) => st.cat === 'vse' || f.cat === st.cat).map((f) => Object.assign({}, f, { specs: f.specs.map((t) => ({ text: t })) }));
+    const FORMATS = [['tarot', 'Tarot', 70, 120], ['tcg', 'Sběratelská', 63, 88], ['mini', 'Mini', 44, 68], ['ctverec', 'Čtvercová', 70, 70], ['vlastni', 'Vlastní', 0, 0]];
+    const formats = FORMATS.map((o) => Object.assign({ label: o[1], dims: o[2] ? o[2] + ' × ' + o[3] + ' mm' : 'zadej rozměry', pick: () => this.setState({ format: o[0] }) }, sel(st.format === o[0])));
+    const cur = FORMATS.filter((o) => o[0] === st.format)[0] || FORMATS[0];
+    const custom = cur[0] === 'vlastni';
+    let w = custom ? Math.max(30, Math.min(200, Number(st.cw) || 80)) : cur[2];
+    let hgt = custom ? Math.max(30, Math.min(200, Number(st.ch) || 125)) : cur[3];
+    if (st.orient === 'sirka' && w < hgt) {
+      const t = w;
+      w = hgt;
+      hgt = t;
+    }
+    if (st.orient === 'vyska' && w > hgt) {
+      const t = w;
+      w = hgt;
+      hgt = t;
+    }
+    const pw = Math.round(Math.min(340, 240 * w / hgt));
+    const fmt = { custom: custom, cw: st.cw, ch: st.ch, ar: w + ' / ' + hgt, pw: pw, dims: w + ' × ' + hgt + ' mm' };
+    const orients = [['vyska', 'Na výšku'], ['sirka', 'Na šířku']].map((o) => {
+      const on = st.orient === o[0];
+      return { label: o[1], pressed: on ? 'true' : 'false', pick: () => this.setState({ orient: o[0] }), bg: on ? '#2a2552' : 'transparent', fg: on ? '#efe6d0' : '#b9b0cc' };
+    });
+    return {
+      cats: cats,
+      fams: fams,
+      formats: formats,
+      orients: orients,
+      fmt: fmt,
+      onCw: (e) => this.setState({ cw: e.target.value }),
+      onCh: (e) => this.setState({ ch: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

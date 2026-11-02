@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+.env
+bin
+pb_data
+design
+docs
+web/node_modules
+web/dist
+web/test-results
+web/playwright-report

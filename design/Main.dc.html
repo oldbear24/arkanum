@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Arkánum – úvod a galerie</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aboreto&amp;family=Cinzel:wght@500;600;700&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&amp;family=Grenze+Gotisch:wght@500;600&amp;family=Jost:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0f0d1e}
+a{color:#e6c37a}a:hover{color:#f6dfa8}
+:focus-visible{outline:2px solid #e6c37a;outline-offset:3px}
+</style>
+</helmet>
+<div style="min-height: 100vh; background-color: #0f0d1e; background-image: radial-gradient(circle at 18% 22%, rgba(239,230,208,0.45) 0, rgba(239,230,208,0.45) 1px, rgba(239,230,208,0) 1.6px), radial-gradient(circle at 63% 71%, rgba(214,176,103,0.4) 0, rgba(214,176,103,0.4) 1px, rgba(214,176,103,0) 1.6px), radial-gradient(circle at 82% 34%, rgba(239,230,208,0.3) 0, rgba(239,230,208,0.3) 0.8px, rgba(239,230,208,0) 1.4px); background-size: 240px 200px, 330px 270px, 190px 250px; color: #efe6d0; font-family: 'Jost', system-ui, sans-serif;">
+
+<header style="border-bottom: 1px solid #2b2650; background: rgba(15,13,30,0.88);">
+<div style="max-width: 1280px; margin: 0 auto; padding: 12px clamp(16px, 4vw, 48px); display: flex; align-items: center; flex-wrap: wrap; gap: 10px 28px;">
+<a href="Main.dc.html" aria-label="Arkánum – úvod" style="display: flex; align-items: center; gap: 12px; min-height: 44px; color: #efe6d0; text-decoration: none;">
+<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true" style="display: block;"><circle cx="16" cy="16" r="14.5" fill="none" stroke="#d6b067" stroke-width="1.2"></circle><path d="M16 4.5L18.2 13.8L27.5 16L18.2 18.2L16 27.5L13.8 18.2L4.5 16L13.8 13.8Z" fill="#d6b067"></path><circle cx="16" cy="16" r="2.2" fill="#0f0d1e"></circle></svg>
+<span style="font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 19px; letter-spacing: 0.22em;">ARKÁNUM</span>
+</a>
+<nav aria-label="Hlavní navigace" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+<a href="Main.dc.html" aria-current="page" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; background: #1d1936; color: #efe6d0; text-decoration: none; font-weight: 500; font-size: 15px;">Galerie</a>
+<a href="Sablony.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: #c4bbd6; text-decoration: none; font-weight: 500; font-size: 15px;">Šablony</a>
+<a href="Dilna.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: #c4bbd6; text-decoration: none; font-weight: 500; font-size: 15px;">Dílna</a>
+</nav>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+<button type="button" aria-label="Hledat karty" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2b2650; background: transparent; color: #c4bbd6; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L20.5 20.5"></path></svg></button>
+<a href="Sablony.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: 22px; background: #d6b067; color: #1b1405; text-decoration: none; font-weight: 600; font-size: 15px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5V19M5 12H19"></path></svg>Nová karta</a>
+<button type="button" aria-label="Můj účet" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #3a3468; background: #1d1936; color: #efe6d0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"></circle><path d="M4.5 20C5.6 16.4 8.5 14.5 12 14.5S18.4 16.4 19.5 20"></path></svg></button>
+</div>
+</div>
+</header>
+
+<section aria-labelledby="hero-nadpis" style="max-width: 1280px; margin: 0 auto; padding: 56px clamp(16px, 4vw, 48px) 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 40px;">
+<div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 22px;">
+<p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: #d6b067;">Dílna sběratelských karet</p>
+<h1 id="hero-nadpis" style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: clamp(40px, 5.2vw, 68px); line-height: 1.04; letter-spacing: 0.01em; text-wrap: balance;">Vytvoř vlastní arkána</h1>
+<p style="margin: 0; max-width: 34ch; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 23px; line-height: 1.45; color: #d2c9e0; text-wrap: pretty;">Navrhni tarot, bojové bestie nebo celou herní sadu. Každá karta má skutečnou tloušťku, zlacenou ořízku a fólii, která se rozzáří, když s ní pohneš.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 6px;">
+<a href="Sablony.dc.html" style="display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 26px; border-radius: 26px; background: #d6b067; color: #1b1405; text-decoration: none; font-weight: 600; font-size: 16px;">Začít tvořit<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12H19M13 6L19 12L13 18"></path></svg></a>
+<a href="#galerie" style="display: inline-flex; align-items: center; height: 52px; padding: 0 24px; border-radius: 26px; border: 1px solid #4a4380; color: #efe6d0; text-decoration: none; font-weight: 500; font-size: 16px;">Procházet galerii</a>
+</div>
+<ul style="list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; max-width: 460px;">
+<li style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; border: 1px solid #3a3468; display: inline-flex; align-items: center; justify-content: center; color: #d6b067;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5ZM4 7.5L12 12L20 7.5M12 12V21"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 2px;"><strong style="font-weight: 600; font-size: 16px;">Plně 3D karty</strong><span style="font-size: 15px; line-height: 1.45; color: #b9b0cc;">Tloušťka, zlacená ořízka, ražba a lesk, který reaguje na pohyb.</span></span>
+</li>
+<li style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; border: 1px solid #3a3468; display: inline-flex; align-items: center; justify-content: center; color: #d6b067;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M7 3H17V21H7ZM3 6H5V18H3M19 6H21V18H19"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 2px;"><strong style="font-weight: 600; font-size: 16px;">Tarot, bestie i hrdinové</strong><span style="font-size: 15px; line-height: 1.45; color: #b9b0cc;">Šablony pro věštecké balíčky i vlastní karetní hry, nebo prázdná karta.</span></span>
+</li>
+<li style="display: flex; gap: 14px; align-items: flex-start;">
+<span style="flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; border: 1px solid #3a3468; display: inline-flex; align-items: center; justify-content: center; color: #d6b067;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12A8 8 0 0 1 6.3 17.7M4 12A8 8 0 0 1 17.7 6.3M18 3V6.5H14.5M6 21V17.5H9.5"></path></svg></span>
+<span style="display: flex; flex-direction: column; gap: 2px;"><strong style="font-weight: 600; font-size: 16px;">Ukládání v reálném čase</strong><span style="font-size: 15px; line-height: 1.45; color: #b9b0cc;">Každá změna se hned uloží a spoluautoři ji vidí živě.</span></span>
+</li>
+</ul>
+</div>
+<div style="flex: 1 1 460px; min-width: 0; position: relative; height: clamp(380px, 46vw, 600px);">
+<svg viewBox="0 0 600 600" aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: min(580px, 100%); height: auto; transform: translate(-50%, -50%); opacity: 0.55;">
+<circle cx="300" cy="300" r="290" fill="none" stroke="#d6b067" stroke-opacity="0.35" stroke-width="1"></circle>
+<circle cx="300" cy="300" r="246" fill="none" stroke="#d6b067" stroke-opacity="0.5" stroke-width="1"></circle>
+<circle cx="300" cy="300" r="200" fill="none" stroke="#d6b067" stroke-opacity="0.25" stroke-width="1"></circle>
+<circle cx="300" cy="300" r="120" fill="none" stroke="#d6b067" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="2 6"></circle>
+<path d="{{astro}}" fill="none" stroke="#d6b067" stroke-opacity="0.55" stroke-width="1"></path>
+<path d="M300 10V590M10 300H590M95 95L505 505M505 95L95 505" fill="none" stroke="#d6b067" stroke-opacity="0.12" stroke-width="1"></path>
+</svg>
+<div style="position: absolute; left: 50%; top: 50%; width: clamp(124px, 14vw, 200px); transform: translate(-50%, -50%) translateX(-80%) translateY(5%) rotate(-11deg);">
+<dc-import name="Karta" variant="tarot" art="mag" palette="krev" frame="gotika" foil="zlata" pad="{{ 0 }}" hint-size="100%,340px"></dc-import>
+</div>
+<div style="position: absolute; left: 50%; top: 50%; width: clamp(124px, 14vw, 200px); transform: translate(-50%, -50%) translateX(80%) translateY(5%) rotate(11deg);">
+<dc-import name="Karta" variant="tarot" art="mesic" palette="smaragd" frame="deco" foil="kosmos" pad="{{ 0 }}" hint-size="100%,340px"></dc-import>
+</div>
+<div style="position: absolute; left: 50%; top: 50%; z-index: 2; width: clamp(150px, 17vw, 240px); transform: translate(-50%, -52%);">
+<dc-import name="Karta" variant="tarot" art="hvezda" palette="pulnoc" frame="secese" foil="duha" foil-i="{{ 80 }}" pad="{{ 0 }}" hint-size="100%,410px"></dc-import>
+</div>
+<p style="position: absolute; left: 0; right: 0; bottom: 0; margin: 0; text-align: center; font-size: 14px; color: #a49cbd;">Najeď na kartu a nakloň ji – fólie se rozzáří</p>
+</div>
+</section>
+
+<section aria-labelledby="sablony-nadpis" style="max-width: 1280px; margin: 0 auto; padding: 64px clamp(16px, 4vw, 48px) 24px;">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px; margin-bottom: 28px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: #d6b067;">Šablony</p>
+<h2 id="sablony-nadpis" style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: clamp(28px, 3.2vw, 40px);">Jedna dílna, mnoho stylů</h2>
+</div>
+<a href="Sablony.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 500; font-size: 16px; text-decoration: none;">Všechny šablony<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12H19M13 6L19 12L13 18"></path></svg></a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 20px;">
+<sc-for list="{{templates}}" as="t" hint-placeholder-count="4">
+<article style="display: flex; flex-direction: column; background: #16132b; border: 1px solid #2b2650; border-radius: 18px; overflow: hidden;">
+<div style="height: 250px; display: flex; align-items: center; justify-content: center; background: #110f22; border-bottom: 1px solid #2b2650;">
+<div style="width: {{t.w}};">
+<dc-import name="Karta" variant="{{t.variant}}" art="{{t.art}}" palette="{{t.palette}}" frame="{{t.frame}}" foil="{{t.foil}}" element="{{t.element}}" pad="{{ 0 }}" hint-size="100%,200px"></dc-import>
+</div>
+</div>
+<div style="padding: 20px 22px 24px; display: flex; flex-direction: column; gap: 10px; flex: 1;">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+<h3 style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: 22px;">{{t.name}}</h3>
+<span style="font-size: 13px; color: #a49cbd; white-space: nowrap;">{{t.format}}</span>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #c4bbd6;">{{t.desc}}</p>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section id="galerie" aria-labelledby="galerie-nadpis" style="max-width: 1280px; margin: 0 auto; padding: 64px clamp(16px, 4vw, 48px) 24px;">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 32px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<p style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: #d6b067;">Galerie</p>
+<h2 id="galerie-nadpis" style="margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: clamp(28px, 3.2vw, 40px);">Z dílen ostatních tvůrců</h2>
+</div>
+<div style="display: flex; gap: 4px; padding: 4px; border-radius: 26px; background: #16132b; border: 1px solid #2b2650;">
+<sc-for list="{{sorts}}" as="o" hint-placeholder-count="2">
+<button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: {{o.bg}}; color: {{o.fg}}; font-family: 'Jost', sans-serif; font-weight: 500; font-size: 15px; cursor: pointer;">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 32px;">
+<sc-for list="{{chips}}" as="chip" hint-placeholder-count="5">
+<button type="button" onClick="{{chip.pick}}" aria-pressed="{{chip.pressed}}" style="height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid {{chip.bd}}; background: {{chip.bg}}; color: {{chip.fg}}; font-family: 'Jost', sans-serif; font-weight: 500; font-size: 15px; cursor: pointer;">{{chip.label}}</button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); gap: 40px 28px;">
+<sc-for list="{{items}}" as="item" hint-placeholder-count="8">
+<article style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+<div style="display: flex; align-items: center; justify-content: center; aspect-ratio: 300 / 514;">
+<div style="width: 100%;">
+<dc-import name="Karta" variant="{{item.variant}}" art="{{item.art}}" palette="{{item.palette}}" frame="{{item.frame}}" foil="{{item.foil}}" element="{{item.element}}" card-title="{{item.title}}" subtitle="{{item.subtitle}}" hp="{{item.hp}}" ab1="{{item.ab1}}" ab1p="{{item.ab1p}}" ab1t="{{item.ab1t}}" ab2="{{item.ab2}}" ab2p="{{item.ab2p}}" ab2t="{{item.ab2t}}" rarity="{{item.rarity}}" author="{{item.author}}" pad="{{ 0 }}" hint-size="100%,380px"></dc-import>
+</div>
+</div>
+<div style="display: flex; align-items: flex-start; gap: 12px;">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<h3 style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 700; font-size: 23px; line-height: 1.15;">{{item.title}}</h3>
+<p style="margin: 0; font-size: 14px; color: #a49cbd;">{{item.author}} · {{item.kindLabel}}</p>
+</div>
+<button type="button" onClick="{{item.like}}" aria-pressed="{{item.pressed}}" aria-label="{{item.likeLabel}}" style="flex: 0 0 44px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid #3a3468; background: transparent; color: #d6b067; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 20C6 15.8 3.5 12.6 3.5 9.3C3.5 6.8 5.4 5 7.7 5C9.4 5 10.8 5.9 12 7.6C13.2 5.9 14.6 5 16.3 5C18.6 5 20.5 6.8 20.5 9.3C20.5 12.6 18 15.8 12 20Z" fill="{{item.heartFill}}"></path></svg></button>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+
+<footer style="border-top: 1px solid #2b2650; margin-top: 64px;">
+<div style="max-width: 1280px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: #a49cbd;">
+<span style="font-family: 'Cinzel', Georgia, serif; font-weight: 600; letter-spacing: 0.22em; color: #c4bbd6;">ARKÁNUM</span>
+<span>Dílna vlastních karet · data a účty běží na PocketBase</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2960}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = Object.assign({}, this.state, { filter: 'vse', sort: 'nove', liked: {} });
+    let d = '';
+    for (let i = 0; i < 72; i++) {
+      const a = (i * 5) * Math.PI / 180;
+      const r2 = i % 6 === 0 ? 264 : 254;
+      d += 'M' + (300 + 246 * Math.cos(a)).toFixed(1) + ' ' + (300 + 246 * Math.sin(a)).toFixed(1) + 'L' + (300 + r2 * Math.cos(a)).toFixed(1) + ' ' + (300 + r2 * Math.sin(a)).toFixed(1);
+    }
+    this.astro = d;
+  }
+
+  renderVals() {
+    const st = this.state;
+    const TEMPLATES = [
+      { name: 'Tarot', variant: 'tarot', art: 'slunce', palette: 'pulnoc', frame: 'secese', foil: 'zlata', w: '118px', format: '70 × 120 mm', desc: 'Velká i malá arkána, římské číslování, souměrná rubová strana a významy karty.' },
+      { name: 'Bestie', variant: 'bestie', element: 'stin', foil: 'duha', w: '146px', format: '63 × 88 mm', desc: 'Bytosti s elementem, životy a dvěma schopnostmi pro vlastní karetní hru.' },
+      { name: 'Hrdina', variant: 'hrdina', foil: 'zlata', w: '146px', format: '63 × 88 mm', desc: 'Postavy s cenou, schopností a třemi vlastnostmi pro RPG kampaně a deskovky.' },
+      { name: 'Orákulum', variant: 'orakulum', palette: 'pergamen', frame: 'minimal', foil: 'zadna', w: '118px', format: '70 × 120 mm', desc: 'Jedno slovo, krátké poselství a čistá ilustrace. Pro afirmace i výklady.' }
+    ];
+    const ITEMS = [
+      { id: 'a1', rank: 2, title: 'Hvězda', variant: 'tarot', art: 'hvezda', palette: 'pulnoc', frame: 'secese', foil: 'duha', author: '@noctua' },
+      { id: 'a2', rank: 1, title: 'Bludička', variant: 'bestie', element: 'mlha', foil: 'kosmos', author: '@bludny_kamen', rarity: 3 },
+      { id: 'a3', rank: 4, title: 'Slunce', variant: 'tarot', art: 'slunce', palette: 'krev', frame: 'deco', foil: 'zlata', author: '@sudicka' },
+      { id: 'a4', rank: 3, title: 'Strážkyně brány', variant: 'hrdina', foil: 'zlata', author: '@kovarna' },
+      { id: 'a5', rank: 6, title: 'Trpělivost', variant: 'orakulum', palette: 'pergamen', frame: 'minimal', foil: 'zadna', author: '@lada' },
+      { id: 'a6', rank: 5, title: 'Měsíc', variant: 'tarot', art: 'mesic', palette: 'smaragd', frame: 'gotika', foil: 'kosmos', author: '@noctua' },
+      { id: 'a7', rank: 7, title: 'Světlonoška', variant: 'bestie', element: 'ohen', foil: 'duha', author: '@bludny_kamen', subtitle: 'lampová víla · Oheň', hp: 60, ab1: 'Jiskření', ab1p: 20, ab1t: 'Sousední bytost získá +1 útok.', ab2: 'Ohnivý vír', ab2p: 40, ab2t: 'Zasáhne všechny bytosti soupeře.', rarity: 4 },
+      { id: 'a8', rank: 8, title: 'Mág', variant: 'tarot', art: 'mag', palette: 'pulnoc', frame: 'gotika', foil: 'zlata', author: '@alchymista' }
+    ];
+    const KIND = { tarot: 'Tarot', bestie: 'Bestie', hrdina: 'Hrdina', orakulum: 'Orákulum' };
+    const chips = [['vse', 'Vše'], ['tarot', 'Tarot'], ['bestie', 'Bestie'], ['hrdina', 'Hrdinové'], ['orakulum', 'Orákulum']].map((x) => {
+      const on = st.filter === x[0];
+      return { label: x[1], pressed: on ? 'true' : 'false', pick: () => this.setState({ filter: x[0] }), bg: on ? '#d6b067' : 'transparent', fg: on ? '#1b1405' : '#c4bbd6', bd: on ? '#d6b067' : '#3a3468' };
+    });
+    const sorts = [['nove', 'Nejnovější'], ['oblibene', 'Nejoblíbenější']].map((x) => {
+      const on = st.sort === x[0];
+      return { label: x[1], pressed: on ? 'true' : 'false', pick: () => this.setState({ sort: x[0] }), bg: on ? '#2a2552' : 'transparent', fg: on ? '#efe6d0' : '#b9b0cc' };
+    });
+    let list = ITEMS.filter((it) => st.filter === 'vse' || it.variant === st.filter);
+    if (st.sort === 'oblibene') list = list.slice().sort((x, y) => x.rank - y.rank);
+    const items = list.map((it) => {
+      const liked = !!st.liked[it.id];
+      return Object.assign({}, it, {
+        kindLabel: KIND[it.variant],
+        heartFill: liked ? '#d6b067' : 'none',
+        pressed: liked ? 'true' : 'false',
+        likeLabel: (liked ? 'Odebrat z oblíbených: ' : 'Přidat do oblíbených: ') + it.title,
+        like: () => this.setState((s) => ({ liked: Object.assign({}, s.liked, { [it.id]: !s.liked[it.id] }) }))
+      });
+    });
+    return { templates: TEMPLATES, chips: chips, sorts: sorts, items: items, astro: this.astro };
+  }
+}
+</script>
+</body>
+</html>
