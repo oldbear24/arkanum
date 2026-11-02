@@ -3,9 +3,11 @@
 Dílna vlastních sběratelských karet s plně 3D náhledem. Tarot, orákulum, bestie, hrdinové i prázdná
 karta s vlastním formátem. Karty se ukládají, sdílejí v galerii a exportují k tisku.
 
-V dílně jde kartou otáčet úplně volně. Kromě šablony, rámu, palety, fólie a textů se dají nastavit i vlastní barvy, vzor
-a barvy rubu, ilustrace přes celou kartu a její jas, kontrast, sytost a odstín. Na líc i rub se dají přidat volně umístěné
-prvky: text, obrázek, symbol, ornament, statistika a tvar.
+V dílně jde kartou otáčet úplně volně. Dvanáct hotových stylů, náhodný vzhled a kopírování vzhledu mezi kartami zrychlí začátek.
+Pak se dá nastavit skoro všechno: 12 arkán a další ilustrace pro ostatní šablony, 8 rámů, 16 palet, 14 fólií s vlastní oblastí a
+směrem, 5 textur, opotřebení okrajů, 12 ořízek, 9 písem s efekty, pozadí a úpravy ilustrace, jednotlivé části karty, vlastní barvy
+a rub se vzorem, barvami i textem. Na líc i rub se dají přidat volně umístěné prvky: text i na oblouku, obrázek s výřezem, symbol
+včetně zvěrokruhu a planet, ornament, statistika a tvar, se stínem, prolnutím a výškou nad kartou.
 
 - **Backend:** Go + [PocketBase](https://pocketbase.io) jako knihovna (v0.40). Schéma a hooky jsou v Go.
 - **Frontend:** React, TypeScript, Vite v adresáři `web/`. Vestavěný do binárky přes `embed`.

@@ -1,12 +1,15 @@
 import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
-import { ORNAMENTS, shapePath, SYMBOLS } from '../../card/itemArt';
-import { PAL, resolveCard } from '../../card/resolve';
-import { counts, enums, ranges, textLimits, type ArtFilter, type CardAbility, type CardContent, type CardItem, type CustomColors, type ItemOrnament, type ItemSide, type ItemSymbol } from '../../card/spec';
+import { ORNAMENTS, shapePath, SYMBOL_LINES, SYMBOLS } from '../../card/itemArt';
+import { hasFoilOverlay } from '../../card/motion';
+import { EDGE, PAL, resolveCard } from '../../card/resolve';
+import { counts, enums, ranges, textLimits, type ArtFilter, type CardAbility, type CardContent, type CardFont, type CardItem, type CardParts, type CustomColors, type ItemOrnament, type ItemSide, type ItemSymbol, type StatLabels } from '../../card/spec';
 import { Icon, type IconName } from '../../components/Icon';
 import { cs } from '../../i18n/cs';
+import { FORMATS } from '../../lib/format';
 import { pb } from '../../lib/pb';
 import { useWorkshop, type ArtTarget, type TabId } from './context';
-import { ADD_ELEMENTS, ARCANAS, ARTS, BACK_PATTERNS, BLANK_OPTION, EDGES, ELEMENTS, FOILS, FONTS, FRAMES, ITEM_ALIGNS, ITEM_FONTS, ITEM_ICONS, ITEM_ORNAMENTS, ITEM_SHAPES, ITEM_SYMBOLS, LAYERS, LAYER_ICONS, PALETTES, SURFACES, VARIANT_OPTIONS, dataTabLabel, itemName, millimetres } from './constants';
+import { ADD_ELEMENTS, ARCANAS, ART_FILTERS, ARTS, BACK_PATTERNS, BLANK_OPTION, EDGES, ELEMENTS, FOIL_AREAS, FOILS, FONTS, FRAMES, ITEM_ALIGNS, ITEM_BLENDS, ITEM_FONTS, ITEM_ICONS, ITEM_ORNAMENTS, ITEM_SHAPES, LAYERS, LAYER_ICONS, PALETTES, SKY_PATTERNS, SKY_STYLES, SURFACES, SYMBOL_GROUPS, TEXTURES, TITLE_EFFECTS, VARIANT_OPTIONS, dataTabLabel, figureOptions, itemName, millimetres, partOptions } from './constants';
+import { applyPreset, copyLook, hasCopiedLook, LOOK_PRESETS, pasteLook, randomLook, resetLook } from './looks';
 import styles from './panels.module.css';
 
 const w = cs.workshop;
@@ -367,25 +370,158 @@ export function LayerList() {
   );
 }
 
+/** Whole looks at once. Each click is one step back with the undo button. */
+function StylesSection() {
+  const { doc, setLook } = useWorkshop();
+  const [copied, setCopied] = useState(false);
+  const [canPaste, setCanPaste] = useState(hasCopiedLook);
+  return (
+    <Foldout title={w.stylesTitle}>
+      <p className={styles.note}>{w.stylesHint}</p>
+      <div className={styles.grid2}>
+        {LOOK_PRESETS.map((preset) => {
+          const palette = PAL[preset.palette];
+          return (
+            <button key={preset.id} type="button" className={styles.optRow} onClick={() => setLook(applyPreset(doc.look, preset))}>
+              <span aria-hidden="true" className={styles.swatchRound} style={{ background: palette.base }}>
+                <span className={styles.swatchDot} style={{ background: palette.g1 }} />
+              </span>
+              <span>{w.styles[preset.id]}</span>
+            </button>
+          );
+        })}
+      </div>
+      <button type="button" className={styles.uploadQuiet} onClick={() => setLook(randomLook(doc.look))}>
+        <Icon name="sparkle" size={18} />
+        {w.randomLook}
+      </button>
+      <button type="button" className={styles.uploadQuiet} onClick={() => setLook(resetLook(doc.look, doc.family))}>
+        <Icon name="undo" size={18} />
+        {w.resetLook}
+      </button>
+      <button
+        type="button"
+        className={styles.uploadQuiet}
+        onClick={() => {
+          const done = copyLook(doc.look);
+          setCopied(done);
+          setCanPaste(done || canPaste);
+        }}
+      >
+        <Icon name="copy" size={18} />
+        {w.copyLook}
+      </button>
+      {canPaste && (
+        <button
+          type="button"
+          className={styles.uploadQuiet}
+          onClick={() => {
+            const pasted = pasteLook(doc.look, doc.family);
+            if (pasted) setLook(pasted);
+          }}
+        >
+          <Icon name="palette" size={18} />
+          {w.pasteLook}
+        </button>
+      )}
+      {copied && (
+        <p className={styles.note} role="status">
+          {w.lookCopied}
+        </p>
+      )}
+    </Foldout>
+  );
+}
+
 function ArtAdjustSection() {
   const { doc, setLook } = useWorkshop();
-  const { artFilter, fullArt } = doc.look;
+  const { artFilter, fullArt, vignette } = doc.look;
   const set = (patch: Partial<ArtFilter>, group: string) => setLook({ artFilter: { ...artFilter, ...patch } }, group);
-  const untouched = artFilter.brightness === 100 && artFilter.contrast === 100 && artFilter.saturate === 100 && artFilter.hue === 0;
+  const untouched = artFilter.brightness === 100 && artFilter.contrast === 100 && artFilter.saturate === 100 && artFilter.hue === 0 && artFilter.sepia === 0;
   return (
     <Foldout title={w.artAdjust}>
       <SwitchRow name={w.fullArt} note={w.fullArtHint} on={fullArt} onToggle={() => setLook({ fullArt: !fullArt })} />
+      <h4 className={styles.subheading}>{w.filterPresetsTitle}</h4>
+      <div className={styles.grid3}>
+        {ART_FILTERS.map(({ id, label, filter }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(JSON.stringify(filter) === JSON.stringify(artFilter))} onClick={() => setLook({ artFilter: filter })}>
+            {label}
+          </button>
+        ))}
+      </div>
       <RangeRow label={w.artBrightness} value={artFilter.brightness} display={`${artFilter.brightness} %`} min={ranges.artBrightness[0]} max={ranges.artBrightness[1]} step={1} onChange={(brightness) => set({ brightness }, 'art-brightness')} />
       <RangeRow label={w.artContrast} value={artFilter.contrast} display={`${artFilter.contrast} %`} min={ranges.artContrast[0]} max={ranges.artContrast[1]} step={1} onChange={(contrast) => set({ contrast }, 'art-contrast')} />
       <RangeRow label={w.artSaturate} value={artFilter.saturate} display={`${artFilter.saturate} %`} min={ranges.artSaturate[0]} max={ranges.artSaturate[1]} step={1} onChange={(saturate) => set({ saturate }, 'art-saturate')} />
       <RangeRow label={w.artHue} value={artFilter.hue} display={`${artFilter.hue}°`} min={ranges.artHue[0]} max={ranges.artHue[1]} step={1} onChange={(hue) => set({ hue }, 'art-hue')} />
+      <RangeRow label={w.artSepia} value={artFilter.sepia} display={`${artFilter.sepia} %`} min={ranges.artSepia[0]} max={ranges.artSepia[1]} step={1} onChange={(sepia) => set({ sepia }, 'art-sepia')} />
+      <RangeRow label={w.vignette} value={vignette} display={`${vignette} %`} min={ranges.vignette[0]} max={ranges.vignette[1]} step={1} onChange={(value) => setLook({ vignette: value }, 'vignette')} />
       {!untouched && (
-        <button type="button" className={styles.uploadQuiet} onClick={() => setLook({ artFilter: { brightness: 100, contrast: 100, saturate: 100, hue: 0 } })}>
+        <button type="button" className={styles.uploadQuiet} onClick={() => setLook({ artFilter: { brightness: 100, contrast: 100, saturate: 100, hue: 0, sepia: 0 } })}>
           <Icon name="undo" size={18} />
           {w.artAdjustReset}
         </button>
       )}
     </Foldout>
+  );
+}
+
+function SkySection() {
+  const { doc, setLook } = useWorkshop();
+  const { skyStyle, skyPattern } = doc.look;
+  return (
+    <Foldout title={w.skyTitle}>
+      <h4 className={styles.subheading}>{w.skyStyleTitle}</h4>
+      <div className={styles.grid2}>
+        {SKY_STYLES.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(skyStyle === id)} onClick={() => setLook({ skyStyle: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <h4 className={styles.subheading}>{w.skyPatternTitle}</h4>
+      <div className={styles.grid2}>
+        {SKY_PATTERNS.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(skyPattern === id)} onClick={() => setLook({ skyPattern: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </Foldout>
+  );
+}
+
+/** The parts of the print one by one, next to the layers that hide them in whole groups. */
+function PartsSection() {
+  const { doc, setLook } = useWorkshop();
+  const { parts, frameWeight } = doc.look;
+  const toggle = (id: keyof CardParts) => setLook({ parts: { ...parts, [id]: !parts[id] } });
+  return (
+    <Foldout title={w.partsTitle}>
+      <RangeRow label={w.frameWeight} value={frameWeight} display={`${frameWeight} %`} min={ranges.frameWeight[0]} max={ranges.frameWeight[1]} step={5} onChange={(value) => setLook({ frameWeight: value }, 'frame-weight')} />
+      <p className={styles.note}>{w.partsHint}</p>
+      {partOptions(doc.family).map(({ id, label }) => (
+        <SwitchRow key={id} name={label} on={parts[id]} onToggle={() => toggle(id)} />
+      ))}
+    </Foldout>
+  );
+}
+
+/** The illustrations a family has besides the one of its template. */
+function FigurePicker() {
+  const { doc, setLook } = useWorkshop();
+  const options = figureOptions(doc.family);
+  if (options.length === 0) return null;
+  return (
+    <>
+      <h4 className={styles.subheading}>{w.figureTitle}</h4>
+      <div className={styles.grid2}>
+        {options.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(doc.look.figure === id)} onClick={() => setLook({ figure: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -402,18 +538,22 @@ function CustomColorsSection() {
       {color('sky', w.colorSky, fallback.c.sky0)}
       {color('metal', w.colorMetal, fallback.c.g1)}
       {color('text', w.colorText, fallback.c.txt)}
+      {color('title', w.colorTitle, fallback.titleColor)}
+      {color('glow', w.colorGlow, fallback.c.glow)}
+      {doc.family !== 'orakulum' && doc.family !== 'prazdna' && color('plaque', w.colorPlaque, fallback.c.plaque)}
+      {(doc.family === 'bestie' || doc.family === 'hrdina') && color('panel', w.colorPanel, fallback.c.panelFill)}
     </Foldout>
   );
 }
 
 function BackSection() {
-  const { doc, setLook, setFlip } = useWorkshop();
-  const { backPalette, backPattern } = doc.look;
+  const { doc, setLook, setContent, setFlip } = useWorkshop();
+  const { backPalette, backPattern, colors } = doc.look;
   const fallback = useCardFallbacks();
   // The back is out of sight while the front is on, and a choice needs to show what it does.
-  const choose = (patch: Parameters<typeof setLook>[0]) => {
+  const choose = (patch: Parameters<typeof setLook>[0], group?: string) => {
     setFlip(true);
-    setLook(patch);
+    setLook(patch, group);
   };
   return (
     <Foldout title={w.backSection}>
@@ -442,6 +582,17 @@ function BackSection() {
           </button>
         ))}
       </div>
+      <ColorField label={w.colorBackBase} value={colors.backBase} shown={fallback.back.base} onChange={(backBase) => choose({ colors: { ...colors, backBase } }, 'color-back-base')} />
+      <ColorField label={w.colorBackMetal} value={colors.backMetal} shown={fallback.back.g1} onChange={(backMetal) => choose({ colors: { ...colors, backMetal } }, 'color-back-metal')} />
+      <TextField
+        label={w.backText}
+        value={doc.content.backText}
+        maxLength={textLimits.backText}
+        onChange={(backText) => {
+          setFlip(true);
+          setContent({ backText }, 'back-text');
+        }}
+      />
     </Foldout>
   );
 }
@@ -456,6 +607,7 @@ function LookTab() {
   return (
     <>
       {compact && <TemplatePicker />}
+      <StylesSection />
       <Section title={w.illustration}>
         {isTarot ? (
           <div className={styles.grid2}>
@@ -480,16 +632,18 @@ function LookTab() {
                 <Icon name="image" size={22} strokeWidth={1.6} />
               </span>
               <span className={styles.artInfoText}>
-                <span className={styles.artInfoName}>{w.artNames[doc.family as keyof typeof w.artNames]}</span>
+                <span className={styles.artInfoName}>{figureOptions(doc.family).find((option) => option.id === look.figure)?.label ?? w.artNames[doc.family as keyof typeof w.artNames]}</span>
                 <span className={styles.artInfoNote}>{w.sampleIllustration}</span>
               </span>
             </div>
           )
         )}
+        <FigurePicker />
         <ArtworkControls />
       </Section>
 
       <ArtAdjustSection />
+      <SkySection />
 
       {!isTcg && (
         <>
@@ -536,6 +690,7 @@ function LookTab() {
       )}
 
       <CustomColorsSection />
+      <PartsSection />
 
       <Section tight>
         <RangeRow label={w.depth} value={look.depth} display={`${look.depth} %`} min={ranges.depth[0]} max={ranges.depth[1]} step={1} onChange={(depth) => setLook({ depth }, 'depth')} />
@@ -570,6 +725,23 @@ function FoilSection() {
       <div className={styles.foilIntensity}>
         <RangeRow label={w.foilIntensity} value={look.foilI} display={`${look.foilI} %`} min={ranges.foilI[0]} max={ranges.foilI[1]} step={1} onChange={(foilI) => setLook({ foilI }, 'foilI')} />
       </div>
+      {hasFoilOverlay(look.foil) && (
+        <>
+          {!look.fullArt && (
+            <>
+              <h4 className={styles.subheading}>{w.foilAreaTitle}</h4>
+              <div className={styles.segments3}>
+                {FOIL_AREAS.map(({ id, label }) => (
+                  <button key={id} type="button" className={styles.optSegment} {...pressed(look.foilArea === id)} onClick={() => setLook({ foilArea: id })}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <RangeRow label={w.foilAngle} value={look.foilAngle} display={`${look.foilAngle}°`} min={ranges.foilAngle[0]} max={ranges.foilAngle[1]} step={1} onChange={(foilAngle) => setLook({ foilAngle }, 'foil-angle')} />
+        </>
+      )}
     </Section>
   );
 }
@@ -579,7 +751,7 @@ function SurfaceSection() {
   const { look } = doc;
   return (
     <Section title={w.surface}>
-      <div className={styles.segments3}>
+      <div className={styles.segments4}>
         {SURFACES.map((surface) => (
           <button key={surface.id} type="button" className={styles.optSegment} {...pressed(look.surface === surface.id)} onClick={() => setLook({ surface: surface.id })}>
             {surface.label}
@@ -591,8 +763,27 @@ function SurfaceSection() {
   );
 }
 
+function TextureSection() {
+  const { doc, setLook } = useWorkshop();
+  const { texture, textureI, wear } = doc.look;
+  return (
+    <Foldout title={w.textureTitle}>
+      <div className={styles.grid3}>
+        {TEXTURES.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(texture === id)} onClick={() => setLook({ texture: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {texture !== 'zadna' && <RangeRow label={w.textureStrength} value={textureI} display={`${textureI} %`} min={ranges.textureI[0]} max={ranges.textureI[1]} step={1} onChange={(value) => setLook({ textureI: value }, 'texture-strength')} />}
+      <RangeRow label={w.wear} value={wear} display={`${wear} %`} min={ranges.wear[0]} max={ranges.wear[1]} step={1} onChange={(value) => setLook({ wear: value }, 'wear')} />
+    </Foldout>
+  );
+}
+
 function EdgeSection() {
   const { compact, doc, setLook } = useWorkshop();
+  const { colors, edge: chosen } = doc.look;
   const cardBase = doc.family === 'bestie' ? '#15171c' : doc.family === 'hrdina' ? '#1a1512' : PAL[doc.look.palette].base;
   return (
     <Section title={w.edge}>
@@ -604,6 +795,7 @@ function EdgeSection() {
           </button>
         ))}
       </div>
+      <ColorField label={w.colorEdge} value={colors.edge} shown={chosen === 'ram' ? cardBase : (EDGE[chosen][4] ?? cardBase)} onChange={(value) => setLook({ colors: { ...colors, edge: value } }, 'color-edge')} />
     </Section>
   );
 }
@@ -622,8 +814,17 @@ function RadiusRange() {
 function FormatRanges() {
   const { doc, setFormat } = useWorkshop();
   if (doc.family !== 'prazdna') return null;
+  const presets = FORMATS.filter((format) => format.key !== 'vlastni');
   return (
     <>
+      <h4 className={styles.subheading}>{w.formatPresets}</h4>
+      <div className={styles.grid2}>
+        {presets.map((format) => (
+          <button key={format.key} type="button" className={styles.optTight} {...pressed(doc.formatW === format.w && doc.formatH === format.h)} onClick={() => setFormat(format.w, format.h)}>
+            {cs.templates.formats[format.key]}
+          </button>
+        ))}
+      </div>
       <RangeRow label={w.formatWidth} value={doc.formatW} display={`${doc.formatW} ${cs.common.mm}`} min={ranges.format[0]} max={ranges.format[1]} step={1} onChange={(formatW) => setFormat(formatW, doc.formatH)} />
       <RangeRow label={w.formatHeight} value={doc.formatH} display={`${doc.formatH} ${cs.common.mm}`} min={ranges.format[0]} max={ranges.format[1]} step={1} onChange={(formatH) => setFormat(doc.formatW, formatH)} />
       <button type="button" className={styles.uploadQuiet} onClick={() => setFormat(doc.formatH, doc.formatW)}>
@@ -647,6 +848,7 @@ function MaterialTab() {
           <RadiusRange />
         </Section>
         <SurfaceSection />
+        <TextureSection />
       </>
     );
   }
@@ -654,6 +856,7 @@ function MaterialTab() {
     <>
       <FoilSection />
       <SurfaceSection />
+      <TextureSection />
       <EdgeSection />
       <Section title={w.shape}>
         <FormatRanges />
@@ -671,6 +874,8 @@ function TextTab() {
   const { content } = doc;
   const fallback = useCardFallbacks();
   const subtitle = (value: string) => setContent({ subtitle: value }, 'subtitle');
+  // A script font falls apart in capitals, so it starts without them.
+  const pickFont = (font: CardFont) => setLook(font === 'vibes' ? { font, titleCaps: false } : { font });
 
   return (
     <>
@@ -690,7 +895,7 @@ function TextTab() {
       <Section title={w.titleFont}>
         <div className={styles.grid2}>
           {FONTS.map((font) => (
-            <button key={font.id} type="button" className={styles.optFont} {...pressed(doc.look.font === font.id)} onClick={() => setLook({ font: font.id })}>
+            <button key={font.id} type="button" className={styles.optFont} {...pressed(doc.look.font === font.id)} onClick={() => pickFont(font.id)}>
               <span className={styles.fontSample} style={{ fontFamily: font.family, fontWeight: font.weight } as CSSProperties}>
                 {w.fontSample}
               </span>
@@ -701,6 +906,19 @@ function TextTab() {
         <RangeRow label={w.titleScale} value={doc.look.titleScale} display={`${doc.look.titleScale} %`} min={ranges.titleScale[0]} max={ranges.titleScale[1]} step={5} onChange={(titleScale) => setLook({ titleScale }, 'title-scale')} />
         <SwitchRow name={w.titleCaps} note={w.titleCapsHint} on={doc.look.titleCaps} onToggle={() => setLook({ titleCaps: !doc.look.titleCaps })} />
       </Section>
+      <Foldout title={w.titleStyleTitle}>
+        <h4 className={styles.subheading}>{w.titleEffect}</h4>
+        <div className={styles.grid3}>
+          {TITLE_EFFECTS.map(({ id, label }) => (
+            <button key={id} type="button" className={styles.optTight} {...pressed(doc.look.titleEffect === id)} onClick={() => setLook({ titleEffect: id })}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <RangeRow label={w.titleSpacing} value={doc.look.titleSpacing} display={`${doc.look.titleSpacing} %`} min={ranges.titleSpacing[0]} max={ranges.titleSpacing[1]} step={1} onChange={(titleSpacing) => setLook({ titleSpacing }, 'title-spacing')} />
+        <RangeRow label={w.titleOffset} value={doc.look.titleOffset} display={`${doc.look.titleOffset} %`} min={ranges.titleOffset[0]} max={ranges.titleOffset[1]} step={1} onChange={(titleOffset) => setLook({ titleOffset }, 'title-offset')} />
+        {doc.family !== 'tarot' && <RangeRow label={w.bodyScale} value={doc.look.bodyScale} display={`${doc.look.bodyScale} %`} min={ranges.bodyScale[0]} max={ranges.bodyScale[1]} step={5} onChange={(bodyScale) => setLook({ bodyScale }, 'body-scale')} />}
+      </Foldout>
     </>
   );
 }
@@ -817,6 +1035,21 @@ function AbilityField({ index, ability, title, down, up, effect, namePlaceholder
   );
 }
 
+/** The captions that a card spells out, the beast has pictures for its other stats. */
+function LabelsSection() {
+  const { doc, setContent } = useWorkshop();
+  const { labels } = doc.content;
+  const fallback = useCardFallbacks();
+  const keys: (keyof StatLabels)[] = doc.family === 'hrdina' ? ['s1', 's2', 's3'] : ['level'];
+  return (
+    <Foldout title={w.labelsTitle}>
+      {keys.map((key) => (
+        <TextField key={key} label={w.labels[key]} maxLength={textLimits.statLabel} value={labels[key]} placeholder={fallback.labels[key]} onChange={(value) => setContent({ labels: { ...labels, [key]: value } }, `label-${key}`)} />
+      ))}
+    </Foldout>
+  );
+}
+
 function DataTab() {
   const { doc, record, setMeaning, setContent, setAbility } = useWorkshop();
   const { content, meaning } = doc;
@@ -904,6 +1137,7 @@ function DataTab() {
         <TextField label={w.setNo} maxLength={textLimits.setNo} value={content.setNo} placeholder={fallback.setNo} onChange={(setNo) => setContent({ setNo }, 'set-no')} />
         {doc.family === 'bestie' && <TextField label={w.artist} maxLength={textLimits.artist} value={content.artist} placeholder={record.expand?.owner ? `@${record.expand.owner.handle}` : fallback.author} onChange={(artist) => setContent({ artist }, 'artist')} />}
       </Section>
+      <LabelsSection />
     </>
   );
 }
@@ -945,7 +1179,8 @@ function ItemPicker<T extends string>({ title, options, value, onPick, draw }: {
 function SymbolPreview({ id }: { id: ItemSymbol }) {
   return (
     <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true">
-      <path d={SYMBOLS[id]} fill="currentColor" fillRule="evenodd" />
+      {SYMBOLS[id] && <path d={SYMBOLS[id]} fill="currentColor" fillRule="evenodd" />}
+      {SYMBOL_LINES[id] && <path d={SYMBOL_LINES[id]} fill="none" stroke="currentColor" strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />}
     </svg>
   );
 }
@@ -1022,7 +1257,9 @@ function ItemEditor({ item }: { item: CardItem }) {
         </>
       )}
 
-      {item.type === 'symbol' && <ItemPicker title={it.symbolPick} options={ITEM_SYMBOLS} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <SymbolPreview id={id} />} />}
+      {item.type === 'symbol' && SYMBOL_GROUPS.map((group) => <ItemPicker key={group.title} title={group.title} options={group.options} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <SymbolPreview id={id} />} />)}
+      {item.type === 'symbol' && SYMBOLS[item.kind as ItemSymbol] && <SwitchRow name={it.filled} note={it.filledHint} on={item.filled} onToggle={() => set({ filled: !item.filled })} />}
+      {item.type === 'symbol' && (SYMBOL_LINES[item.kind as ItemSymbol] || !item.filled) && <RangeRow label={it.stroke} value={item.stroke} display={`${item.stroke}`} min={ranges.itemStroke[0]} max={ranges.itemStroke[1]} step={0.5} onChange={(stroke) => set({ stroke }, 'stroke')} />}
       {item.type === 'ornament' && <ItemPicker title={it.ornamentPick} options={ITEM_ORNAMENTS} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <OrnamentPreview id={id} />} />}
 
       {item.type === 'stat' && (
@@ -1030,6 +1267,7 @@ function ItemEditor({ item }: { item: CardItem }) {
           <TextField label={it.statValue} look="display" maxLength={textLimits.itemValue} value={item.value} onChange={(value) => set({ value }, 'value')} />
           <TextField label={it.statLabel} maxLength={textLimits.itemText} value={item.text} onChange={(text) => set({ text }, 'text')} />
           <ItemPicker title={it.badgePick} options={ITEM_SHAPES} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <ShapePreview id={id} />} />
+          <RangeRow label={it.stroke} value={item.stroke} display={`${item.stroke}`} min={ranges.itemStroke[0]} max={ranges.itemStroke[1]} step={0.5} onChange={(stroke) => set({ stroke }, 'stroke')} />
         </>
       )}
 
@@ -1037,6 +1275,7 @@ function ItemEditor({ item }: { item: CardItem }) {
         <>
           <ItemPicker title={it.shapePick} options={ITEM_SHAPES} value={item.kind} onPick={(kind) => set({ kind })} draw={(id) => <ShapePreview id={id} />} />
           <SwitchRow name={it.filled} note={it.filledHint} on={item.filled} onToggle={() => set({ filled: !item.filled })} />
+          {!item.filled && <RangeRow label={it.stroke} value={item.stroke} display={`${item.stroke}`} min={ranges.itemStroke[0]} max={ranges.itemStroke[1]} step={0.5} onChange={(stroke) => set({ stroke }, 'stroke')} />}
           <RangeRow label={it.ratio} value={item.ratio} display={`${item.ratio} %`} min={ranges.itemRatio[0]} max={ranges.itemRatio[1]} step={5} onChange={(ratio) => set({ ratio }, 'ratio')} />
         </>
       )}
@@ -1047,7 +1286,25 @@ function ItemEditor({ item }: { item: CardItem }) {
         </p>
       )}
 
-      {item.type !== 'image' && <ColorField label={it.color} value={item.color} shown={item.type === 'text' ? fallback.c.txt : fallback.c.g1} onChange={(color) => set({ color }, 'color')} />}
+      {item.type === 'image' && (
+        <>
+          <h4 className={styles.subheading}>{it.imageCut}</h4>
+          <div className={styles.iconGrid}>
+            <button type="button" className={styles.optIcon} aria-label={it.imageCutNone} title={it.imageCutNone} {...pressed(item.mask === '')} onClick={() => set({ mask: '' })}>
+              <Icon name="image" size={22} strokeWidth={1.6} />
+            </button>
+            {ITEM_SHAPES.map((shape) => (
+              <button key={shape.id} type="button" className={styles.optIcon} aria-label={shape.label} title={shape.label} {...pressed(item.mask === shape.id)} onClick={() => set({ mask: shape.id })}>
+                <ShapePreview id={shape.id} />
+              </button>
+            ))}
+          </div>
+          <RangeRow label={it.imageRatio} value={item.ratio} display={`${item.ratio} %`} min={ranges.itemRatio[0]} max={ranges.itemRatio[1]} step={1} onChange={(ratio) => set({ ratio }, 'ratio')} />
+          <RangeRow label={it.imageBorder} value={item.border} display={`${item.border}`} min={ranges.itemBorder[0]} max={ranges.itemBorder[1]} step={0.5} onChange={(border) => set({ border }, 'border')} />
+        </>
+      )}
+
+      {(item.type !== 'image' || item.border > 0) && <ColorField label={it.color} value={item.color} shown={item.type === 'text' ? fallback.c.txt : fallback.c.g1} onChange={(color) => set({ color }, 'color')} />}
 
       <h4 className={styles.subheading}>{it.side}</h4>
       <div className={styles.segments2}>
@@ -1059,12 +1316,73 @@ function ItemEditor({ item }: { item: CardItem }) {
       </div>
 
       <p className={styles.note}>{it.moveHint}</p>
+      <SwitchRow name={it.lock} note={it.lockHint} on={item.locked} onToggle={() => set({ locked: !item.locked })} />
       <RangeRow label={it.positionX} value={item.x} display={`${Math.round(item.x)} %`} min={ranges.itemPosition[0]} max={ranges.itemPosition[1]} step={1} onChange={(x) => set({ x }, 'x')} />
       <RangeRow label={it.positionY} value={item.y} display={`${Math.round(item.y)} %`} min={ranges.itemPosition[0]} max={ranges.itemPosition[1]} step={1} onChange={(y) => set({ y }, 'y')} />
+      <div className={styles.grid2}>
+        <button type="button" className={styles.optTight} onClick={() => set({ x: 50 })}>
+          {it.centerX}
+        </button>
+        <button type="button" className={styles.optTight} onClick={() => set({ y: 50 })}>
+          {it.centerY}
+        </button>
+      </div>
       <RangeRow label={it.size} value={item.size} display={`${item.size} %`} min={ownSize[0]!} max={ownSize[1]!} step={1} onChange={(size) => set({ size }, 'size')} />
       <RangeRow label={it.rotate} value={item.rotate} display={`${item.rotate}°`} min={ranges.itemRotate[0]} max={ranges.itemRotate[1]} step={1} onChange={(rotate) => set({ rotate }, 'rotate')} />
       <RangeRow label={it.opacity} value={item.opacity} display={`${item.opacity} %`} min={ranges.itemOpacity[0]} max={ranges.itemOpacity[1]} step={1} onChange={(opacity) => set({ opacity }, 'opacity')} />
     </Section>
+  );
+}
+
+/** The finer settings of a text, on top of its font and alignment. */
+function ItemTextSection({ item }: { item: CardItem }) {
+  const { setItem } = useWorkshop();
+  const set = (patch: Partial<CardItem>, group?: string) => setItem(item.id, patch, group && `item-${group}-${item.id}`);
+  return (
+    <Foldout title={it.textTitle}>
+      <SwitchRow name={it.caps} on={item.caps} onToggle={() => set({ caps: !item.caps })} />
+      <RangeRow label={it.spacing} value={item.spacing} display={`${item.spacing} %`} min={ranges.itemSpacing[0]} max={ranges.itemSpacing[1]} step={1} onChange={(spacing) => set({ spacing }, 'spacing')} />
+      <RangeRow label={it.line} value={item.line} display={`${item.line} %`} min={ranges.itemLine[0]} max={ranges.itemLine[1]} step={5} onChange={(line) => set({ line }, 'line')} />
+      <RangeRow label={it.curve} value={item.curve} display={`${item.curve} %`} min={ranges.itemCurve[0]} max={ranges.itemCurve[1]} step={1} onChange={(curve) => set({ curve }, 'curve')} />
+      <p className={styles.note}>{it.curveHint}</p>
+      <h4 className={styles.subheading}>{it.effect}</h4>
+      <div className={styles.grid3}>
+        {TITLE_EFFECTS.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(item.effect === id)} onClick={() => set({ effect: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </Foldout>
+  );
+}
+
+/** What all the items have in common: how they lie on the card and how they mix with it. */
+function ItemStyleSection({ item }: { item: CardItem }) {
+  const { setItem } = useWorkshop();
+  const set = (patch: Partial<CardItem>, group?: string) => setItem(item.id, patch, group && `item-${group}-${item.id}`);
+  return (
+    <Foldout title={it.styleTitle}>
+      <div className={styles.grid2}>
+        <button type="button" className={styles.optTight} {...pressed(item.flipX)} onClick={() => set({ flipX: !item.flipX })}>
+          {it.flipX}
+        </button>
+        <button type="button" className={styles.optTight} {...pressed(item.flipY)} onClick={() => set({ flipY: !item.flipY })}>
+          {it.flipY}
+        </button>
+      </div>
+      <RangeRow label={it.depth} value={item.depth} display={`${item.depth} %`} min={ranges.itemDepth[0]} max={ranges.itemDepth[1]} step={5} onChange={(depth) => set({ depth }, 'depth')} />
+      <p className={styles.note}>{it.depthHint}</p>
+      <RangeRow label={it.shadow} value={item.shadow} display={`${item.shadow} %`} min={ranges.itemShadow[0]} max={ranges.itemShadow[1]} step={1} onChange={(shadow) => set({ shadow }, 'shadow')} />
+      <h4 className={styles.subheading}>{it.blend}</h4>
+      <div className={styles.grid3}>
+        {ITEM_BLENDS.map(({ id, label }) => (
+          <button key={id} type="button" className={styles.optTight} {...pressed(item.blend === id)} onClick={() => set({ blend: id })}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </Foldout>
   );
 }
 
@@ -1102,6 +1420,8 @@ function ItemsTab() {
         )}
       </Section>
       {selected && <ItemEditor key={selected.id} item={selected} />}
+      {selected && selected.type === 'text' && <ItemTextSection key={`text-${selected.id}`} item={selected} />}
+      {selected && <ItemStyleSection key={`style-${selected.id}`} item={selected} />}
     </>
   );
 }

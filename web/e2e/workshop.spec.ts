@@ -471,6 +471,304 @@ test('the fields of a game card reach the card', async ({ page }) => {
   await waitSaved(page);
 });
 
+test('a ready style changes the whole look in one step back', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByText('Hotové styly').click();
+  await page.getByRole('button', { name: 'Krvavý měsíc' }).click();
+  await waitSaved(page);
+
+  await settingsTab(page, 'Materiál').click();
+  await expect(page.getByRole('button', { name: 'Plamen' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Červená' })).toHaveAttribute('aria-pressed', 'true');
+
+  await page.keyboard.press('Control+z');
+  await expect(page.getByRole('button', { name: 'Zlatá' }).first()).toHaveAttribute('aria-pressed', 'true');
+  await waitSaved(page);
+});
+
+test('every random look gets through the checks of the server', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByText('Hotové styly').click();
+  for (let i = 0; i < 6; i++) {
+    await page.getByRole('button', { name: 'Náhodný vzhled' }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Ukládám' })).toBeVisible();
+    await waitSaved(page);
+  }
+
+  await page.getByRole('button', { name: 'Výchozí vzhled šablony' }).click();
+  await waitSaved(page);
+  await settingsTab(page, 'Materiál').click();
+  await expect(page.getByRole('button', { name: 'Zlatá' }).first()).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a look carries over to another card, whose own illustration stays', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByText('Hotové styly').click();
+  await page.getByRole('button', { name: 'Hvězdný prach' }).click();
+  await page.getByRole('button', { name: 'Kopírovat vzhled' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'zkopírovaný' })).toBeVisible();
+  await waitSaved(page);
+
+  await createCard(page, 'Bestie');
+  await page.getByText('Hotové styly').click();
+  await page.getByRole('button', { name: 'Vložit vzhled' }).click();
+  await waitSaved(page);
+  await settingsTab(page, 'Materiál').click();
+  await expect(page.getByRole('button', { name: 'Galaxie' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('Bestie · Stín')).toBeVisible();
+});
+
+test('the material options reach the card and survive a reload', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+  const card = page.getByRole('main', { name: 'Náhled karty' });
+
+  await settingsTab(page, 'Materiál').click();
+  await page.getByRole('button', { name: 'Duhová' }).click();
+  await page.getByRole('button', { name: 'Ilustrace', exact: true }).click();
+  await expect(card.locator('clipPath[clipPathUnits="objectBoundingBox"]')).toHaveCount(1);
+  await page.getByLabel('Směr fólie').fill('40');
+  await expect(card.locator('[style*="linear-gradient(40deg"]')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Zrcadlo' }).click();
+  await page.getByText('Textura a opotřebení').click();
+  await page.getByRole('button', { name: 'Plátno' }).click();
+  await expect(card.locator('[data-texture="platno"]')).toHaveCount(2);
+  await page.getByLabel('Opotřebení okrajů').fill('50');
+  await expect(card.locator('[data-wear]')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Duha', exact: true }).click();
+  await page.getByLabel('Vlastní barva ořízky').fill('#3060c0');
+  await expect(cardScene(page).locator('> div').nth(1).locator('> div').nth(4)).toHaveCSS('background-color', 'rgb(48, 96, 192)');
+  await waitSaved(page);
+
+  await page.reload();
+  await settingsTab(page, 'Materiál').click();
+  await expect(page.getByRole('button', { name: 'Duhová' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Ilustrace', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Zrcadlo' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(card.locator('[data-texture="platno"]')).toHaveCount(2);
+});
+
+test('the look options reach the card and survive a reload', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+  const card = page.getByRole('main', { name: 'Náhled karty' });
+
+  await page.getByRole('button', { name: 'XVI Věž' }).click();
+  await expect(page.getByRole('img', { name: /^Věž/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Baroko' }).click();
+  await page.getByRole('button', { name: 'Slonovina' }).click();
+
+  await page.getByText('Úpravy ilustrace').click();
+  await page.getByRole('button', { name: 'Stará fotka' }).click();
+  await expect(card.locator('filter[filterUnits] feColorMatrix[type="matrix"]')).toHaveCount(1);
+  await page.getByLabel('Ztmavení rohů').fill('60');
+
+  await page.getByText('Pozadí okna').click();
+  await page.getByRole('button', { name: 'Záře' }).click();
+  await page.getByRole('button', { name: 'Hvězdné nebe' }).click();
+
+  await page.getByText('Části karty').click();
+  await expect(cardScene(page)).toContainText('XVI');
+  await page.getByRole('switch', { name: 'Číslo arkány' }).click();
+  await expect(cardScene(page)).not.toContainText('XVI');
+  await page.getByLabel('Síla linek').fill('150');
+  await waitSaved(page);
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'XVI Věž' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Baroko' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Slonovina' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(cardScene(page)).not.toContainText('XVI');
+  await page.getByText('Pozadí okna').click();
+  await expect(page.getByRole('button', { name: 'Hvězdné nebe' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('the back takes its own colours and text', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByText('Rub karty').click();
+  await page.getByRole('button', { name: 'Šachovnice' }).click();
+  await expect(page.getByRole('main', { name: 'Náhled karty' }).getByRole('button', { name: 'Rub' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Text na rubu').fill('Moje sada');
+  await expect(cardScene(page)).toContainText('Moje sada');
+  await page.getByLabel('Podklad rubu').fill('#113355');
+  await expect(cardScene(page).locator('> div').nth(1).locator('> div').nth(11)).toHaveCSS('background-color', 'rgb(17, 51, 85)');
+  await waitSaved(page);
+
+  await page.reload();
+  await page.getByText('Rub karty').click();
+  await expect(page.getByLabel('Text na rubu')).toHaveValue('Moje sada');
+});
+
+test('the title takes its effect, spacing and place', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await settingsTab(page, 'Text').click();
+  await page.getByRole('button', { name: /Great Vibes/ }).click();
+  await expect(page.getByRole('switch', { name: /Velká písmena/ })).toHaveAttribute('aria-checked', 'false');
+  const title = cardScene(page).getByText('Hvězda', { exact: true });
+  await expect(title).toHaveCSS('font-family', /Great Vibes/);
+
+  await page.getByText('Úprava nadpisu').click();
+  await page.getByRole('button', { name: 'Záře' }).click();
+  await expect(title).not.toHaveCSS('text-shadow', 'none');
+  const before = await title.boundingBox();
+  await page.getByLabel('Posun nahoru a dolů').fill('-30');
+  await expect.poll(async () => (await title.boundingBox())?.y).toBeLessThan((before?.y ?? 0) - 20);
+  await waitSaved(page);
+});
+
+test('the fonts of a card have the Czech letters and load from this server', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+  const foreign: string[] = [];
+  page.on('request', (request) => {
+    if (/fonts\.(googleapis|gstatic)\.com/.test(request.url())) foreign.push(request.url());
+  });
+
+  await settingsTab(page, 'Text').click();
+  await page.getByRole('button', { name: /Uncial Antiqua/ }).click();
+  await page.getByLabel('Název karty').fill('Žluťoučký kůň');
+  await expect.poll(() => page.evaluate(() => document.fonts.check("20px 'Uncial Antiqua'", 'ď'))).toBe(true);
+  await expect(page.getByRole('button', { name: /Uncial Antiqua/ })).toHaveAttribute('aria-pressed', 'true');
+  expect(foreign).toEqual([]);
+  await waitSaved(page);
+});
+
+test('a beast chooses another illustration and a caption', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page, 'Bestie');
+  const paths = () => cardScene(page).locator('svg path').evaluateAll((list) => list.map((path) => path.getAttribute('d')).join('|'));
+
+  const before = await paths();
+  await page.getByRole('button', { name: 'Sova' }).click();
+  await expect.poll(paths).not.toBe(before);
+  await page.getByRole('button', { name: 'Led', exact: true }).click();
+  await expect(page.getByText('Bestie · Led')).toBeVisible();
+
+  await settingsTab(page, 'Hra').click();
+  await page.getByText('Vlastní popisky').click();
+  await page.getByLabel('Popisek úrovně').fill('LV');
+  await expect(cardScene(page)).toContainText('LV 2');
+  await waitSaved(page);
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Sova' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(cardScene(page)).toContainText('LV 2');
+
+  // Another family has other illustrations to choose from, so it starts with its own.
+  await page.getByRole('button', { name: 'Hrdina' }).click();
+  await expect(page.getByRole('button', { name: 'Strážkyně brány' })).toHaveAttribute('aria-pressed', 'true');
+  await waitSaved(page);
+});
+
+test('an oracle takes a tarot illustration, and a hero its own captions and panel', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page, 'Orákulum');
+  await page.getByRole('button', { name: 'Svět', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Svět', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await waitSaved(page);
+
+  await createCard(page, 'Hrdina');
+  await settingsTab(page, 'Hra').click();
+  await page.getByText('Vlastní popisky').click();
+  await page.getByLabel('Popisek síly').fill('ÚTOK');
+  await expect(cardScene(page)).toContainText('ÚTOK');
+  await waitSaved(page);
+
+  await settingsTab(page, 'Vzhled').click();
+  await page.getByText('Vlastní barvy').click();
+  await page.getByLabel('Panel s texty').fill('#101010');
+  await expect(cardScene(page).getByText('Brána se otevře')).toHaveCSS('color', 'rgb(207, 199, 178)');
+  await waitSaved(page);
+});
+
+test('a text bends on a curve, floats above the card and can be locked', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await addButton(page, 'Text').click();
+  const item = page.locator('[data-item]');
+  await page.getByText('Úprava textu').click();
+  await page.getByLabel('Ohyb textu').fill('60');
+  await expect(item.locator('textPath')).toHaveText('Nový text');
+  await page.getByRole('switch', { name: 'Velká písmena' }).click();
+  await expect(item.locator('textPath')).toHaveText('NOVÝ TEXT');
+  const box = await item.boundingBox();
+  expect(box?.width).toBeGreaterThan(10);
+
+  await page.getByText('Vzhled prvku').click();
+  await page.getByLabel('Výška nad kartou').fill('100');
+  await expect.poll(() => item.evaluate((element) => (element as HTMLElement).style.transform)).toContain('var(--ifx)');
+  await page.getByLabel('Stín', { exact: true }).fill('40');
+  await page.getByRole('button', { name: 'Převrátit zleva doprava' }).click();
+  await expect.poll(() => item.evaluate((element) => (element as HTMLElement).style.transform)).toContain('scale(-1, 1)');
+  await page.getByRole('button', { name: 'Zesvětlit' }).click();
+  await expect(item).toHaveCSS('mix-blend-mode', 'screen');
+
+  // A locked item lets the pointer through to the card, which turns instead.
+  await page.getByRole('switch', { name: /Zamknout polohu/ }).click();
+  await waitSaved(page);
+  const left = await item.evaluate((element) => (element as HTMLElement).style.left);
+  const place = await item.boundingBox();
+  if (!place) throw new Error('The item has no box');
+  await page.mouse.move(place.x + place.width / 2, place.y + place.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(place.x + place.width / 2 + 60, place.y + place.height / 2, { steps: 4 });
+  await page.mouse.up();
+  expect(await item.evaluate((element) => (element as HTMLElement).style.left)).toBe(left);
+  await expect.poll(() => cardScene(page).evaluate((element) => (element as HTMLElement).style.getPropertyValue('--orient'))).not.toBe('rotate3d(0, 0, 1, 0deg)');
+
+  await page.reload();
+  await expect(page.locator('[data-item] textPath')).toHaveText('NOVÝ TEXT');
+});
+
+test('a sign of the zodiac and a cut-out image go on the card', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await addButton(page, 'Symbol').click();
+  await page.locator('button[title="Lev"]').click();
+  await expect(page.locator('[data-item] path').first()).toHaveAttribute('fill', 'none');
+  await page.getByLabel('Šířka čar').fill('6');
+  await expect(page.locator('[data-item] path').first()).toHaveAttribute('stroke-width', /^14.[34]/);
+  await page.getByRole('button', { name: 'Na střed zleva doprava' }).click();
+
+  await page.getByRole('complementary', { name: 'Šablona a vrstvy' }).locator('input[type="file"]').setInputFiles({ name: 'erb.png', mimeType: 'image/png', buffer: PNG });
+  await expect(page.locator('[data-item] image')).toHaveCount(1);
+  await page.locator('button[title="Kruh"]').click();
+  await expect(page.locator('[data-item] clipPath')).toHaveCount(1);
+  await page.getByLabel('Rámeček okolo obrázku').fill('5');
+  await expect(page.locator('[data-item] svg > path[stroke-width="5"]')).toHaveCount(1);
+  await waitSaved(page);
+
+  await page.reload();
+  await expect(page.locator('[data-item] clipPath')).toHaveCount(1);
+});
+
+test('a blank card picks a common format with one click', async ({ page }) => {
+  await signIn(page, 'demo');
+  await page.goto('/sablony');
+  await page.getByRole('button', { name: /^Čtvercová/ }).click();
+  await page.getByRole('button', { name: 'Vytvořit prázdnou kartu' }).click();
+  await page.waitForURL(/\/dilna\//);
+
+  await settingsTab(page, 'Materiál').click();
+  await page.getByRole('button', { name: 'Mini', exact: true }).click();
+  await expect(page.getByText('44 × 68 mm · vlastní formát')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mini', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await waitSaved(page);
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

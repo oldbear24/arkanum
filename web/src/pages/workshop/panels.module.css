@@ -258,7 +258,8 @@
 }
 
 .segments2,
-.segments3 {
+.segments3,
+.segments4 {
   display: grid;
   gap: 4px;
   padding: 3px;
@@ -272,6 +273,10 @@
 
 .segments3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.segments4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .optSegment {

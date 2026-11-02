@@ -56,18 +56,21 @@ export function cssRotation(pose: Quat): string {
   return `rotate3d(${axis(x)}, ${axis(y)}, ${axis(z)}, ${((2 * Math.atan2(sine, w * sign)) / RAD).toFixed(2)}deg)`;
 }
 
+/** The unit vector towards the viewer in the axes of the card. */
+export function viewDirection(pose: Quat): { x: number; y: number; z: number } {
+  const [x, y, z, w] = pose;
+  return { x: 2 * (x * z - w * y), y: 2 * (y * z + w * x), z: 1 - 2 * (x * x + y * y) };
+}
+
 /**
  * Where the viewer stands as seen from the card, in degrees: yaw towards its sides and
  * pitch towards its top and bottom. Both are 0 when looking straight at the front.
  */
 export function viewAngles(pose: Quat): { yaw: number; pitch: number } {
-  const [x, y, z, w] = pose;
-  const viewX = 2 * (x * z - w * y);
-  const viewY = 2 * (y * z + w * x);
-  const viewZ = 1 - 2 * (x * x + y * y);
+  const view = viewDirection(pose);
   return {
-    yaw: Math.atan2(-viewX, viewZ) / RAD,
-    pitch: Math.asin(Math.max(-1, Math.min(1, viewY))) / RAD,
+    yaw: Math.atan2(-view.x, view.z) / RAD,
+    pitch: Math.asin(Math.max(-1, Math.min(1, view.y))) / RAD,
   };
 }
 

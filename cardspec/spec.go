@@ -152,10 +152,10 @@ func (p *Problems) array(obj map[string]any, key, count string) []any {
 // ValidateLook checks the `look` JSON. Missing keys are fine, normalizeCard() fills them in.
 func ValidateLook(look map[string]any) Problems {
 	var p Problems
-	for _, key := range []string{"variant", "art", "frame", "palette", "element", "foil", "surface", "edge", "font"} {
+	for _, key := range []string{"variant", "art", "frame", "palette", "element", "foil", "foilArea", "surface", "texture", "edge", "font", "titleEffect", "skyStyle", "skyPattern"} {
 		p.enum(look, key, key)
 	}
-	for _, key := range []string{"foilI", "thick", "radius", "depth", "titleScale"} {
+	for _, key := range []string{"foilI", "foilAngle", "thick", "radius", "depth", "titleScale", "titleSpacing", "titleOffset", "bodyScale", "vignette", "wear", "frameWeight", "textureI"} {
 		p.number(look, key, key)
 	}
 	for _, key := range []string{"emboss", "fullArt", "titleCaps"} {
@@ -166,13 +166,18 @@ func ValidateLook(look map[string]any) Problems {
 	if palette, ok := look["backPalette"]; !ok || palette != "" {
 		p.enum(look, "backPalette", "palette")
 	}
+	p.figure(look)
 
 	visible := p.object(look, "visible")
 	for _, key := range []string{"art", "frame", "text", "foil"} {
 		p.boolean(visible, key)
 	}
+	parts := p.object(look, "parts")
+	for _, key := range []string{"title", "numeral", "subtitle", "plaque", "window", "border", "corners", "ornaments", "rarity", "credit"} {
+		p.boolean(parts, key)
+	}
 	colors := p.object(look, "colors")
-	for _, key := range []string{"base", "sky", "metal", "text"} {
+	for _, key := range []string{"base", "sky", "metal", "text", "title", "plaque", "panel", "glow", "edge", "backBase", "backMetal"} {
 		p.color(colors, key)
 	}
 	filter := p.object(look, "artFilter")
@@ -180,7 +185,25 @@ func ValidateLook(look map[string]any) Problems {
 	p.number(filter, "contrast", "artContrast")
 	p.number(filter, "saturate", "artSaturate")
 	p.number(filter, "hue", "artHue")
+	p.number(filter, "sepia", "artSepia")
 	return p
+}
+
+// figure checks the illustration of the cards that do not pick one of the tarot arts by
+// their `art`. Empty means the illustration of the template. Which of the values fit
+// depends on the family, and a card of another family simply does not draw it.
+func (p *Problems) figure(look map[string]any) {
+	v, ok := look["figure"]
+	if !ok || v == "" {
+		return
+	}
+	s, isText := v.(string)
+	for _, enum := range []string{"art", "figureBestie", "figureHrdina"} {
+		if isText && slices.Contains(limits.Enums[enum], s) {
+			return
+		}
+	}
+	p.addf("figure: unknown value")
 }
 
 // ValidateContent checks the `content` JSON.
@@ -191,8 +214,14 @@ func ValidateContent(content map[string]any) Problems {
 	p.text(content, "cls", "cls")
 	p.text(content, "setNo", "setNo")
 	p.text(content, "artist", "artist")
+	p.text(content, "backText", "backText")
 	for _, key := range []string{"hp", "level", "cost", "s1", "s2", "s3", "rarity"} {
 		p.number(content, key, key)
+	}
+
+	labels := p.object(content, "labels")
+	for _, key := range []string{"level", "s1", "s2", "s3"} {
+		p.text(labels, key, "statLabel")
 	}
 
 	for _, item := range p.array(content, "abilities", "abilities") {
@@ -220,19 +249,24 @@ func ValidateContent(content map[string]any) Problems {
 // element checks one freely placed element. Which of the keys matter depends on its type,
 // the limits hold for all of them.
 func (p *Problems) element(element map[string]any) {
-	for key, enum := range map[string]string{"type": "itemType", "side": "itemSide", "font": "itemFont", "align": "itemAlign"} {
+	for key, enum := range map[string]string{"type": "itemType", "side": "itemSide", "font": "itemFont", "align": "itemAlign", "blend": "itemBlend", "effect": "titleEffect"} {
 		p.enum(element, key, enum)
 	}
 	for key, limit := range map[string]string{"id": "itemId", "text": "itemText", "value": "itemValue", "file": "itemFile"} {
 		p.text(element, key, limit)
 	}
-	for key, rng := range map[string]string{"x": "itemPosition", "y": "itemPosition", "size": "itemSize", "rotate": "itemRotate", "opacity": "itemOpacity", "ratio": "itemRatio"} {
+	for key, rng := range map[string]string{"x": "itemPosition", "y": "itemPosition", "size": "itemSize", "rotate": "itemRotate", "opacity": "itemOpacity", "ratio": "itemRatio", "depth": "itemDepth", "shadow": "itemShadow", "spacing": "itemSpacing", "line": "itemLine", "curve": "itemCurve", "stroke": "itemStroke", "border": "itemBorder"} {
 		p.number(element, key, rng)
 	}
 	p.color(element, "color")
-	p.boolean(element, "filled")
-	p.boolean(element, "hidden")
+	for _, key := range []string{"filled", "hidden", "flipX", "flipY", "locked", "caps"} {
+		p.boolean(element, key)
+	}
 	p.text(element, "kind", "itemId")
+	// Empty means the whole image without any cut-out.
+	if mask, ok := element["mask"]; ok && mask != "" {
+		p.enum(element, "mask", "itemShape")
+	}
 
 	kinds := map[string]string{"symbol": "itemSymbol", "ornament": "itemOrnament", "shape": "itemShape", "stat": "itemShape"}
 	if enum, ok := kinds[fmt.Sprint(element["type"])]; ok {

@@ -1,12 +1,49 @@
 import { memo, type CSSProperties } from 'react';
 import { cs } from '../i18n/cs';
 import { CardItems } from './CardItems';
-import { flatContainerStyle, flatRootStyle, type FlatCardProps } from './CardFace';
+import { flatContainerStyle, flatRootStyle, MaterialLayers, type FlatCardProps } from './CardFace';
 import { restingMotion } from './motion';
 import type { ResolvedCard } from './resolve';
 import { useCardIds, useResolvedCard } from './useResolvedCard';
 
 const SVG: CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' };
+
+/** The own text sits on a plate of its own, the pattern under it could be anything. */
+function BackText({ card }: { card: ResolvedCard }) {
+  const { back, backText } = card;
+  const brand = card.tcg && card.backPattern === 'mandala';
+  if (!backText && !brand) return null;
+  const plate = Boolean(backText);
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: brand ? '70%' : '80%',
+        height: '5%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'Cinzel', serif",
+          fontWeight: 700,
+          fontSize: '0.95em',
+          letterSpacing: '0.32em',
+          paddingLeft: '0.32em',
+          color: back.txt,
+          whiteSpace: 'nowrap',
+          ...(plate ? { paddingRight: '0.2em', borderRadius: '0.3em', background: back.base } : null),
+        }}
+      >
+        {backText || cs.card.brand}
+      </span>
+    </div>
+  );
+}
 
 const glareStyle: CSSProperties = {
   position: 'absolute',
@@ -47,29 +84,9 @@ export const BackLayers = memo(function BackLayers({ card, editable = false, sel
         <path d={b.fill} fill={gold} />
         <path d={b.dark} fill={back.base} />
       </svg>
-      {card.tcg && card.backPattern === 'mandala' && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: '70%',
-            height: '5%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: "'Cinzel', serif",
-            fontWeight: 700,
-            fontSize: '0.95em',
-            letterSpacing: '0.32em',
-            paddingLeft: '0.32em',
-            color: back.txt,
-          }}
-        >
-          {cs.card.brand}
-        </div>
-      )}
+      <BackText card={card} />
       <CardItems items={card.items} side="back" ink={{ base: back.base, text: back.txt, metal: `url(#${ids.metal})` }} editable={editable} selected={selected} />
+      {!card.uniformBack && <MaterialLayers card={card} />}
       <div aria-hidden="true" style={glareStyle} />
     </>
   );

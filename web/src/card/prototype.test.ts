@@ -55,6 +55,10 @@ const prototypeVariants = enums.variant.filter((v): v is Exclude<Variant, 'prazd
 const prototypePalettes = enums.palette.filter((palette) => ['pulnoc', 'krev', 'smaragd', 'pergamen'].includes(palette));
 const prototypeFoils = enums.foil.filter((foil) => ['zadna', 'zlata', 'duha', 'kosmos'].includes(foil));
 const prototypeEdges = enums.edge.filter((edge) => ['zlata', 'cerna', 'bila', 'ram'].includes(edge));
+const prototypeFrames = enums.frame.filter((frame) => ['secese', 'deco', 'gotika', 'minimal'].includes(frame));
+const prototypeArts = enums.art.filter((art) => ['hvezda', 'mesic', 'slunce', 'mag'].includes(art));
+const prototypeElements = enums.element.filter((element) => ['mlha', 'ohen', 'les', 'blesk', 'stin'].includes(element));
+const prototypeFonts = enums.font.filter((font) => ['cinzel', 'cormorant', 'aboreto', 'gotika'].includes(font));
 
 function render(props: Record<string, unknown>, state: Partial<MotionState> = {}) {
   const instance = new Prototype();
@@ -66,9 +70,9 @@ function render(props: Record<string, unknown>, state: Partial<MotionState> = {}
 describe('geometry matches the prototype', () => {
   for (const variant of prototypeVariants) {
     it(`${variant}: every frame, artwork, element, rarity and radius`, () => {
-      for (const frame of enums.frame) {
-        for (const art of enums.art) {
-          for (const element of enums.element) {
+      for (const frame of prototypeFrames) {
+        for (const art of prototypeArts) {
+          for (const element of prototypeElements) {
             for (const rarity of [0, 3, 5]) {
               for (const radius of [0, 8, 14, 30]) {
                 const expected = original.build(variant, frame, art, element, rarity, radius);
@@ -90,11 +94,11 @@ describe('static values match the prototype', () => {
   for (const variant of prototypeVariants) {
     samples.push({ variant });
     for (const palette of prototypePalettes) samples.push({ variant, palette });
-    for (const element of enums.element) samples.push({ variant, element });
+    for (const element of prototypeElements) samples.push({ variant, element });
     for (const foil of prototypeFoils) samples.push({ variant, foil, foilI: 80 });
     for (const edge of prototypeEdges) samples.push({ variant, edge, palette: 'krev' });
-    for (const font of enums.font) samples.push({ variant, font, cardTitle: 'Velmi dlouhý název karty' });
-    for (const art of enums.art) samples.push({ variant, art });
+    for (const font of prototypeFonts) samples.push({ variant, font, cardTitle: 'Velmi dlouhý název karty' });
+    for (const art of prototypeArts) samples.push({ variant, art });
     samples.push({ variant, thick: 7.5, radius: 22 });
     samples.push({ variant, cardTitle: 'Krátký', subtitle: 'Vlastní podtitul', numeral: 'IX', hp: 90, level: 4, ab1: 'A', ab1p: 10, ab1t: 'B', ab2: 'C', ab2p: 30, ab2t: 'D', s1: 1, s2: 5, s3: 9, cost: 2, cls: 'Mág', author: '@ja', setNo: 'X · 1/2', rarity: 5 });
   }
@@ -134,6 +138,14 @@ describe('static values match the prototype', () => {
       expect(edge.z).toBe(v.e[`z${i}`]);
     });
     expect(card.ariaBase).toBe(v.aria);
+  });
+});
+
+describe('values beyond the design', () => {
+  it('stay out of the way of the defaults', () => {
+    const plain = resolveCard({});
+    const named = resolveCard({ foilArea: 'cela', foilAngle: 115, texture: 'zadna', wear: 0, frameWeight: 100, titleEffect: 'zadny', titleSpacing: 0, titleOffset: 0, bodyScale: 100, skyStyle: 'prechod', skyPattern: 'zadny', vignette: 0 });
+    expect(named).toEqual(plain);
   });
 });
 

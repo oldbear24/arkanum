@@ -1,5 +1,5 @@
-import { enums } from '../../card/spec';
-import type { Art, BackPattern, CardElement, CardFont, CardItem, Edge, Family, Foil, Frame, ItemAlign, ItemFont, ItemOrnament, ItemShape, ItemSymbol, ItemType, LayerVisibility, Palette, Surface, Arcana } from '../../card/spec';
+import { enums, figureChoices } from '../../card/spec';
+import type { ArtFilter, Art, BackPattern, CardElement, CardFont, CardItem, CardParts, Edge, Family, Figure, Foil, FoilArea, Frame, ItemAlign, ItemBlend, ItemFont, ItemOrnament, ItemShape, ItemSymbol, ItemType, LayerVisibility, Palette, SkyPattern, SkyStyle, Surface, Texture, TitleEffect, Arcana } from '../../card/spec';
 import { WIN } from '../../card/geometry';
 import { PAL } from '../../card/resolve';
 import type { IconName } from '../../components/Icon';
@@ -9,6 +9,54 @@ import type { TabId } from './context';
 const w = cs.workshop;
 
 export const BACK_PATTERNS: { id: BackPattern; label: string }[] = enums.backPattern.map((id) => ({ id, label: w.backPatterns[id] }));
+
+export const SKY_STYLES: { id: SkyStyle; label: string }[] = enums.skyStyle.map((id) => ({ id, label: w.skyStyles[id] }));
+export const SKY_PATTERNS: { id: SkyPattern; label: string }[] = enums.skyPattern.map((id) => ({ id, label: w.skyPatterns[id] }));
+export const FOIL_AREAS: { id: FoilArea; label: string }[] = enums.foilArea.map((id) => ({ id, label: w.foilAreas[id] }));
+export const TEXTURES: { id: Texture; label: string }[] = enums.texture.map((id) => ({ id, label: w.textures[id] }));
+export const TITLE_EFFECTS: { id: TitleEffect; label: string }[] = enums.titleEffect.map((id) => ({ id, label: w.titleEffects[id] }));
+
+const f = w.filterPresets;
+
+/** Ready adjustments of the colours of an illustration. */
+export const ART_FILTERS: { id: string; label: string; filter: ArtFilter }[] = [
+  { id: 'cernobila', label: f.cernobila, filter: { brightness: 100, contrast: 105, saturate: 0, hue: 0, sepia: 0 } },
+  { id: 'sepie', label: f.sepie, filter: { brightness: 100, contrast: 95, saturate: 80, hue: 0, sepia: 80 } },
+  { id: 'noir', label: f.noir, filter: { brightness: 90, contrast: 140, saturate: 0, hue: 0, sepia: 0 } },
+  { id: 'vybledla', label: f.vybledla, filter: { brightness: 110, contrast: 75, saturate: 60, hue: 0, sepia: 15 } },
+  { id: 'tepla', label: f.tepla, filter: { brightness: 105, contrast: 100, saturate: 120, hue: -12, sepia: 20 } },
+  { id: 'studena', label: f.studena, filter: { brightness: 100, contrast: 105, saturate: 90, hue: 18, sepia: 0 } },
+];
+
+/** The other illustrations of a family, with the one of its template first. */
+export function figureOptions(family: Family): { id: Figure | ''; label: string }[] {
+  const names = w.artNames as Partial<Record<Family, string>>;
+  const figures = w.figures as Partial<Record<Figure, string>>;
+  const arts = cs.card.arts as Partial<Record<Figure, { name: string }>>;
+  const others = figureChoices(family).map((id) => ({ id, label: figures[id] ?? arts[id]?.name ?? id }));
+  return others.length > 0 ? [{ id: '', label: names[family] ?? '' }, ...others] : [];
+}
+
+const SECOND_TEXT: Partial<Record<Family, string>> = { orakulum: w.message, bestie: w.creatureDescription, hrdina: w.quote, prazdna: w.cardText };
+
+/** The parts of a card that can be switched off one by one, and how each family calls them. */
+export function partOptions(family: Family): { id: keyof CardParts; label: string }[] {
+  const p = w.parts;
+  const second = SECOND_TEXT[family];
+  const rows: { id: keyof CardParts; label: string; only?: Family[]; not?: Family[] }[] = [
+    { id: 'title', label: p.title },
+    { id: 'numeral', label: p.numeral, only: ['tarot'] },
+    { id: 'subtitle', label: second ?? '', not: ['tarot'] },
+    { id: 'plaque', label: p.plaque, not: ['orakulum', 'prazdna'] },
+    { id: 'window', label: p.window },
+    { id: 'border', label: p.border },
+    { id: 'corners', label: p.corners, not: ['prazdna'] },
+    { id: 'ornaments', label: p.ornaments, not: ['hrdina', 'prazdna'] },
+    { id: 'rarity', label: p.rarity, only: ['bestie'] },
+    { id: 'credit', label: family === 'hrdina' ? p.creditHero : p.credit, only: ['bestie', 'hrdina'] },
+  ];
+  return rows.filter((row) => (!row.only || row.only.includes(family)) && !row.not?.includes(family));
+}
 
 export const VARIANT_OPTIONS: { id: Family; label: string; icon: string }[] = [
   { id: 'tarot', label: cs.family.tarot, icon: 'M7 3H17V21H7ZM12 8L13 11L16 12L13 13L12 16L11 13L8 12L11 11Z' },
@@ -106,7 +154,17 @@ export const ITEM_ICONS: Record<ItemType, IconName> = {
 
 const i = w.items;
 
-export const ITEM_SYMBOLS = enums.itemSymbol.map((id) => ({ id, label: i.symbols[id] }));
+const symbolOptions = (ids: ItemSymbol[]) => ids.map((id) => ({ id, label: i.symbols[id] }));
+
+/** The symbols in groups, there are too many of them to look through at once. */
+export const SYMBOL_GROUPS: { title: string; options: { id: ItemSymbol; label: string }[] }[] = [
+  { title: i.symbolGroups.zaklad, options: symbolOptions(['hvezda', 'hvezda8', 'mesic', 'uplnek', 'slunce', 'oko', 'srdce', 'koruna', 'plamen', 'kapka', 'list', 'blesk', 'stit', 'ruze', 'motyl', 'pirko']) },
+  { title: i.symbolGroups.predmety, options: symbolOptions(['mec', 'pohar', 'pentakl', 'hul', 'klic', 'kniha', 'presypaci', 'miska', 'kompas', 'kostka', 'lebka', 'ouroboros']) },
+  { title: i.symbolGroups.zivly, options: symbolOptions(['ohen', 'voda', 'vzduch', 'zeme']) },
+  { title: i.symbolGroups.zverokruh, options: symbolOptions(['beran', 'byk', 'blizenci', 'rak', 'lev', 'panna', 'vahy', 'stir', 'strelec', 'kozoroh', 'vodnar', 'ryby']) },
+  { title: i.symbolGroups.planety, options: symbolOptions(['merkur', 'venuse', 'mars', 'jupiter', 'saturn']) },
+];
+
 export const ITEM_ORNAMENTS = enums.itemOrnament.map((id) => ({ id, label: i.ornaments[id] }));
 export const ITEM_SHAPES = enums.itemShape.map((id) => ({ id, label: i.shapes[id] }));
 
@@ -117,7 +175,14 @@ export const ITEM_FONTS: { id: ItemFont; label: string; family: string; weight: 
   { id: 'aboreto', label: i.fonts.aboreto, family: "'Aboreto', Georgia, serif", weight: 400 },
   { id: 'gotika', label: i.fonts.gotika, family: "'Grenze Gotisch', Georgia, serif", weight: 600 },
   { id: 'jost', label: i.fonts.jost, family: "'Jost', system-ui, sans-serif", weight: 500 },
+  { id: 'marcellus', label: i.fonts.marcellus, family: "'Marcellus', Georgia, serif", weight: 400 },
+  { id: 'uncial', label: i.fonts.uncial, family: "'Uncial Antiqua', Georgia, serif", weight: 400 },
+  { id: 'fondamento', label: i.fonts.fondamento, family: "'Fondamento', Georgia, serif", weight: 400 },
+  { id: 'metamorphous', label: i.fonts.metamorphous, family: "'Metamorphous', Georgia, serif", weight: 400 },
+  { id: 'vibes', label: i.fonts.vibes, family: "'Great Vibes', Georgia, cursive", weight: 400 },
 ];
+
+export const ITEM_BLENDS: { id: ItemBlend; label: string }[] = enums.itemBlend.map((id) => ({ id, label: i.blends[id] }));
 
 export const ITEM_ALIGNS: { id: ItemAlign; label: string }[] = enums.itemAlign.map((id) => ({ id, label: i.aligns[id] }));
 
@@ -139,7 +204,7 @@ export function itemName(item: CardItem): string {
   }
 }
 
-export const ARTS: { id: Art; label: string; numeral: string }[] = (['hvezda', 'mesic', 'slunce', 'mag'] as const).map((id) => ({
+export const ARTS: { id: Art; label: string; numeral: string }[] = enums.art.map((id) => ({
   id,
   label: cs.card.arts[id].name,
   numeral: cs.card.arts[id].numeral,
@@ -150,6 +215,10 @@ export const FRAMES: { id: Frame; label: string; short: string; win: string }[] 
   { id: 'deco', label: w.frames.deco, short: w.frames.decoShort, win: WIN.deco },
   { id: 'gotika', label: w.frames.gotika, short: w.frames.gotika, win: WIN.gotika },
   { id: 'minimal', label: w.frames.minimal, short: w.frames.minimal, win: WIN.minimal },
+  { id: 'baroko', label: w.frames.baroko, short: w.frames.baroko, win: WIN.baroko },
+  { id: 'vitraz', label: w.frames.vitraz, short: w.frames.vitraz, win: WIN.vitraz },
+  { id: 'luna', label: w.frames.luna, short: w.frames.luna, win: WIN.luna },
+  { id: 'keltsky', label: w.frames.keltsky, short: w.frames.keltsky, win: WIN.keltsky },
 ];
 
 export const PALETTES: { id: Palette; label: string; base: string; gold: string }[] = [
@@ -161,6 +230,14 @@ export const PALETTES: { id: Palette; label: string; base: string; gold: string 
   { id: 'safir', label: w.palettes.safir, base: PAL.safir.base, gold: PAL.safir.g1 },
   { id: 'obsidian', label: w.palettes.obsidian, base: PAL.obsidian.base, gold: PAL.obsidian.g1 },
   { id: 'jantar', label: w.palettes.jantar, base: PAL.jantar.base, gold: PAL.jantar.g1 },
+  { id: 'ruze', label: w.palettes.ruze, base: PAL.ruze.base, gold: PAL.ruze.g1 },
+  { id: 'tyrkys', label: w.palettes.tyrkys, base: PAL.tyrkys.base, gold: PAL.tyrkys.g1 },
+  { id: 'popel', label: w.palettes.popel, base: PAL.popel.base, gold: PAL.popel.g1 },
+  { id: 'mech', label: w.palettes.mech, base: PAL.mech.base, gold: PAL.mech.g1 },
+  { id: 'vino', label: w.palettes.vino, base: PAL.vino.base, gold: PAL.vino.g1 },
+  { id: 'slonovina', label: w.palettes.slonovina, base: PAL.slonovina.base, gold: PAL.slonovina.g1 },
+  { id: 'zima', label: w.palettes.zima, base: PAL.zima.base, gold: PAL.zima.g1 },
+  { id: 'pisek', label: w.palettes.pisek, base: PAL.pisek.base, gold: PAL.pisek.g1 },
 ];
 
 export const ELEMENTS: { id: CardElement; label: string; color: string }[] = [
@@ -169,6 +246,11 @@ export const ELEMENTS: { id: CardElement; label: string; color: string }[] = [
   { id: 'les', label: cs.card.elements.les, color: '#7cbf5a' },
   { id: 'blesk', label: cs.card.elements.blesk, color: '#e6c548' },
   { id: 'stin', label: cs.card.elements.stin, color: '#a58be6' },
+  { id: 'voda', label: cs.card.elements.voda, color: '#4a9fe0' },
+  { id: 'led', label: cs.card.elements.led, color: '#8fdbe8' },
+  { id: 'zeme', label: cs.card.elements.zeme, color: '#b58a5a' },
+  { id: 'svetlo', label: cs.card.elements.svetlo, color: '#efe2b0' },
+  { id: 'jed', label: cs.card.elements.jed, color: '#b4d23c' },
 ];
 
 export const FOILS: { id: Foil; label: string; short: string; swatch: string }[] = [
@@ -185,12 +267,26 @@ export const FOILS: { id: Foil; label: string; short: string; swatch: string }[]
   { id: 'stribrna', label: w.foils.stribrna, short: w.foils.stribrna, swatch: 'linear-gradient(135deg, #5d6470 0%, #f7f9fc 48%, #6f7682 100%)' },
   { id: 'hranol', label: w.foils.hranol, short: w.foils.hranol, swatch: 'repeating-linear-gradient(115deg, #ff5caa 0, #ffd666 5px, #68ffc4 10px, #5cb2ff 15px, #c478ff 20px, #ff5caa 25px)' },
   { id: 'perlet', label: w.foils.perlet, short: w.foils.perlet, swatch: 'linear-gradient(135deg, #f4dfe8 0%, #e2f0ff 50%, #e8ffef 100%)' },
+  { id: 'ruzova', label: w.foils.ruzova, short: w.foils.ruzovaShort, swatch: 'linear-gradient(135deg, #7d4f4a 0%, #fff1ec 48%, #8f5a54 100%)' },
+  { id: 'medena', label: w.foils.medena, short: w.foils.medena, swatch: 'linear-gradient(135deg, #6a3518 0%, #ffe3c8 48%, #7d4322 100%)' },
+  { id: 'plamen', label: w.foils.plamen, short: w.foils.plamen, swatch: 'linear-gradient(135deg, #ff3c1e 0%, #ff9628 45%, #ffe278 75%, #ff781e 100%)' },
+  { id: 'ledova', label: w.foils.ledova, short: w.foils.ledova, swatch: 'linear-gradient(135deg, #5096ff 0%, #78e6ff 45%, #ebfcff 75%, #78beff 100%)' },
+  {
+    id: 'trpytky',
+    label: w.foils.trpytky,
+    short: w.foils.trpytky,
+    swatch:
+      'radial-gradient(circle at 25% 30%, #ffffff 0, #ffffff 1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 60% 25%, #ffe2aa 0, #ffe2aa 1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 75% 65%, #ffffff 0, #ffffff 1px, rgba(255,255,255,0) 2px), radial-gradient(circle at 35% 72%, #b4d6ff 0, #b4d6ff 1px, rgba(255,255,255,0) 2px), linear-gradient(135deg, #4a4668, #2b2650)',
+  },
+  { id: 'vlny', label: w.foils.vlny, short: w.foils.vlny, swatch: 'repeating-radial-gradient(circle at 30% 30%, #ff5caa 0, #ffd666 4px, #68ffc4 8px, #5cb2ff 12px, #ff5caa 16px)' },
+  { id: 'galaxie', label: w.foils.galaxie, short: w.foils.galaxie, swatch: 'radial-gradient(circle at 30% 35%, #a05aff 0, rgba(160,90,255,0) 55%), radial-gradient(circle at 72% 60%, #46a0ff 0, rgba(70,160,255,0) 55%), linear-gradient(135deg, #15102e, #241a4a)' },
 ];
 
 export const SURFACES: { id: Surface; label: string }[] = [
   { id: 'mat', label: w.surfaces.mat },
   { id: 'saten', label: w.surfaces.saten },
   { id: 'lesk', label: w.surfaces.lesk },
+  { id: 'zrcadlo', label: w.surfaces.zrcadlo },
 ];
 
 export const EDGES: { id: Edge; label: string; short: string; swatch?: string }[] = [
@@ -200,6 +296,12 @@ export const EDGES: { id: Edge; label: string; short: string; swatch?: string }[
   { id: 'ram', label: w.edges.ram, short: w.edges.ramShort },
   { id: 'stribrna', label: w.edges.stribrna, short: w.edges.stribrna, swatch: 'linear-gradient(90deg, #7f858f, #e4e7ec, #7f858f)' },
   { id: 'medena', label: w.edges.medena, short: w.edges.medena, swatch: 'linear-gradient(90deg, #84492a, #e3a26f, #84492a)' },
+  { id: 'ruzova', label: w.edges.ruzova, short: w.edges.ruzova, swatch: 'linear-gradient(90deg, #a56f68, #f0c4b8, #a56f68)' },
+  { id: 'modra', label: w.edges.modra, short: w.edges.modra, swatch: 'linear-gradient(90deg, #2c4f8c, #6f9fe0, #2c4f8c)' },
+  { id: 'cervena', label: w.edges.cervena, short: w.edges.cervena, swatch: 'linear-gradient(90deg, #7f1f26, #d24a4a, #7f1f26)' },
+  { id: 'zelena', label: w.edges.zelena, short: w.edges.zelena, swatch: 'linear-gradient(90deg, #1f6a48, #4fbf88, #1f6a48)' },
+  { id: 'fialova', label: w.edges.fialova, short: w.edges.fialova, swatch: 'linear-gradient(90deg, #4f3288, #9a74e0, #4f3288)' },
+  { id: 'duha', label: w.edges.duha, short: w.edges.duha, swatch: 'linear-gradient(180deg, #ff5caa, #ffd666, #68ffc4, #5cb2ff, #c478ff)' },
 ];
 
 export const FONTS: { id: CardFont; label: string; family: string; weight: number }[] = [
@@ -207,6 +309,11 @@ export const FONTS: { id: CardFont; label: string; family: string; weight: numbe
   { id: 'cormorant', label: w.fonts.cormorant, family: "'Cormorant Garamond', Georgia, serif", weight: 700 },
   { id: 'aboreto', label: w.fonts.aboreto, family: "'Aboreto', Georgia, serif", weight: 400 },
   { id: 'gotika', label: w.fonts.gotika, family: "'Grenze Gotisch', Georgia, serif", weight: 600 },
+  { id: 'marcellus', label: w.fonts.marcellus, family: "'Marcellus', Georgia, serif", weight: 400 },
+  { id: 'uncial', label: w.fonts.uncial, family: "'Uncial Antiqua', Georgia, serif", weight: 400 },
+  { id: 'fondamento', label: w.fonts.fondamento, family: "'Fondamento', Georgia, serif", weight: 400 },
+  { id: 'metamorphous', label: w.fonts.metamorphous, family: "'Metamorphous', Georgia, serif", weight: 400 },
+  { id: 'vibes', label: w.fonts.vibes, family: "'Great Vibes', Georgia, cursive", weight: 400 },
 ];
 
 export const ARCANAS: { id: Arcana; label: string }[] = [

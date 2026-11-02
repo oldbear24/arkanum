@@ -16,13 +16,15 @@ export interface CardIds {
   glow: string;
   clip: string;
   emb: string;
+  vignette: string;
+  foil: string;
 }
 
 /** Ids of the SVG definitions, unique per rendered card and safe to use in url(#…). */
 export function useCardIds(): CardIds {
   const uid = 'k' + useId().replace(/[^a-zA-Z0-9]/g, '');
   return useMemo(
-    () => ({ gold: uid + 'g', metal: uid + 'm', filter: uid + 'f', sky: uid + 's', glow: uid + 'w', clip: uid + 'c', emb: uid + 'e' }),
+    () => ({ gold: uid + 'g', metal: uid + 'm', filter: uid + 'f', sky: uid + 's', glow: uid + 'w', clip: uid + 'c', emb: uid + 'e', vignette: uid + 'v', foil: uid + 'o' }),
     [uid],
   );
 }

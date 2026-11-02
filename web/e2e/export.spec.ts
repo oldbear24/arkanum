@@ -95,6 +95,60 @@ test('exports a print PDF with real size, bleed and two pages', async ({ page })
   }
 });
 
+test('the export carries the look options and a text on a curve', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByRole('complementary', { name: 'Šablona a vrstvy' }).getByRole('button', { name: 'Text', exact: true }).click();
+  await page.getByLabel('Barva', { exact: true }).fill('#ff0000');
+  await page.getByLabel('Velikost').fill('20');
+  await page.getByText('Úprava textu').click();
+  await page.getByLabel('Ohyb textu').fill('50');
+  await page.getByText('Vzhled prvku').click();
+  await page.getByLabel('Stín', { exact: true }).fill('60');
+
+  await page.getByRole('button', { name: 'Vzhled', exact: true }).click();
+  await page.getByText('Pozadí okna').click();
+  await page.getByRole('button', { name: 'Paprsky' }).click();
+  await page.getByText('Úpravy ilustrace').click();
+  await page.getByLabel('Ztmavení rohů').fill('70');
+
+  await page.getByRole('button', { name: 'Materiál', exact: true }).click();
+  await page.getByRole('button', { name: 'Galaxie' }).click();
+  await page.getByRole('button', { name: 'Okolo ní' }).click();
+  await page.getByText('Textura a opotřebení').click();
+  await page.getByRole('button', { name: 'Zrno' }).click();
+  await page.getByLabel('Opotřebení okrajů').fill('60');
+  await waitSaved(page);
+
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: /^PNG/ }).click();
+  const bytes = await bytesOf(await pending);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+
+  const counts = await page.evaluate(async (data) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d')!;
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, image.width, image.height).data;
+    let red = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i]! > 200 && pixels[i + 1]! < 70 && pixels[i + 2]! < 70) red++;
+    }
+    // Worn edges darken what lies at the edge of the card, next to the corner.
+    const at = (x: number, y: number) => [...context.getImageData(x, y, 1, 1).data];
+    return { red, edge: at(Math.round(image.width / 2), 6), inner: at(Math.round(image.width / 2), 200) };
+  }, bytes.toString('base64'));
+
+  expect(counts.red).toBeGreaterThan(200);
+  expect(counts.edge[3]).toBe(255);
+});
+
 test('publishing makes the card public with a 600 px preview', async ({ page, request }) => {
   await signIn(page, 'demo');
   const id = await createCard(page);

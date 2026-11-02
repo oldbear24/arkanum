@@ -48,6 +48,20 @@ describe('applyTemplate', () => {
     expect(doc.content).toMatchObject({ hp: 150, rarity: 5 });
   });
 
+  it('drops the illustration of the old family', () => {
+    const doc = applyTemplate(normalizeCard({ family: 'bestie', look: { figure: 'sova' } }), 'hrdina');
+    expect(doc.look.figure).toBe('');
+    expect(normalizeCard(doc)).toEqual(doc);
+  });
+
+  it('keeps the parts and the own texts of the back', () => {
+    const before = normalizeCard({ look: { parts: { title: false }, texture: 'platno' }, content: { backText: 'Moje sada', labels: { s1: 'Moc' } } });
+    const doc = applyTemplate(before, 'hrdina');
+    expect(doc.look.parts.title).toBe(false);
+    expect(doc.look.texture).toBe('platno');
+    expect(doc.content).toMatchObject({ backText: 'Moje sada', labels: { s1: 'Moc' } });
+  });
+
   it('keeps the artwork placement and stays valid', () => {
     const before = normalizeCard({ artworkTransform: { x: 10, y: 20, zoom: 2 } });
     const doc = applyTemplate(before, 'prazdna');

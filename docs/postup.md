@@ -50,6 +50,9 @@ v administraci. Aktualizace Docker image se takhle nezkoušela, lokálně tu Doc
 Verze do `v0.1.2` neznají volby z `v0.2.0`. Kartu s novou paletou, fólií nebo ořízkou po návratu odmítnou uložit, když se posílá
 jen část dat, například při nahrání ilustrace. Plné uložení z jejich dílny projde, protože neznámé hodnoty nahradí výchozími.
 
+Stejně se k volbám z další verze zachovají verze do `v0.2.0`. Plyne to z toho, že validace zná jen své výčty a neznámé klíče
+pomíjí, starší binárkou jsem to ale zatím nezkoušel. Nové klíče po návratu z karty při plném uložení zmizí.
+
 ## Co není ověřené
 
 - **Skutečné Safari.** Playwright WebKit na Windows neumí 3D skládání vůbec: rub prosvítá zrcadlově i na nejjednodušší
@@ -57,6 +60,9 @@ jen část dat, například při nahrání ilustrace. Plné uložení z jejich d
   provozem je potřeba 3D kartu prohlédnout na iPhonu nebo Macu.
 - **Firefox.** Prohlížeč se na tomhle stroji nepodařilo spustit (systém odmítá `firefox.exe` s `Permission denied`).
 - **E-maily** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo.
+- **Nové efekty karty mimo Chromium.** Automatické testy běží jen v Chromiu. Oblast fólie, texturu, vzor pozadí a záři nadpisu jsem na
+  plochém líci prohlédl i v Playwright WebKitu a vypadají stejně. Prolnutí prvků a text na oblouku, hlavně v exportu, mimo Chromium
+  vyzkoušené nejsou.
 - **Otáčení dvěma prsty** je ověřené jen simulovanými událostmi ukazatele v unit testu, ne na skutečném telefonu.
 - **Švih prstem u odemknuté karty** je ověřený jen emulovaným dotykem v Chromiu. V emulaci se první klepnutí po švihnutí ztratí
   (`pointerup` přijde, `click` ne), a to i na prázdné stránce bez aplikace, takže to dělá prohlížeč. Na telefonu je potřeba
@@ -250,6 +256,47 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
   sbalené. **Střed dílny je na širokém displeji přilepený,** jinak by se karta s dlouhým panelem odsunula mimo obrazovku.
 - Vlastní barvy projdou jen ve tvaru `#rrggbb`, a to na klientu i v Go hooku, protože končí přímo ve stylech karty.
 - **Balíček** dál určuje jednotný rub: u svých karet přebije vzor i prvky na rubu, jinak by rub prozrazoval, která karta je která.
+
+### Ještě víc možností úprav
+
+Všechno je navíc oproti návrhu a výchozí hodnoty kreslí kartu stejně jako dřív. Hlídá to `prototype.test.ts`, který z návrhu dál
+porovnává jen jeho hodnoty, a test v něm, že výslovně zadané výchozí hodnoty nic nezmění. Kresby i rámy jsou vlastní.
+
+- **Přibylo:** 8 arkán, ilustrace pro orákulum, bestii a hrdinu, 4 rámy, 8 palet, 5 elementů, 7 fólií se směrem a oblastí, povrch
+  Zrcadlo, 5 textur a opotřebení okrajů, 6 ořízek a vlastní barva ořízky, 5 písem, efekty, mezery a posun nadpisu, velikost ostatních
+  textů, vlastní popisky statistik, pozadí okna (4 podoby a 5 vzorů), ztmavení rohů, sépie a hotové filtry, síla linek, vypínání
+  jednotlivých částí karty, 7 dalších vlastních barev, 4 vzory rubu a text na rubu. U prvků 33 symbolů (zvěrokruh, planety, živly a
+  předměty), 7 ornamentů, 6 tvarů, zrcadlení, stín, prolnutí, výška nad kartou, zámek, text na oblouku a výřez obrázku.
+- **Ilustrace ostatních rodin je nové pole `figure`,** ne `art`. Uložené orákulum má v `art` výchozí `hvezda` a kreslí semínko, takže
+  sdílené pole by změnilo vzhled existujících karet. Prázdná hodnota znamená ilustraci šablony. Přepnutí šablony ji maže, protože každá
+  rodina nabízí jiné. Název karty se s ní nemění, na rozdíl od tarotu tam ilustrace název neurčuje.
+- **Hotové styly a náhodný vzhled** (`web/src/pages/workshop/looks.ts`) nastavují vzhled jako celek. Nesahají na rodinu,
+  ilustraci, tloušťku a zaoblení, skryté vrstvy a vypnuté části. Co styl nezmiňuje, vrací na výchozí hodnotu, jinak by se styly
+  vršily přes sebe. U bestie styl vybere místo palety element.
+- **„Výchozí vzhled šablony"** naopak vrací všechno kromě ilustrace, tedy i tloušťku, zaoblení, skryté vrstvy a vypnuté části. Tlačítko
+  slibuje výchozí stav a schovaná část by po něm jen mátla. Jde to vrátit tlačítkem Zpět.
+- **Kopírování vzhledu** ukládá do `localStorage`, takže funguje jen v jednom prohlížeči. Vložení jde přes `normalizeCard()`, protože
+  tam může ležet cokoli. Na server jsem pojmenované styly nedával, chtělo by to novou kolekci a vlastní obrazovku.
+- **Části karty (`look.parts`) jsou vedle vrstev,** ne místo nich. Oko u vrstvy dál schová celou skupinu jako v návrhu, přepínače schovají
+  jednu část. Text vypnuté části zůstává uložený.
+- **Oblast fólie** je `clip-path` přímo na vrstvách fólie. Na obalu kolem nich by vznikl nový kontext vrstvení a `mix-blend-mode` by se
+  odřízl od karty pod ním. U ilustrace přes celou kartu oblast není, fólie by se zastavila na neviditelné hraně okna. Volby oblasti a
+  směru se ukazují jen u fólií s vlastní vrstvou, zlatá, stříbrná, růžová a měděná mění jen kov.
+- **Výška prvku nad kartou** je jen posun ve vrstvě líce, protože `overflow: hidden` na líci skutečné 3D zploští. Počítá se ze skutečného
+  směru k divákovi (`viewDirection`), takže sedí i na obrácené nebo v rovině natočené kartě a na rubu. Na hloubce ilustrace nezávisí.
+- **Text na oblouku** je SVG `textPath`. Šířku písmen předem změřit nejde, proto je rámeček výběru jen odhad a text je vždy na jednom
+  řádku. Stín a záři má přes `filter`, protože SVG text `text-shadow` nekreslí.
+- **Textury** jsou CSS přechody v `em`, takže se dostanou i do exportu a škálují s kartou. Jemnější vzor se při šířce karty kolem 170 px
+  rozpadal na moaré, proto mají Plátno, Rýhy a Kazeta periodu aspoň 0,2 em.
+- **Vlastní barva panelu** přepíná barvu textů na tmavou nebo světlou podle jasu panelu, jinak by se text na tmavém panelu hrdiny ztratil.
+- **Výřez obrázku:** obrázek teď vyplňuje svůj box (`slice`). Při poměru stran souboru je to totéž co dřív a posuvník výšky ho může oříznout.
+- **Písma:** přibyly Marcellus, Uncial Antiqua, Fondamento, Metamorphous a Great Vibes, všechna přes `@fontsource`. Česká písmena jsem
+  ověřil v Chromiu porovnáním šířek proti náhradnímu písmu. Almendra vypadla, chybí jí ď a ť. Po výběru Great Vibes se vypnou velká
+  písmena, protože psací písmo se v nich rozpadá.
+- **Balíček** dál přebíjí rub: příznak `uniformBack` vypne vlastní barvy rubu, text na rubu, texturu a opotřebení rubu i vlastní barvu ořízky.
+- Text na `/sablony` říká „Osm rámů a šestnáct palet", návrh má „Čtyři rámy a čtyři palety", což už neplatí.
+- **Nedělal jsem** rámy a palety pro bestii a hrdinu (mají pevný návrh, zůstávají vlastní barvy), jiný tvar karty než zaoblený obdélník
+  (spadávka v PDF s ním počítá) a výběr písma pro ostatní texty.
 
 ### Přístupnost
 

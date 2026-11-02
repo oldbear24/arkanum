@@ -18,7 +18,8 @@ Hrdina a prázdná karta.
 - **Frontend:** `web/` – React + TypeScript + Vite, React Router, PocketBase JS SDK.
   Styly přes CSS Modules a CSS proměnné v `web/src/styles/tokens.css`. Žádná UI knihovna.
 - **Písma** hostuj lokálně přes `@fontsource` (Cinzel, Cormorant Garamond, Jost, Aboreto,
-  Grenze Gotisch). Nenačítej nic z Google Fonts.
+  Grenze Gotisch, Marcellus, Uncial Antiqua, Fondamento, Metamorphous, Great Vibes). Nenačítej nic
+  z Google Fonts.
 - **Testy:** Go testy (pravidla API, hooky), Vitest (logika karty), Playwright smoke test.
 - Ověř si API aktuální stabilní verze PocketBase z jeho dokumentace – syntaxe pravidel a
   migrací se mezi verzemi měnila.
