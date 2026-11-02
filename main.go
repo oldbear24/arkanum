@@ -8,7 +8,10 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
+	"arkanum/internal/hooks"
+	"arkanum/internal/seed"
 	"arkanum/internal/server"
+	_ "arkanum/migrations"
 	"arkanum/web"
 )
 
@@ -25,7 +28,9 @@ func main() {
 		Dir:          "migrations",
 	})
 
+	hooks.Register(app)
 	server.Register(app, web.Dist())
+	app.RootCmd.AddCommand(seed.Command(app))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)

@@ -1,0 +1,257 @@
+[
+  {
+    "slug": "tarot",
+    "name": "Tarot",
+    "family": "tarot",
+    "formatW": 70,
+    "formatH": 120,
+    "defaults": {
+      "title": "Hvězda",
+      "look": {
+        "variant": "tarot",
+        "art": "hvezda",
+        "frame": "secese",
+        "palette": "pulnoc",
+        "element": "mlha",
+        "foil": "zlata",
+        "foilI": 70,
+        "surface": "saten",
+        "emboss": true,
+        "edge": "zlata",
+        "thick": 4,
+        "radius": 14,
+        "depth": 60,
+        "font": "cinzel",
+        "visible": { "art": true, "frame": true, "text": true, "foil": true }
+      },
+      "content": {
+        "numeral": "XVII",
+        "subtitle": "",
+        "cls": "Paladin · Legenda",
+        "hp": 70,
+        "level": 2,
+        "cost": 5,
+        "s1": 4,
+        "s2": 6,
+        "s3": 2,
+        "rarity": 3,
+        "setNo": "",
+        "abilities": [
+          { "name": "Mámení", "power": 20, "text": "" },
+          { "name": "Bažinné světlo", "power": 50, "text": "" }
+        ],
+        "elements": []
+      },
+      "meaning": {
+        "arcana": "velka",
+        "upright": "Naděje, inspirace a klid po bouři. Víra, že se věci obracejí k lepšímu.",
+        "reversed": "Ztráta víry, rozčarování, odpojení od vlastních snů.",
+        "keywords": ["naděje", "inspirace", "klid"]
+      }
+    }
+  },
+  {
+    "slug": "orakulum",
+    "name": "Orákulum",
+    "family": "orakulum",
+    "formatW": 70,
+    "formatH": 120,
+    "defaults": {
+      "title": "Trpělivost",
+      "look": {
+        "variant": "orakulum",
+        "art": "hvezda",
+        "frame": "minimal",
+        "palette": "pergamen",
+        "element": "mlha",
+        "foil": "zadna",
+        "foilI": 70,
+        "surface": "saten",
+        "emboss": true,
+        "edge": "bila",
+        "thick": 4,
+        "radius": 14,
+        "depth": 60,
+        "font": "cinzel",
+        "visible": { "art": true, "frame": true, "text": true, "foil": true }
+      },
+      "content": {
+        "numeral": "",
+        "subtitle": "Co má vyrůst, nespěchá.",
+        "cls": "",
+        "hp": 70,
+        "level": 2,
+        "cost": 5,
+        "s1": 4,
+        "s2": 6,
+        "s3": 2,
+        "rarity": 3,
+        "setNo": "",
+        "abilities": [
+          { "name": "", "power": 20, "text": "" },
+          { "name": "", "power": 50, "text": "" }
+        ],
+        "elements": []
+      },
+      "meaning": {
+        "arcana": "velka",
+        "upright": "Nespěchej. To, co právě sázíš, potřebuje čas a klid, ne pozornost každou hodinu.",
+        "reversed": "",
+        "keywords": []
+      }
+    }
+  },
+  {
+    "slug": "bestie",
+    "name": "Bestie",
+    "family": "bestie",
+    "formatW": 63,
+    "formatH": 88,
+    "defaults": {
+      "title": "Bludička",
+      "look": {
+        "variant": "bestie",
+        "art": "hvezda",
+        "frame": "secese",
+        "palette": "pulnoc",
+        "element": "mlha",
+        "foil": "kosmos",
+        "foilI": 70,
+        "surface": "saten",
+        "emboss": true,
+        "edge": "cerna",
+        "thick": 4,
+        "radius": 14,
+        "depth": 60,
+        "font": "cinzel",
+        "visible": { "art": true, "frame": true, "text": true, "foil": true }
+      },
+      "content": {
+        "numeral": "",
+        "subtitle": "",
+        "cls": "",
+        "hp": 70,
+        "level": 2,
+        "cost": 5,
+        "s1": 3,
+        "s2": 2,
+        "s3": 2,
+        "rarity": 3,
+        "setNo": "",
+        "abilities": [
+          { "name": "Mámení", "power": 20, "text": "" },
+          { "name": "Bažinné světlo", "power": 50, "text": "" }
+        ],
+        "elements": []
+      },
+      "meaning": {
+        "arcana": "velka",
+        "upright": "",
+        "reversed": "",
+        "keywords": []
+      }
+    }
+  },
+  {
+    "slug": "hrdina",
+    "name": "Hrdina",
+    "family": "hrdina",
+    "formatW": 63,
+    "formatH": 88,
+    "defaults": {
+      "title": "Strážkyně brány",
+      "look": {
+        "variant": "hrdina",
+        "art": "hvezda",
+        "frame": "secese",
+        "palette": "pulnoc",
+        "element": "mlha",
+        "foil": "zlata",
+        "foilI": 70,
+        "surface": "saten",
+        "emboss": true,
+        "edge": "cerna",
+        "thick": 4,
+        "radius": 14,
+        "depth": 60,
+        "font": "cinzel",
+        "visible": { "art": true, "frame": true, "text": true, "foil": true }
+      },
+      "content": {
+        "numeral": "",
+        "subtitle": "Brána se otevře jen tomu, kdo zná heslo.",
+        "cls": "Paladin · Legenda",
+        "hp": 70,
+        "level": 2,
+        "cost": 5,
+        "s1": 4,
+        "s2": 6,
+        "s3": 2,
+        "rarity": 3,
+        "setNo": "",
+        "abilities": [
+          { "name": "Hradba", "power": 20, "text": "Když vstoupí do hry, tvé ostatní bytosti získají +1 obranu." },
+          { "name": "", "power": 50, "text": "" }
+        ],
+        "elements": []
+      },
+      "meaning": {
+        "arcana": "velka",
+        "upright": "",
+        "reversed": "",
+        "keywords": []
+      }
+    }
+  },
+  {
+    "slug": "prazdna",
+    "name": "Prázdná",
+    "family": "prazdna",
+    "formatW": 70,
+    "formatH": 120,
+    "defaults": {
+      "title": "Nová karta",
+      "look": {
+        "variant": "prazdna",
+        "art": "hvezda",
+        "frame": "minimal",
+        "palette": "pulnoc",
+        "element": "mlha",
+        "foil": "zadna",
+        "foilI": 70,
+        "surface": "saten",
+        "emboss": true,
+        "edge": "ram",
+        "thick": 4,
+        "radius": 14,
+        "depth": 60,
+        "font": "cinzel",
+        "visible": { "art": true, "frame": true, "text": true, "foil": true }
+      },
+      "content": {
+        "numeral": "",
+        "subtitle": "",
+        "cls": "",
+        "hp": 70,
+        "level": 2,
+        "cost": 5,
+        "s1": 4,
+        "s2": 6,
+        "s3": 2,
+        "rarity": 3,
+        "setNo": "",
+        "abilities": [
+          { "name": "", "power": 20, "text": "" },
+          { "name": "", "power": 50, "text": "" }
+        ],
+        "elements": []
+      },
+      "meaning": {
+        "arcana": "velka",
+        "upright": "",
+        "reversed": "",
+        "keywords": []
+      }
+    }
+  }
+]

@@ -1,0 +1,5 @@
+# gofmt and the Linux build images expect LF everywhere, also on Windows checkouts.
+* text=auto eol=lf
+*.png binary
+*.woff binary
+*.woff2 binary

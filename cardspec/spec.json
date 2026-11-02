@@ -1,0 +1,51 @@
+{
+  "enums": {
+    "family": ["tarot", "orakulum", "bestie", "hrdina", "prazdna"],
+    "variant": ["tarot", "bestie", "hrdina", "orakulum", "prazdna"],
+    "art": ["hvezda", "mesic", "slunce", "mag"],
+    "frame": ["secese", "deco", "gotika", "minimal"],
+    "palette": ["pulnoc", "krev", "smaragd", "pergamen"],
+    "element": ["mlha", "ohen", "les", "blesk", "stin"],
+    "foil": ["zadna", "zlata", "duha", "kosmos"],
+    "surface": ["mat", "saten", "lesk"],
+    "edge": ["zlata", "cerna", "bila", "ram"],
+    "font": ["cinzel", "cormorant", "aboreto", "gotika"],
+    "arcana": ["velka", "mala"],
+    "visibility": ["private", "unlisted", "public"]
+  },
+  "ranges": {
+    "foilI": [0, 100],
+    "thick": [1, 8],
+    "radius": [0, 30],
+    "depth": [0, 100],
+    "hp": [10, 200],
+    "level": [1, 10],
+    "cost": [0, 10],
+    "s1": [0, 12],
+    "s2": [0, 12],
+    "s3": [0, 12],
+    "rarity": [0, 5],
+    "power": [0, 200],
+    "format": [30, 200],
+    "artOffset": [-100, 100],
+    "artZoom": [1, 4]
+  },
+  "text": {
+    "title": 28,
+    "numeral": 8,
+    "subtitle": 120,
+    "cls": 30,
+    "abilityName": 22,
+    "abilityText": 200,
+    "setNo": 24,
+    "upright": 1000,
+    "reversed": 1000,
+    "keyword": 24
+  },
+  "counts": {
+    "abilities": 2,
+    "keywords": 12,
+    "elements": 64,
+    "artworkLayers": 3
+  }
+}
