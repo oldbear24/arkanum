@@ -43,3 +43,44 @@ jobs:
           name: playwright-report
           path: web/playwright-report
           retention-days: 7
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t arkanum .
+
+      - name: Start container
+        run: docker run -d --name arkanum -p 8090:8090 -v arkanum-data:/pb_data arkanum
+
+      - name: Wait for the healthcheck
+        run: |
+          for attempt in $(seq 1 45); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' arkanum)
+            echo "$attempt: $status"
+            if [ "$status" = healthy ]; then exit 0; fi
+            sleep 2
+          done
+          docker logs arkanum
+          exit 1
+
+      - name: Check the API, the frontend and the system templates
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/health
+          curl --fail --silent --show-error http://127.0.0.1:8090/dilna/abc | grep -q 'id="root"'
+          curl --fail --silent --show-error http://127.0.0.1:8090/api/collections/templates/records | grep -q '"totalItems":5'
+
+      - name: Keep data in the volume across a restart
+        run: |
+          curl --fail --silent --show-error -X POST http://127.0.0.1:8090/api/collections/users/records \
+            -H 'Content-Type: application/json' \
+            -d '{"handle":"ci_uzivatel","email":"ci@example.com","password":"correct-horse-battery","passwordConfirm":"correct-horse-battery"}' > /dev/null
+          docker restart arkanum
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8090/api/collections/users/records | grep -q '"handle":"ci_uzivatel"'; then exit 0; fi
+            sleep 2
+          done
+          docker logs arkanum
+          exit 1
