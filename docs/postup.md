@@ -28,7 +28,7 @@
 ## Vydání
 
 Vydání spouští tag `v*`. Workflow `.github/workflows/release.yml` postaví Docker image pro `linux/amd64` a `linux/arm64`,
-publikuje ho do `ghcr.io/oldbear24/arkanum` (značky jako `0.1.1`, `0.1` a `latest`) a ověří, že běží. Na obou architekturách
+publikuje ho do `ghcr.io/oldbear24/arkanum` (značky jako `0.1.2`, `0.1` a `latest`) a ověří, že běží. Na obou architekturách
 kontroluje, že `--version` vypíše číslo z tagu. Na amd64 navíc kontroluje healthcheck, API a frontend přes `compose.yaml`,
 na arm64 běží pod emulací a kontroluje se jen tenhle výpis.
 
@@ -36,15 +36,16 @@ Provoz přes Compose popisuje [docker-compose.md](docker-compose.md). CI (job `d
 commitu: spuštění, založení správce, ukázková data, záloha a obnova. Nastavení reverzní proxy z návodu ověřené není.
 
 Binárky se zatím staví ručně z čistého commitu (`CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=X.Y.Z"`
-pro Linux, macOS a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. U vydání `v0.1.0` a `v0.1.1` je přímo spuštěná
+pro Linux, macOS a Windows) a nahrávají se do GitHub Releases spolu s `checksums.txt`. U dosavadních vydání je přímo spuštěná
 jen binárka pro Windows, ostatní se jen kompilují.
 
 Verze `v0.1.1` a starší vypisují `(untracked)` místo čísla. Build bez čísla, tedy `make build` nebo `docker build` bez
 `--build-arg VERSION`, vypíše `dev`.
 
-Aktualizaci dat jsem před vydáním `v0.1.1` ověřil na binárce pro Windows: ukázková data založená verzí 0.1.0 zůstala
-po spuštění nové verze beze změny, migrace proběhla a přihlášení heslem funguje. Návrat na 0.1.0 nad stejnými daty také
-funguje. Aktualizace Docker image se takhle nezkoušela, lokálně tu Docker není.
+Aktualizaci dat jsem před vydáním `v0.1.1` a `v0.1.2` ověřil na binárce pro Windows: ukázková data založená starší verzí
+zůstala po spuštění nové verze beze změny, migrace proběhla a přihlášení heslem funguje. Návrat na starší verzi nad
+stejnými daty také funguje, verze do `v0.1.1` při něm ale smažou poskytovatele OAuth2 nastavené v administraci. Aktualizace
+Docker image se takhle nezkoušela, lokálně tu Docker není.
 
 ## Co není ověřené
 
