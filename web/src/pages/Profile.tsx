@@ -148,6 +148,7 @@ export function Profile() {
   const [editing, setEditing] = useState(false);
   const [deckList, setDeckList] = useState<DeckRecord[]>([]);
   const [newDeck, setNewDeck] = useState('');
+  const [deckFailed, setDeckFailed] = useState(false);
 
   useEffect(() => {
     if (!handle) return;
@@ -214,8 +215,13 @@ export function Profile() {
 
   const addDeck = async (e: FormEvent) => {
     e.preventDefault();
-    const created = await createDeck(profile.id, newDeck.trim());
-    navigate(`/balicky/${created.id}`);
+    setDeckFailed(false);
+    try {
+      const created = await createDeck(profile.id, newDeck.trim());
+      navigate(`/balicky/${created.id}`);
+    } catch {
+      setDeckFailed(true);
+    }
   };
 
   return (
@@ -267,6 +273,11 @@ export function Profile() {
             </form>
           )}
         </div>
+        {deckFailed && (
+          <p className={ui.alert} role="alert">
+            {cs.deck.createFailed}
+          </p>
+        )}
         {deckList.length > 0 ? (
           <div className={styles.decks}>
             {deckList.map((deck) => (

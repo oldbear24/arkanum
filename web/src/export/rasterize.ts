@@ -98,7 +98,10 @@ async function inlineImages(root: Element) {
   await Promise.all(
     Array.from(root.querySelectorAll('image')).map(async (image) => {
       const href = image.getAttribute('href');
-      if (href && !href.startsWith('data:')) image.setAttribute('href', await cachedDataUrl(new URL(href, window.location.href).href));
+      if (!href || href.startsWith('data:')) return;
+      const response = await fetch(new URL(href, window.location.href));
+      if (!response.ok) throw new Error(`Cannot load ${href}`);
+      image.setAttribute('href', await blobToDataUrl(await response.blob()));
     }),
   );
 }

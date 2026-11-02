@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Card3D } from '../card/Card3D';
 import type { CardParams } from '../card/resolve';
@@ -182,6 +182,9 @@ export function Deck() {
     };
   }, [id, userId]);
 
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
+
   const cardsInOrder = useMemo(() => (deck ? orderedDeckCards(deck) : []), [deck]);
   const ids = useMemo(() => cardsInOrder.map((card) => card.id), [cardsInOrder]);
   const { liked, toggle } = useLikes(ids);
@@ -189,11 +192,8 @@ export function Deck() {
   const update = useCallback(
     async (patch: Record<string, unknown>, optimistic: Partial<DeckRecord>) => {
       setSaveFailed(false);
-      let previous: DeckRecord | null = null;
-      setDeck((current) => {
-        previous = current;
-        return current ? { ...current, ...optimistic } : current;
-      });
+      const previous = deckRef.current;
+      setDeck((current) => (current ? { ...current, ...optimistic } : current));
       try {
         setDeck(await decks().update(id, patch, { expand: EXPAND }));
       } catch {

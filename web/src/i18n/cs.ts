@@ -284,8 +284,6 @@ export const cs = {
     unverified: 'Tvůj e-mail zatím není ověřený.',
     resendVerification: 'Poslat ověřovací e-mail',
     verificationSent: 'Ověřovací e-mail je na cestě.',
-    notFoundTitle: 'Tento profil neexistuje',
-    notFoundText: 'Zkontroluj prosím adresu.',
   },
 
   workshop: {
@@ -420,7 +418,6 @@ export const cs = {
     numeral: 'Číslo arkány',
     message: 'Poselství',
     creatureDescription: 'Popis bytosti',
-    creatureHint: 'bažinný přízrak · ',
     cardText: 'Text na kartě',
     classRarity: 'Třída a rarita',
     quote: 'Citát',

@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { PAL, resolveCard } from '../../card/resolve';
 import { counts, ranges, textLimits, type CardAbility, type CardContent } from '../../card/spec';
-import { Icon } from '../../components/Icon';
+import { Icon, type IconName } from '../../components/Icon';
 import { cs } from '../../i18n/cs';
 import { pb } from '../../lib/pb';
 import { useWorkshop, type ArtTarget, type TabId } from './context';
@@ -746,7 +746,7 @@ function ExportSection() {
   );
 }
 
-const TAB_ICONS: Record<TabId, string> = {
+const TAB_ICONS: Record<TabId, IconName> = {
   vzhled: 'palette',
   material: 'sparkle',
   text: 'text',
@@ -770,7 +770,7 @@ export function SettingsPanel() {
       <div className={styles.tabs} style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((item) => (
           <button key={item.id} type="button" className={styles.tab} {...pressed(active === item.id)} onClick={() => setTab(item.id)}>
-            {compact && <Icon name={TAB_ICONS[item.id] as 'palette'} strokeWidth={1.6} />}
+            {compact && <Icon name={TAB_ICONS[item.id]} strokeWidth={1.6} />}
             <span>{item.label}</span>
           </button>
         ))}
