@@ -255,12 +255,12 @@ func TestUsers(t *testing.T) {
 		{name: "a handle cannot be too long", method: http.MethodPost, url: url, body: register("abcdefghijklmnopqrstuvwxy"), status: 400, has: []string{`"handle"`}},
 		{name: "a handle must be unique", method: http.MethodPost, url: url, body: register("alice"), status: 400, has: []string{`"handle"`}},
 		{
-			name:   "a missing handle is generated",
+			name:   "a missing handle is generated, and not from the private e-mail address",
 			method: http.MethodPost,
 			url:    url,
-			body:   `{"email":"oauth.user@example.com","password":"correct-horse-battery","passwordConfirm":"correct-horse-battery"}`,
+			body:   `{"email":"tajny.uzivatel@example.com","password":"correct-horse-battery","passwordConfirm":"correct-horse-battery"}`,
 			status: 200,
-			has:    []string{`"handle":"oauth_user"`, `"displayName":"oauth_user"`},
+			has:    []string{`"handle":"tvurce"`, `"displayName":"tvurce"`},
 		},
 
 		{name: "a stranger cannot edit a profile", as: bob, method: http.MethodPatch, url: url + "/" + alice, body: `{"displayName":"x"}`, status: http.StatusNotFound},

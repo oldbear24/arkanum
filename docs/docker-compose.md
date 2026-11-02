@@ -23,14 +23,15 @@ Otevřete `.env` a nastavte aspoň tyto hodnoty:
 
 | Proměnná | Co do ní patří |
 | --- | --- |
-| `APP_URL` | veřejná adresa aplikace, například `https://karty.example.cz`. Míří na ni odkazy v e-mailech a přihlášení přes OAuth2 |
+| `APP_URL` | veřejná adresa aplikace, například `https://karty.example.cz`. Míří na ni odkazy v e-mailech |
 | `PB_ENCRYPTION_KEY` | 32 znaků, kterými se šifruje nastavení. Vygenerujete je příkazem `openssl rand -hex 16` |
 
 Klíč `PB_ENCRYPTION_KEY` si uložte, po změně nejde dosavadní nastavení přečíst.
 
 Pro ověřování e-mailů a obnovu hesla vyplňte `SMTP_*`, pro přihlášení přes Google, GitHub nebo Discord dvojice
-`*_CLIENT_ID` a `*_CLIENT_SECRET`. Význam všech proměnných popisuje [README](../README.md#konfigurace). Pro Compose jsou
-navíc tyto dvě:
+`*_CLIENT_ID` a `*_CLIENT_SECRET`. Založení aplikace na Discordu popisuje
+[návod v README](../README.md#přihlášení-přes-discord). Význam všech proměnných popisuje
+[README](../README.md#konfigurace). Pro Compose jsou navíc tyto dvě:
 
 | Proměnná | Výchozí hodnota | Význam |
 | --- | --- | --- |
@@ -131,5 +132,9 @@ Limit velikosti požadavku v proxy nastavte aspoň na 40 MB, ilustrace může m�
 - **Kontejner se nerozběhne:** `docker compose logs arkanum` ukáže důvod, `docker compose ps` stav healthchecku.
 - **`required` v `env_file` hlásí chybu:** máte Compose starší než 2.24, aktualizujte ho.
 - **Port je obsazený:** nastavte jiný `ARKANUM_PORT`.
+- **Změny v `.env` se neprojevily:** spusťte `docker compose up -d`. Příkaz `docker compose restart` nové hodnoty
+  nenačte.
+- **Discord hlásí neplatné přesměrování:** v jeho nastavení chybí adresa přesně tak, jak ji vidíte v prohlížeči, včetně
+  `https://` a doplněná o `/api/oauth2-redirect`.
 - **Vlastní adresář místo svazku:** image běží jako uživatel s UID 10001, takže adresář mu musí patřit
   (`sudo chown -R 10001 ./pb_data`).

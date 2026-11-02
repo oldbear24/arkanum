@@ -44,8 +44,11 @@ pro Windows, ostatní se jen kompilují.
   testovací stránce a i u původního návrhu, takže o 3D kartě v Safari nic neříká. Export v něm funguje. Před ostrým
   provozem je potřeba 3D kartu prohlédnout na iPhonu nebo Macu.
 - **Firefox.** Prohlížeč se na tomhle stroji nepodařilo spustit (systém odmítá `firefox.exe` s `Permission denied`).
-- **E-maily a OAuth2** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo a žádný poskytovatel
-  se nezkoušel, protože tu nejsou přístupové údaje.
+- **E-maily** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo.
+- **Skutečný Discord.** Přihlášení prochází celé proti falešnému serveru, včetně kódu poskytovatele v PocketBase
+  a vyskakovacího okna v prohlížeči (`web/e2e/discord.spec.ts`), a falešný server jen napodobuje odpovědi Discordu.
+  Se skutečným se nezkoušelo, protože tu nejsou přístupové údaje. Nevyzkoušené je i stažení avataru, falešný server
+  žádný nevrací. Google a GitHub se nezkoušely vůbec.
 
 ## Rozhodnutí oproti zadání
 
@@ -70,8 +73,11 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
   soukromé karty.
 - **`users`:** `emailVisibility` hook vždy vrací na `false`, protože zadání chce e-mail skrytý trvale. Filtrování
   podle e-mailu pro cizí uživatele blokuje už sám PocketBase, ověřeno testem.
-- **`users.handle`:** při registraci přes OAuth2 hook handle vygeneruje z e-mailu. Výchozí pole `name` jsem
-  nahradil polem `displayName`.
+- **`users.handle`:** při registraci přes OAuth2 hook handle odvodí z uživatelského jména u poskytovatele, potom
+  z jeho zobrazovaného jména, a když ani jedno nestačí, použije `tvurce`. Z e-mailu ho neodvozuje, protože veřejný
+  profil by prozradil část skryté adresy. Výchozí pole `name` jsem nahradil polem `displayName`.
+- **`users.email`** není v databázi povinné (migrace `1793600002`). Discord neověřenou adresu nepředá a s povinným
+  polem by přihlášení skončilo chybou. Registraci heslem bez adresy dál odmítá hook.
 - **`visibility`** je povinné a prázdnou hodnotu hook nahradí `private`. Prázdná hodnota by jinak prošla přes
   `visibility != "private"`.
 

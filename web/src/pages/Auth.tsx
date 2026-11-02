@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Card3D } from '../card/Card3D';
+import { DiscordMark } from '../components/Icon';
 import { Field, ui } from '../components/ui';
 import { cs } from '../i18n/cs';
 import { safeNext, signInPath, signOut, useUser } from '../lib/auth';
@@ -70,6 +71,7 @@ function OAuthButtons({ next }: { next: string }) {
       <div className={styles.oauthButtons}>
         {providers.map((provider) => (
           <button key={provider.name} type="button" className={ui.outline} onClick={() => void signIn(provider.name)}>
+            {provider.name === 'discord' && <DiscordMark />}
             {provider.displayName}
           </button>
         ))}

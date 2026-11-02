@@ -58,7 +58,8 @@ func applyOAuthConfig(app core.App) error {
 
 	providers := make([]core.OAuth2ProviderConfig, 0, len(oauthProviders))
 	for _, p := range oauthProviders {
-		id, secret := os.Getenv(p.env+"_CLIENT_ID"), os.Getenv(p.env+"_CLIENT_SECRET")
+		// A stray space or line ending from .env would only show up as a sign-in the provider refuses.
+		id, secret := strings.TrimSpace(os.Getenv(p.env+"_CLIENT_ID")), strings.TrimSpace(os.Getenv(p.env+"_CLIENT_SECRET"))
 		if id == "" || secret == "" {
 			continue
 		}

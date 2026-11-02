@@ -21,6 +21,12 @@ const seed = spawnSync(binary, ['seed', `--dir=${dataDir}`], {
 });
 if (seed.status !== 0) process.exit(seed.status ?? 1);
 
+// Only a superuser can point the Discord provider at the fake server in discord.spec.ts.
+const superuser = spawnSync(binary, ['superuser', 'upsert', 'e2e@arkanum.example', 'arkanum-dev', `--dir=${dataDir}`], {
+  stdio: 'inherit',
+});
+if (superuser.status !== 0) process.exit(superuser.status ?? 1);
+
 const server = spawn(binary, ['serve', `--http=127.0.0.1:${port}`, `--dir=${dataDir}`], {
   stdio: 'inherit',
 });

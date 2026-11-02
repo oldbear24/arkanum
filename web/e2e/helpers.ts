@@ -1,6 +1,21 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
 export const PASSWORD = 'arkanum-dev';
+
+// The card itself is artwork. Its text sits on gradients, foils and images, where an
+// automatic contrast check only produces noise, so the check covers everything around it.
+export async function checkA11y(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .exclude('[role="img"]')
+    .analyze();
+  const summary = results.violations.map((violation) => ({
+    id: violation.id,
+    nodes: violation.nodes.map((node) => node.target.join(' ')).slice(0, 5),
+  }));
+  expect(summary).toEqual([]);
+}
 
 export async function signIn(page: Page, handle: string) {
   await page.goto('/prihlaseni');

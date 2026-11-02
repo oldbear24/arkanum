@@ -35,7 +35,9 @@ make dev
 
 Spustí PocketBase na `http://127.0.0.1:8090` a Vite na `http://localhost:5173`. Vite přeposílá `/api`
 a `/_` na PocketBase. Administrace je na `http://127.0.0.1:8090/_/`. Dokud neexistuje správce, vypíše
-server do konzole odkaz na jeho založení. Prohlížeč sám neotevírá.
+server do konzole odkaz na jeho založení. Prohlížeč sám neotevírá. Konfiguraci si `make dev` a `make seed` načtou
+ze souboru `.env`, pokud existuje. Ostatní příkazy ho nečtou, takže testy nikdy nesahají na skutečnou poštu ani
+přihlašovací služby.
 
 `make seed` založí ukázkové účty, karty a balíčky a jde spustit opakovaně. Přihlásíte se jako
 `demo@arkanum.example` s heslem `arkanum-dev`. Stránka se všemi variantami karty a ovládáním parametrů je
@@ -80,18 +82,52 @@ přepínač `--dir`. Na Windows se binárka jmenuje `bin/arkanum.exe`.
 ## Konfigurace
 
 Všechno se nastavuje proměnnými prostředí, vzor je v [.env.example](.env.example). Binárka soubor `.env`
-sama nečte, předává ho například `docker run --env-file`.
+sama nečte, předává ho například Docker Compose, `docker run --env-file` nebo `make dev`.
 
 | Proměnná | Význam |
 | --- | --- |
 | `PB_ENCRYPTION_KEY` | 32 znaků, šifruje nastavení PocketBase (heslo SMTP, tajné klíče OAuth2) |
-| `APP_URL` | veřejná adresa aplikace, použije se v odkazech v e-mailech a pro OAuth2 |
+| `APP_URL` | veřejná adresa aplikace, použije se v odkazech v e-mailech |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_TLS`, `SMTP_SENDER_ADDRESS`, `SMTP_SENDER_NAME` | odesílání e-mailů. Bez `SMTP_HOST` se nastavení nemění |
 | `GOOGLE_CLIENT_ID`/`_SECRET`, `GITHUB_CLIENT_ID`/`_SECRET`, `DISCORD_CLIENT_ID`/`_SECRET` | přihlášení přes OAuth2. Poskytovatel se zapne, až když má obě hodnoty |
 | `SEED_PASSWORD` | heslo ukázkových účtů pro `arkanum seed`. Bez něj se vygeneruje a vypíše |
 
 OAuth2 se nastavuje při každém startu z prostředí, takže změny poskytovatelů v administraci přepíše.
-Adresa pro přesměrování u poskytovatele je `APP_URL/api/oauth2-redirect`.
+Adresa pro přesměrování u poskytovatele je adresa, na které aplikaci otevíráte v prohlížeči, doplněná
+o `/api/oauth2-redirect`.
+
+### Přihlášení přes Discord
+
+1. V [Discord Developer Portalu](https://discord.com/developers/applications) založte aplikaci tlačítkem
+   **New Application**.
+2. V části **OAuth2** si zkopírujte **Client ID** a tlačítkem **Reset Secret** vytvořte **Client Secret**.
+3. Tamtéž do **Redirects** přidejte adresy, na kterých aplikaci otevíráte. Discord je porovnává znak po znaku, takže
+   `localhost` a `127.0.0.1` jsou pro něj dvě různé adresy.
+
+   | Kde aplikace běží | Adresa pro přesměrování |
+   | --- | --- |
+   | veřejný server | `https://karty.example.cz/api/oauth2-redirect` |
+   | `make dev` | `http://localhost:5173/api/oauth2-redirect` |
+   | binárka nebo Docker na vlastním počítači | `http://localhost:8090/api/oauth2-redirect` |
+
+4. Do souboru `.env` doplňte oba klíče. Git tento soubor ignoruje, klíče do repozitáře nepatří.
+
+   ```bash
+   DISCORD_CLIENT_ID=...
+   DISCORD_CLIENT_SECRET=...
+   ```
+
+5. Restartujte aplikaci. Na stránkách přihlášení a registrace přibude tlačítko Discord.
+
+Jak se přihlášení chová:
+
+- **Nový účet** převezme z Discordu uživatelské jméno jako `handle`, zobrazované jméno a avatar. Všechno jde později
+  změnit na profilu. Je-li `handle` obsazený, dostane příponu.
+- **Existující účet** se stejnou adresou se s Discordem propojí a další přihlášení už na něj vede. Jde to jen tehdy,
+  když je adresa na Discordu ověřená. Pokud ji dosud neověřil účet v aplikaci, jeho heslo přestane platit, protože
+  takový účet mohl založit kdokoli s cizí adresou. Nové heslo si uživatel nastaví přes „Zapomenuté heslo“.
+- **Bez ověřené adresy** Discord e-mail nepředá. Vznikne účet bez e-mailu, který funguje běžně, jen si nemůže nechat
+  poslat obnovu hesla. Adresa se doplní při prvním přihlášení poté, co ji uživatel na Discordu ověří.
 
 ## Docker
 

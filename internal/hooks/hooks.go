@@ -4,13 +4,23 @@ package hooks
 import (
 	"errors"
 	"strings"
+	"unicode"
 
 	"github.com/pocketbase/dbx"
 	validation "github.com/pocketbase/ozzo-validation/v4"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/security"
+	"golang.org/x/text/unicode/norm"
 
 	"arkanum/cardspec"
+)
+
+const (
+	fallbackHandle  = "tvurce"
+	handleMinLen    = 3
+	handleMaxLen    = 24
+	handleSuffixLen = 5
+	displayNameMax  = 60
 )
 
 // Register attaches all hooks to the app.
@@ -23,10 +33,46 @@ func Register(app core.App) {
 }
 
 func registerUsers(app core.App) {
+	// A new account from an OAuth2 provider takes its handle from the provider's username.
+	app.OnRecordAuthWithOAuth2Request("users").BindFunc(func(e *core.RecordAuthWithOAuth2RequestEvent) error {
+		if !e.IsNewRecord {
+			return e.Next()
+		}
+		if e.CreateData == nil {
+			e.CreateData = map[string]any{}
+		}
+		if handle, _ := e.CreateData["handle"].(string); handle == "" {
+			handle, err := freeHandle(e.App, e.OAuth2User.Username, e.OAuth2User.Name)
+			if err != nil {
+				return e.InternalServerError("", err)
+			}
+			e.CreateData["handle"] = handle
+		}
+		// An unusually long name from the provider must not stand in the way of signing in.
+		e.OAuth2User.Name = clipRunes(e.OAuth2User.Name, displayNameMax)
+		return e.Next()
+	})
+
+	// The e-mail field is optional only because a provider may not give a verified
+	// address, as Discord does for accounts without one. Everyone else has to enter it.
+	app.OnRecordCreateRequest("users").BindFunc(func(e *core.RecordRequestEvent) error {
+		info, err := e.RequestInfo()
+		if err != nil {
+			return e.BadRequestError("", err)
+		}
+		if e.Record.Email() == "" && info.Context != core.RequestInfoContextOAuth2 {
+			return e.BadRequestError("Failed to create record.", validation.Errors{
+				core.FieldNameEmail: validation.NewError("validation_required", "Cannot be blank."),
+			})
+		}
+		return e.Next()
+	})
+
 	app.OnRecordCreate("users").BindFunc(func(e *core.RecordEvent) error {
-		// OAuth2 sign-ups arrive without a handle.
+		// The last resort for a record saved without a handle. It never uses the e-mail
+		// address, because handles are public.
 		if e.Record.GetString("handle") == "" {
-			handle, err := generateHandle(e.App, e.Record)
+			handle, err := freeHandle(e.App)
 			if err != nil {
 				return err
 			}
@@ -46,27 +92,21 @@ func registerUsers(app core.App) {
 	})
 }
 
-// generateHandle derives a free handle from the e-mail address.
-func generateHandle(app core.App, user *core.Record) (string, error) {
-	local, _, _ := strings.Cut(user.Email(), "@")
-
-	var b strings.Builder
-	for _, r := range strings.ToLower(local) {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '_':
-			b.WriteRune(r)
-		case b.Len() > 0 && r == '.', b.Len() > 0 && r == '-':
-			b.WriteByte('_')
+// freeHandle turns the first usable candidate into a handle nobody has taken yet.
+func freeHandle(app core.App, candidates ...string) (string, error) {
+	base := fallbackHandle
+	for _, candidate := range candidates {
+		if slug := slugifyHandle(candidate); len(slug) >= handleMinLen {
+			base = slug
+			break
 		}
 	}
+	if len(base) > handleMaxLen {
+		base = strings.TrimRight(base[:handleMaxLen], "_")
+	}
 
-	base := b.String()
-	if len(base) < 3 {
-		base = "tvurce"
-	}
-	if len(base) > 18 {
-		base = base[:18]
-	}
+	// Room for the suffix when the handle is taken.
+	prefix := strings.TrimRight(base[:min(len(base), handleMaxLen-handleSuffixLen-1)], "_")
 
 	handle := base
 	for attempt := 0; attempt < 10; attempt++ {
@@ -77,9 +117,34 @@ func generateHandle(app core.App, user *core.Record) (string, error) {
 		if total == 0 {
 			return handle, nil
 		}
-		handle = base + "_" + security.RandomStringWithAlphabet(5, "abcdefghijklmnopqrstuvwxyz0123456789")
+		handle = prefix + "_" + security.RandomStringWithAlphabet(handleSuffixLen, "abcdefghijklmnopqrstuvwxyz0123456789")
 	}
 	return "", errors.New("could not find a free handle")
+}
+
+// slugifyHandle reduces a name to what the handle pattern allows: "Žofie Nováková" and
+// "zofie.novakova" both become "zofie_novakova".
+func slugifyHandle(name string) string {
+	var b strings.Builder
+	for _, r := range norm.NFD.String(strings.ToLower(name)) {
+		switch {
+		case unicode.Is(unicode.Mn, r):
+			// A combining accent, the letter itself comes separately.
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '_':
+			b.WriteRune(r)
+		case b.Len() > 0 && !strings.HasSuffix(b.String(), "_"):
+			b.WriteByte('_')
+		}
+	}
+	return strings.Trim(b.String(), "_")
+}
+
+func clipRunes(text string, limit int) string {
+	runes := []rune(text)
+	if len(runes) <= limit {
+		return text
+	}
+	return string(runes[:limit])
 }
 
 func registerCards(app core.App) {

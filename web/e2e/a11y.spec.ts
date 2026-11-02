@@ -1,26 +1,11 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-import { createCard, settingsTab, signIn } from './helpers';
-
-// The card itself is artwork. Its text sits on gradients, foils and images, where an
-// automatic contrast check only produces noise, so the check covers everything around it.
-async function check(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .exclude('[role="img"]')
-    .analyze();
-  const summary = results.violations.map((violation) => ({
-    id: violation.id,
-    nodes: violation.nodes.map((node) => node.target.join(' ')).slice(0, 5),
-  }));
-  expect(summary).toEqual([]);
-}
+import { expect, test } from '@playwright/test';
+import { checkA11y, createCard, settingsTab, signIn } from './helpers';
 
 test('public pages have no automatically detectable problems', async ({ page }) => {
   for (const path of ['/', '/sablony', '/prihlaseni', '/registrace', '/obnova-hesla', '/@noctua', '/neexistuje']) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
-    await check(page);
+    await checkA11y(page);
   }
 });
 
@@ -29,7 +14,7 @@ test('the workshop has no automatically detectable problems', async ({ page }) =
   await createCard(page);
   for (const tab of ['Vzhled', 'Materiál', 'Text', 'Význam']) {
     await settingsTab(page, tab).click();
-    await check(page);
+    await checkA11y(page);
   }
 });
 
@@ -39,7 +24,7 @@ test.describe('on a phone', () => {
   test('the workshop has no automatically detectable problems', async ({ page }) => {
     await signIn(page, 'demo');
     await createCard(page, 'Bestie');
-    await check(page);
+    await checkA11y(page);
   });
 
   test('touch targets in the workshop are at least 44 px', async ({ page }) => {

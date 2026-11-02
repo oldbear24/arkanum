@@ -78,6 +78,29 @@ func TestApplyEnvConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("whitespace around the keys is ignored", func(t *testing.T) {
+		t.Setenv("DISCORD_CLIENT_ID", " id\r")
+		t.Setenv("DISCORD_CLIENT_SECRET", "secret\r")
+		t.Setenv("GOOGLE_CLIENT_ID", "id")
+		t.Setenv("GOOGLE_CLIENT_SECRET", " \r")
+
+		if err := applyEnvConfig(app); err != nil {
+			t.Fatal(err)
+		}
+
+		users, err := app.FindCollectionByNameOrId(usersCollection)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(users.OAuth2.Providers) != 1 {
+			t.Fatalf("only Discord should be enabled, got %+v", users.OAuth2.Providers)
+		}
+		discord := users.OAuth2.Providers[0]
+		if discord.Name != "discord" || discord.DisplayName != "Discord" || discord.ClientId != "id" || discord.ClientSecret != "secret" {
+			t.Errorf("unexpected provider %+v", discord)
+		}
+	})
+
 	t.Run("a broken port is reported", func(t *testing.T) {
 		t.Setenv("SMTP_HOST", "smtp.example")
 		t.Setenv("SMTP_PORT", "ne")
