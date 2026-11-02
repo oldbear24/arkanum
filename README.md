@@ -137,8 +137,8 @@ Jak se přihlášení chová:
 
 ## Docker
 
-Image se publikuje do `ghcr.io/oldbear24/arkanum` při každém tagu `v*`, se značkami podle verze (například `0.2.0`
-a `0.2`) a `latest`. Pro trvalý provoz doporučujeme [Docker Compose](docs/docker-compose.md) a přiložený
+Image se publikuje do `ghcr.io/oldbear24/arkanum` při každém tagu `v*`, se značkami podle verze (například `0.3.0`
+a `0.3`) a `latest`. Pro trvalý provoz doporučujeme [Docker Compose](docs/docker-compose.md) a přiložený
 [compose.yaml](compose.yaml), jednorázově stačí:
 
 ```bash
