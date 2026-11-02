@@ -51,5 +51,4 @@ seed:
 	go run . seed
 
 clean:
-	go clean
-	npm --prefix web exec -- node -e "for (const d of ['dist/assets','../bin']) require('fs').rmSync(d,{recursive:true,force:true})"
+	node -e "for (const d of ['web/dist/assets','web/dist/index.html','web/dist/favicon.svg','bin']) require('fs').rmSync(d,{recursive:true,force:true})"

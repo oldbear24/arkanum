@@ -111,10 +111,11 @@
   color: var(--text-3);
 }
 
+/* A 44 px touch target that takes up the 32 px of the design. */
 .rangeInput {
   width: 100%;
-  height: 32px;
-  margin: 0;
+  height: 44px;
+  margin: -6px 0;
 }
 
 .foilIntensity {
@@ -607,9 +608,9 @@
 }
 
 .keywordRemove {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
   border: 0;
   background: transparent;
   color: var(--text-3);
@@ -913,5 +914,5 @@
 }
 
 .compact .rangeInput {
-  height: 36px;
+  margin: -4px 0;
 }

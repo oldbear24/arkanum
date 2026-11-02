@@ -209,6 +209,7 @@ export const Card3D = memo(function Card3D({ flip = false, spin = false, interac
     borderRadius: card.rad,
     overflow: 'hidden',
     backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
   };
 
   return (

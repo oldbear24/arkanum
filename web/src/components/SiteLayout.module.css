@@ -100,9 +100,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 4px 0 14px;
-  border-radius: 22px;
+  height: 46px;
+  padding: 0 0 0 14px;
+  border-radius: 23px;
   border: 1px solid var(--line-strong);
   background: var(--field);
   color: var(--text-3);
@@ -131,10 +131,10 @@
 }
 
 .searchClose {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   background: transparent;
   color: var(--text-3);
   display: inline-flex;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { normalizeCard } from '../../card/normalize';
-import { counts, type ArtPlacement, type CardAbility, type CardContent, type CardDoc, type CardLook, type CardMeaning, type Family } from '../../card/spec';
+import { counts, type ArtPlacement, type Art, type CardAbility, type CardContent, type CardDoc, type CardLook, type CardMeaning, type Family } from '../../card/spec';
 import { Dialog, ui } from '../../components/ui';
 import { cs } from '../../i18n/cs';
 import { signInPath, useUser } from '../../lib/auth';
@@ -13,7 +13,7 @@ import { WorkshopProvider, type ArtTarget, type ExportKind, type TabId, type Wor
 import { historyReducer, initHistory } from './history';
 import { ShareDialog } from './ShareDialog';
 import { applyTemplate, hasEditedTexts } from './templateSwitch';
-import { useAutosave } from './useAutosave';
+import { serializeDoc, useAutosave } from './useAutosave';
 import { usePresence } from './usePresence';
 import { WorkshopDesktop } from './WorkshopDesktop';
 import { WorkshopMobile } from './WorkshopMobile';
@@ -22,6 +22,7 @@ const EXPAND = 'owner,editors';
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const NO_PLACEMENT: ArtPlacement = { x: 0, y: 0, zoom: 1 };
+const PREVIEW_REFRESH_MS = 5000;
 
 function uploadProblem(file: File): string | null {
   if (!IMAGE_TYPES.includes(file.type)) return cs.workshop.uploadBadType;
@@ -61,6 +62,9 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
   }, []);
   const templateId = useCallback((family: Family) => templateIds[family], [templateIds]);
 
+  const docRef = useRef(doc);
+  docRef.current = doc;
+
   const autosave = useAutosave({ cardId, doc, templateId });
   const others = usePresence(cardId, userId);
 
@@ -83,8 +87,11 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
           lastUpdated.current = event.record.updated;
           setRecord(event.record);
 
+          // The echo of our own save must not touch the history, it would clear the redo steps.
           const remote = normalizeCard(event.record);
-          if (receive.current(remote)) dispatch({ type: 'replace', value: remote });
+          if (receive.current(remote) && serializeDoc(remote) !== serializeDoc(docRef.current)) {
+            dispatch({ type: 'replace', value: remote });
+          }
         },
         { expand: EXPAND },
       )
@@ -99,15 +106,29 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     };
   }, [cardId]);
 
-  const change = useCallback((value: CardDoc, group?: string) => dispatch({ type: 'change', value, group, at: Date.now() }), []);
-
-  const docRef = useRef(doc);
-  docRef.current = doc;
+  const localEdit = useRef(false);
+  const change = useCallback((value: CardDoc, group?: string) => {
+    localEdit.current = true;
+    dispatch({ type: 'change', value, group, at: Date.now() });
+  }, []);
 
   const setTitle = useCallback((title: string) => change({ ...docRef.current, title }, 'title'), [change]);
   const setLook = useCallback((patch: Partial<CardLook>, group?: string) => change({ ...docRef.current, look: { ...docRef.current.look, ...patch } }, group), [change]);
   const setContent = useCallback((patch: Partial<CardContent>, group?: string) => change({ ...docRef.current, content: { ...docRef.current.content, ...patch } }, group), [change]);
   const setMeaning = useCallback((patch: Partial<CardMeaning>, group?: string) => change({ ...docRef.current, meaning: { ...docRef.current.meaning, ...patch } }, group), [change]);
+  const setArt = useCallback(
+    (art: Art) => {
+      // One click, one undo step. The artwork also brings its title and numeral along.
+      const current = docRef.current;
+      change({
+        ...current,
+        title: cs.card.arts[art].name,
+        look: { ...current.look, art },
+        content: { ...current.content, numeral: cs.card.arts[art].numeral },
+      });
+    },
+    [change],
+  );
   const setAbility = useCallback(
     (index: number, patch: Partial<CardAbility>, group?: string) => {
       const current = docRef.current;
@@ -149,8 +170,14 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     setTab(target);
   }, []);
 
-  const undo = useCallback(() => dispatch({ type: 'undo' }), []);
-  const redo = useCallback(() => dispatch({ type: 'redo' }), []);
+  const undo = useCallback(() => {
+    localEdit.current = true;
+    dispatch({ type: 'undo' });
+  }, []);
+  const redo = useCallback(() => {
+    localEdit.current = true;
+    dispatch({ type: 'redo' });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -305,6 +332,30 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     })();
   }, [autosave, cardId, publishing]);
 
+  // A card that others can see keeps its gallery preview fresh, a moment after the last local edit.
+  const previewState = JSON.stringify([normalizeCard(doc), record.artwork, record.artworkLayers]);
+  const previewOf = useRef(previewState);
+  const isShared = record.visibility !== 'private';
+  useEffect(() => {
+    if (!isShared) previewOf.current = previewState;
+    if (!isShared || !localEdit.current || previewOf.current === previewState) return undefined;
+    const timer = setTimeout(() => {
+      previewOf.current = previewState;
+      localEdit.current = false;
+      void (async () => {
+        try {
+          const { renderThumbnail } = await import('../../export/exportCard');
+          const data = new FormData();
+          data.set('thumbnail', await renderThumbnail(paramsRef.current), 'nahled.png');
+          setRecord(await cards().update(cardId, data, { expand: EXPAND }));
+        } catch {
+          // The gallery falls back to the older preview or to drawing the card itself.
+        }
+      })();
+    }, PREVIEW_REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [cardId, isShared, previewState]);
+
   const exportCard = useCallback(
     (kind: ExportKind) => {
       if (exporting) return;
@@ -349,6 +400,7 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     setLook,
     setContent,
     setMeaning,
+    setArt,
     setAbility,
     setPlacement,
     requestTemplate,
@@ -386,10 +438,13 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
 
   if (deleted) {
     return (
-      <main style={{ padding: 48, textAlign: 'center' }}>
+      <main style={{ padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <p className={ui.alert} role="alert">
           {cs.workshop.deleted}
         </p>
+        <Link to="/" className={ui.outline}>
+          {cs.notFound.back}
+        </Link>
       </main>
     );
   }

@@ -10,6 +10,8 @@ export interface LazyCardProps extends Card3DProps {
 /** Keeps a live 3D card only inside the viewport. Elsewhere it shows the stored preview. */
 export function LazyCard({ thumbnail, className, style, ...props }: LazyCardProps) {
   const card = useResolvedCard(props);
+  const cornerX = (card.radius / 300) * 100;
+  const cornerY = (card.radius / card.H) * 100;
   const holder = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
@@ -41,10 +43,10 @@ export function LazyCard({ thumbnail, className, style, ...props }: LazyCardProp
           alt={card.ariaBase}
           loading="lazy"
           decoding="async"
-          style={{ display: 'block', width: '100%', height: '100%', borderRadius: `${(card.radius / 300) * 100}%` }}
+          style={{ display: 'block', width: '100%', height: '100%' }}
         />
       ) : (
-        <div role="img" aria-label={card.ariaBase} style={{ width: '100%', height: '100%', borderRadius: `${(card.radius / 300) * 100}%`, background: card.c.base }} />
+        <div role="img" aria-label={card.ariaBase} style={{ width: '100%', height: '100%', borderRadius: `${cornerX}% / ${cornerY}%`, background: card.c.base }} />
       )}
     </div>
   );

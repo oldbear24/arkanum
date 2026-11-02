@@ -55,7 +55,7 @@ function parseSolo(search: URLSearchParams): CardParams & { flip?: boolean } {
 function SoloCard({ search }: { search: URLSearchParams }) {
   const params = parseSolo(search);
   return (
-    <div style={{ width: 356, padding: 28 }}>
+    <div style={{ boxSizing: 'border-box', width: 356, padding: 28 }}>
       <Card3D {...params} />
     </div>
   );

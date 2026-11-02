@@ -10,8 +10,8 @@
 | 4. Úvod, šablony, přihlášení, profil | hotovo |
 | 5. Dílna | hotovo |
 | 6. Detail karty, lajky, remix, balíčky | hotovo |
-| 7. Export | čeká |
-| 8. Později | mimo tuto iteraci |
+| 7. Export | hotovo |
+| 8. Později | nezačato, patří sem volné prvky z „Přidat prvek", GLB a moderace galerie |
 
 ## Prostředí
 
@@ -23,6 +23,17 @@
   `go` a `npm` a nespoléhá na konkrétní shell. Ověřeno přes `mingw32-make`.
 - Na vývojovém stroji není Docker, takže **Dockerfile není ověřený skutečným buildem**.
 - Repozitář zatím nemá vzdálený `origin`, commity zůstávají lokálně a `push` se neprovádí.
+
+## Co není ověřené
+
+- **Docker image** se tu nedal postavit. Kroky Dockerfile odpovídají příkazům, které tu procházejí, ale jako celek
+  neběžel. Stejně tak neběžel workflow GitHub Actions, protože repozitář nemá vzdálený `origin`.
+- **Skutečné Safari.** Playwright WebKit na Windows neumí 3D skládání vůbec: rub prosvítá zrcadlově i na nejjednodušší
+  testovací stránce a i u původního návrhu, takže o 3D kartě v Safari nic neříká. Export v něm funguje. Před ostrým
+  provozem je potřeba 3D kartu prohlédnout na iPhonu nebo Macu.
+- **Firefox.** Prohlížeč se na tomhle stroji nepodařilo spustit (systém odmítá `firefox.exe` s `Permission denied`).
+- **E-maily a OAuth2** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo a žádný poskytovatel
+  se nezkoušel, protože tu nejsou přístupové údaje.
 
 ## Rozhodnutí oproti zadání
 
@@ -65,9 +76,9 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 ### Komponenta karty (fáze 3)
 
 - **Věrnost návrhu ověřuju dvakrát.** `web/src/card/prototype.test.ts` spouští skutečný kód z
-  `design/Karta.dc.html` a porovnává cesty, barvy, texty i hodnoty pohybu s přepisem. Pixelové porovnání deseti
-  variant s vykresleným návrhem dalo rozdíl nejvýš 0,38 % pixelů (vyhlazení textu). Porovnávací skript není
-  v repozitáři, protože potřebuje běhové prostředí návrhu `support.js`, které k předání nepatří.
+  `design/Karta.dc.html` a porovnává cesty, barvy, texty i hodnoty pohybu s přepisem. Pixelové porovnání s vykresleným
+  návrhem dalo u karty v klidu nejvýš 0,05 % pixelů a u naklopené karty pod stejným kurzorem 0,00 %. Porovnávací skript
+  není v repozitáři, protože potřebuje běhové prostředí návrhu `support.js`, které k předání nepatří.
 - `CardFace` a `CardBack` mají styly inline, ne v CSS Modules. Export serializuje jejich DOM do SVG obrázku a tam
   externí styly neplatí.
 - `prefers-reduced-motion` vypíná i otáčení tažením (režim `drag`), protože zadání říká „vypne náklon, otáčení
@@ -86,7 +97,7 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 
 ### Úvod, šablony, přihlášení, profil (fáze 4)
 
-- Pixelové porovnání s návrhem při 1440 px: `/sablony` 0,62 % pixelů, horní část `/` 0,17 % pixelů. Zbytek je
+- Pixelové porovnání s návrhem při 1440 px: `/sablony` 0,08 % pixelů, horní část `/` 0,21 % pixelů. Zbytek je
   vyhlazení textu.
 - **Bez globálního `box-sizing: border-box`.** Návrh počítá s výchozím `content-box` (šířka 1280 px je bez
   odsazení), `border-box` mají jen pole formulářů. S globálním resetem by byl obsah o 96 px užší.
@@ -140,6 +151,27 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
   jejichž rub má jinak pevné barvy. Karty, které divák nesmí vidět, se v balíčku vynechají a stránka je spočítá.
 - Pořadí karet se mění tlačítky, aby to šlo i klávesnicí a na telefonu. Skryté karty si drží své místo.
 - Na vlastním profilu přibyl formulář „Nový balíček", aby balíček nešlo založit jen přes kartu.
+
+### Export (fáze 7)
+
+- PNG i PDF se vykreslují v prohlížeči. `CardFace` se serializuje do SVG obrázku s `foreignObject`, písma a ilustrace
+  jsou v něm vložené jako data URL a výsledek se nakreslí na canvas. Díky tomu je výstup stejný jako náhled,
+  včetně fólie a ražby. Vyzkoušeno v Chromiu a ve WebKitu, kde se kvůli načítání kreslí opakovaně.
+- PNG má šířku 1200 px (dvojnásobek náhledu 600 px), rohy jsou průhledné.
+- **PDF:** skutečný rozměr v mm, 3 mm spadávka, ořezové značky, `TrimBox` a `BleedBox`, líc a rub na zvláštních
+  stranách. Rastr má 450 DPI a nejdelší strana je omezená na 4096 px, aby to zvládly telefony. Text je součástí
+  rastru a barvy jsou RGB. Převod do CMYK, který některé tiskárny chtějí, je mimo prohlížeč.
+- **Spadávka** vzniká protažením krajních pixelů, ne jednobarevným pruhem. Fólie mění barvu okraje podél karty,
+  takže rovný pruh by při nepřesném ořezu ukázal šev. Rohy v PDF jsou rovné, zaoblení je věc tiskárny.
+- **Náhled** se vytvoří při publikování. Navíc oproti zadání se u sdílené karty obnoví 5 s po poslední úpravě, jinak
+  by galerie ukazovala starou podobu. Když se náhled nepovede, publikování přesto proběhne a galerie kartu nakreslí sama.
+- GLB je podle zadání až v pozdější fázi, tlačítko je vypnuté.
+
+### Přístupnost
+
+Playwright spouští `axe-core` nad veřejnými stránkami a dílnou a na telefonu měří cíle dotyku (aspoň 44 px). Z kontroly
+kontrastu je vyjmutá samotná karta, protože její text leží na přechodech a fóliích. Oproti návrhu jsou proto větší
+odebírání klíčového slova a zavírání hledání (návrh 40 a 36 px) a posuvníky mají větší aktivní plochu při stejném rozložení.
 
 ### Lajky
 

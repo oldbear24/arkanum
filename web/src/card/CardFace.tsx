@@ -563,6 +563,7 @@ export function flatRootStyle(card: ResolvedCard, widthPx: number | undefined, s
     borderRadius: squareCorners ? 0 : card.rad,
     background,
     fontSize: widthPx ? `${widthPx / 18.75}px` : 'calc(100cqw / 18.75)',
+    fontFamily: "'Jost', system-ui, sans-serif",
     lineHeight: 'normal',
     userSelect: 'none',
     ...(restingMotion(card).vars as CSSProperties),

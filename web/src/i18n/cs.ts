@@ -140,7 +140,6 @@ export const cs = {
     },
     likeAdd: 'Přidat do oblíbených: ',
     likeRemove: 'Odebrat z oblíbených: ',
-    openCard: 'Otevřít kartu ',
     empty: 'Zatím tu nejsou žádné karty.',
     emptySearch: 'Hledání nic nenašlo.',
     searchFor: 'Výsledky hledání: ',

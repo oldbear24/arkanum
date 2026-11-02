@@ -31,7 +31,7 @@ jobs:
         run: make build
 
       - name: Install Playwright browser
-        run: npx --prefix web playwright install --with-deps chromium
+        run: npm --prefix web exec -- playwright install --with-deps chromium
 
       - name: Smoke test
         run: npm --prefix web run test:e2e

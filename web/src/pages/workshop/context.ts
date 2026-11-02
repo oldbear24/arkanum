@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { CardParams } from '../../card/resolve';
-import type { ArtPlacement, CardAbility, CardContent, CardDoc, CardLook, CardMeaning, Family } from '../../card/spec';
+import type { ArtPlacement, Art, CardAbility, CardContent, CardDoc, CardLook, CardMeaning, Family } from '../../card/spec';
 import type { CardRecord } from '../../lib/pb';
 import type { SaveState } from './useAutosave';
 import type { PresenceUser } from './usePresence';
@@ -30,6 +30,7 @@ export interface WorkshopApi {
   setLook: (patch: Partial<CardLook>, group?: string) => void;
   setContent: (patch: Partial<CardContent>, group?: string) => void;
   setMeaning: (patch: Partial<CardMeaning>, group?: string) => void;
+  setArt: (art: Art) => void;
   setAbility: (index: number, patch: Partial<CardAbility>, group?: string) => void;
   setPlacement: (target: ArtTarget, patch: Partial<ArtPlacement>) => void;
   requestTemplate: (family: Family) => void;

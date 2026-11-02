@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
-import { PAL } from '../../card/resolve';
+import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { PAL, resolveCard } from '../../card/resolve';
 import { counts, ranges, textLimits, type CardAbility, type CardContent } from '../../card/spec';
 import { Icon } from '../../components/Icon';
 import { cs } from '../../i18n/cs';
@@ -12,6 +12,13 @@ const w = cs.workshop;
 
 function cx(...names: (string | false | undefined)[]) {
   return names.filter(Boolean).join(' ');
+}
+
+/** What the card shows for an empty field. The fields offer it as their placeholder. */
+function useCardFallbacks() {
+  const { doc } = useWorkshop();
+  const { variant, art, element } = doc.look;
+  return useMemo(() => resolveCard({ variant, art, element }), [variant, art, element]);
 }
 
 function Section({ title, children, tight }: { title?: string; children: ReactNode; tight?: boolean }) {
@@ -268,9 +275,10 @@ export function LayerList() {
 }
 
 function LookTab() {
-  const { compact, doc, setLook, setTitle, setContent } = useWorkshop();
+  const { compact, doc, setLook, setArt } = useWorkshop();
   const { look } = doc;
   const isTarot = doc.family === 'tarot';
+  const isBlank = doc.family === 'prazdna';
   const isTcg = doc.family === 'bestie' || doc.family === 'hrdina';
 
   return (
@@ -285,11 +293,7 @@ function LookTab() {
                 type="button"
                 className={styles.optArt}
                 {...pressed(look.art === art.id)}
-                onClick={() => {
-                  setLook({ art: art.id });
-                  setTitle(art.label);
-                  setContent({ numeral: art.numeral });
-                }}
+                onClick={() => setArt(art.id)}
               >
                 <span className={styles.optArtNum}>{art.numeral}</span>
                 <span>{art.label}</span>
@@ -297,7 +301,8 @@ function LookTab() {
             ))}
           </div>
         ) : (
-          !compact && (
+          !compact &&
+          !isBlank && (
             <div className={styles.artInfo}>
               <span className={styles.artInfoIcon}>
                 <Icon name="image" size={22} strokeWidth={1.6} />
@@ -314,18 +319,20 @@ function LookTab() {
 
       {!isTcg && (
         <>
-          <Section title={w.frame}>
-            <div className={compact ? styles.grid4 : styles.grid2}>
-              {FRAMES.map((frame) => (
-                <button key={frame.id} type="button" className={compact ? styles.optColumn : styles.optRow} {...pressed(look.frame === frame.id)} onClick={() => setLook({ frame: frame.id })}>
-                  <svg width={compact ? 20 : 24} height={compact ? 30 : 36} viewBox="20 56 260 378" aria-hidden="true">
-                    <path d={frame.win} fill="none" stroke="#d6b067" strokeWidth={compact ? 16 : 14} strokeLinejoin="round" />
-                  </svg>
-                  <span>{compact ? frame.short : frame.label}</span>
-                </button>
-              ))}
-            </div>
-          </Section>
+          {!isBlank && (
+            <Section title={w.frame}>
+              <div className={compact ? styles.grid4 : styles.grid2}>
+                {FRAMES.map((frame) => (
+                  <button key={frame.id} type="button" className={compact ? styles.optColumn : styles.optRow} {...pressed(look.frame === frame.id)} onClick={() => setLook({ frame: frame.id })}>
+                    <svg width={compact ? 20 : 24} height={compact ? 30 : 36} viewBox="20 56 260 378" aria-hidden="true">
+                      <path d={frame.win} fill="none" stroke="#d6b067" strokeWidth={compact ? 16 : 14} strokeLinejoin="round" />
+                    </svg>
+                    <span>{compact ? frame.short : frame.label}</span>
+                  </button>
+                ))}
+              </div>
+            </Section>
+          )}
           <Section title={compact ? w.paletteShort : w.palette}>
             <div className={styles.grid4}>
               {PALETTES.map((palette) => (
@@ -477,20 +484,20 @@ function MaterialTab() {
 function TextTab() {
   const { doc, setTitle, setContent, setLook } = useWorkshop();
   const { content } = doc;
-  const element = cs.card.elements[doc.look.element];
+  const fallback = useCardFallbacks();
   const subtitle = (value: string) => setContent({ subtitle: value }, 'subtitle');
 
   return (
     <>
       <Section tight>
-        <TextField label={w.cardTitle} value={doc.title} maxLength={textLimits.title} onChange={setTitle} />
-        {doc.family === 'tarot' && <TextField label={w.numeral} look="display" value={content.numeral} maxLength={textLimits.numeral} onChange={(numeral) => setContent({ numeral }, 'numeral')} />}
-        {doc.family === 'orakulum' && <TextField label={w.message} look="serif" value={content.subtitle} maxLength={40} onChange={subtitle} />}
-        {doc.family === 'bestie' && <TextField label={w.creatureDescription} look="serif" value={content.subtitle} maxLength={34} placeholder={w.creatureHint + element} onChange={subtitle} />}
+        <TextField label={w.cardTitle} value={doc.title} maxLength={textLimits.title} placeholder={fallback.title} onChange={setTitle} />
+        {doc.family === 'tarot' && <TextField label={w.numeral} look="display" value={content.numeral} maxLength={textLimits.numeral} placeholder={fallback.numeral} onChange={(numeral) => setContent({ numeral }, 'numeral')} />}
+        {doc.family === 'orakulum' && <TextField label={w.message} look="serif" value={content.subtitle} maxLength={40} placeholder={fallback.subtitle} onChange={subtitle} />}
+        {doc.family === 'bestie' && <TextField label={w.creatureDescription} look="serif" value={content.subtitle} maxLength={34} placeholder={fallback.subtitle} onChange={subtitle} />}
         {doc.family === 'hrdina' && (
           <>
-            <TextField label={w.classRarity} value={content.cls} maxLength={textLimits.cls} onChange={(cls) => setContent({ cls }, 'cls')} />
-            <TextArea label={w.quote} italic rows={2} value={content.subtitle} maxLength={textLimits.subtitle} onChange={subtitle} />
+            <TextField label={w.classRarity} value={content.cls} maxLength={textLimits.cls} placeholder={fallback.cls} onChange={(cls) => setContent({ cls }, 'cls')} />
+            <TextArea label={w.quote} italic rows={2} value={content.subtitle} maxLength={textLimits.subtitle} placeholder={fallback.subtitle} onChange={subtitle} />
           </>
         )}
         {doc.family === 'prazdna' && <TextArea label={w.cardText} italic rows={3} value={content.subtitle} maxLength={textLimits.subtitle} onChange={subtitle} />}
@@ -596,7 +603,7 @@ function Stepper({ label, value, min, max, step, onChange }: { label: string; va
   );
 }
 
-function AbilityField({ index, ability, title, down, up, effect }: { index: number; ability: CardAbility; title: string; down: string; up: string; effect: string }) {
+function AbilityField({ index, ability, title, down, up, effect, namePlaceholder, textPlaceholder }: { index: number; ability: CardAbility; title: string; down: string; up: string; effect: string; namePlaceholder: string; textPlaceholder: string }) {
   const { setAbility } = useWorkshop();
   const id = useId();
   const power = (delta: number) => setAbility(index, { power: Math.max(ranges.power[0], Math.min(ranges.power[1], ability.power + delta)) });
@@ -609,7 +616,7 @@ function AbilityField({ index, ability, title, down, up, effect }: { index: numb
           {ability.power}
         </label>
         <div className={styles.abilityRow}>
-          <input id={id} type="text" className={cx(styles.input, styles.abilityInput)} maxLength={textLimits.abilityName} value={ability.name} onChange={(e) => setAbility(index, { name: e.target.value }, `ability-${index}`)} />
+          <input id={id} type="text" className={cx(styles.input, styles.abilityInput)} maxLength={textLimits.abilityName} value={ability.name} placeholder={namePlaceholder} onChange={(e) => setAbility(index, { name: e.target.value }, `ability-${index}`)} />
           <button type="button" className={styles.abilityButton} aria-label={down} onClick={() => power(-10)}>
             <Icon name="minus" size={16} strokeWidth={2} />
           </button>
@@ -618,7 +625,7 @@ function AbilityField({ index, ability, title, down, up, effect }: { index: numb
           </button>
         </div>
       </div>
-      <TextField label={effect} look="serif" maxLength={textLimits.abilityText} value={ability.text} onChange={(text) => setAbility(index, { text }, `ability-text-${index}`)} />
+      <TextField label={effect} look="serif" maxLength={textLimits.abilityText} value={ability.text} placeholder={textPlaceholder} onChange={(text) => setAbility(index, { text }, `ability-text-${index}`)} />
     </>
   );
 }
@@ -626,6 +633,7 @@ function AbilityField({ index, ability, title, down, up, effect }: { index: numb
 function DataTab() {
   const { doc, setMeaning, setContent, setAbility } = useWorkshop();
   const { content, meaning } = doc;
+  const fallback = useCardFallbacks();
   const stat = (key: keyof CardContent) => (value: number) => setContent({ [key]: value }, `stat-${key}`);
   const first = content.abilities[0];
   const second = content.abilities[1];
@@ -683,8 +691,8 @@ function DataTab() {
       {doc.family === 'bestie' && first && second && (
         <>
           <Section title={w.abilities}>
-            <AbilityField index={0} ability={first} title={w.firstAbility} down={w.lowerFirst} up={w.raiseFirst} effect={w.firstEffect} />
-            <AbilityField index={1} ability={second} title={w.secondAbility} down={w.lowerSecond} up={w.raiseSecond} effect={w.secondEffect} />
+            <AbilityField index={0} ability={first} title={w.firstAbility} down={w.lowerFirst} up={w.raiseFirst} effect={w.firstEffect} namePlaceholder={fallback.ab1} textPlaceholder={fallback.ab1t} />
+            <AbilityField index={1} ability={second} title={w.secondAbility} down={w.lowerSecond} up={w.raiseSecond} effect={w.secondEffect} namePlaceholder={fallback.ab2} textPlaceholder={fallback.ab2t} />
           </Section>
           <Section title={w.rarity}>
             <div className={styles.stars}>
@@ -700,8 +708,8 @@ function DataTab() {
 
       {doc.family === 'hrdina' && first && (
         <Section tight>
-          <TextField label={w.ability} maxLength={textLimits.abilityName} value={first.name} onChange={(name) => setAbility(0, { name }, 'ability-0')} />
-          <TextArea label={w.abilityEffect} rows={3} maxLength={textLimits.abilityText} value={first.text} onChange={(text) => setAbility(0, { text }, 'ability-text-0')} />
+          <TextField label={w.ability} maxLength={textLimits.abilityName} value={first.name} placeholder={fallback.ab1} onChange={(name) => setAbility(0, { name }, 'ability-0')} />
+          <TextArea label={w.abilityEffect} rows={3} maxLength={textLimits.abilityText} value={first.text} placeholder={fallback.ab1t} onChange={(text) => setAbility(0, { text }, 'ability-text-0')} />
         </Section>
       )}
     </>

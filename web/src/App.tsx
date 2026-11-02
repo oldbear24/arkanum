@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SiteLayout } from './components/SiteLayout';
 import { refreshSession } from './lib/auth';
 import { Home } from './pages/Home';
@@ -30,28 +31,30 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={null}>
-        <Routes>
-          <Route element={<SiteLayout />}>
-            <Route index element={<Home />} />
-            <Route path="sablony" element={<Templates />} />
-            <Route path="prihlaseni" element={<SignIn />} />
-            <Route path="registrace" element={<Register />} />
-            <Route path="obnova-hesla" element={<RequestPasswordReset />} />
-            <Route path="obnova-hesla/:token" element={<ConfirmPasswordReset />} />
-            <Route path="overeni/:token" element={<ConfirmVerification />} />
-            <Route path="zmena-emailu/:token" element={<ConfirmEmailChange />} />
-            <Route path="dilna" element={<WorkshopEntry />} />
-            <Route path="karta/:id" element={<CardDetail />} />
-            <Route path="balicky/:id" element={<Deck />} />
-            {/* React Router has no partial segments, so `/@handle` is checked in the page. */}
-            <Route path=":atHandle" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-          <Route path="dilna/:id" element={<Workshop />} />
-          <Route path="dev/karty" element={<DevCards />} />
-        </Routes>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route element={<SiteLayout />}>
+              <Route index element={<Home />} />
+              <Route path="sablony" element={<Templates />} />
+              <Route path="prihlaseni" element={<SignIn />} />
+              <Route path="registrace" element={<Register />} />
+              <Route path="obnova-hesla" element={<RequestPasswordReset />} />
+              <Route path="obnova-hesla/:token" element={<ConfirmPasswordReset />} />
+              <Route path="overeni/:token" element={<ConfirmVerification />} />
+              <Route path="zmena-emailu/:token" element={<ConfirmEmailChange />} />
+              <Route path="dilna" element={<WorkshopEntry />} />
+              <Route path="karta/:id" element={<CardDetail />} />
+              <Route path="balicky/:id" element={<Deck />} />
+              {/* React Router has no partial segments, so `/@handle` is checked in the page. */}
+              <Route path=":atHandle" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+            <Route path="dilna/:id" element={<Workshop />} />
+            <Route path="dev/karty" element={<DevCards />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

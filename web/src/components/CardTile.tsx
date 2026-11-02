@@ -29,7 +29,7 @@ export const CardTile = memo(function CardTile({ record, liked = false, onToggle
   return (
     <article className={styles.tile}>
       <div className={styles.cardBox}>
-        <Link to={href} className={styles.cardLink} aria-label={cs.gallery.openCard + title}>
+        <Link to={href} className={styles.cardLink}>
           <LazyCard {...params} flip={flip} thumbnail={flip ? undefined : thumbnailUrl(record)} />
         </Link>
       </div>

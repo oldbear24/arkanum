@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Card3D } from '../card/Card3D';
 import { normalizeCard } from '../card/normalize';
+import { resolveCard, type ResolvedCard } from '../card/resolve';
 import type { CardDoc } from '../card/spec';
 import { AddToDeckDialog } from '../components/AddToDeckDialog';
 import { Icon } from '../components/Icon';
@@ -40,9 +41,12 @@ function Prose({ children }: { children: string }) {
   return <p className={styles.prose}>{children}</p>;
 }
 
-function Meaning({ doc }: { doc: CardDoc }) {
+function Meaning({ doc, card }: { doc: CardDoc; card: ResolvedCard }) {
   const { content, meaning } = doc;
-  const [first, second] = content.abilities;
+  const abilities = [
+    { name: card.ab1, power: card.ab1p, text: card.ab1t },
+    { name: card.ab2, power: card.ab2p, text: card.ab2t },
+  ];
   const s = w.stats;
 
   switch (doc.family) {
@@ -76,14 +80,11 @@ function Meaning({ doc }: { doc: CardDoc }) {
       );
     }
     case 'orakulum':
-      if (!content.subtitle && !meaning.upright) return <p className={styles.empty}>{d.empty}</p>;
       return (
         <>
-          {content.subtitle && (
-            <Block title={d.message}>
-              <Prose>{content.subtitle}</Prose>
-            </Block>
-          )}
+          <Block title={d.message}>
+            <Prose>{card.subtitle}</Prose>
+          </Block>
           {meaning.upright && (
             <Block title={d.reading}>
               <Prose>{meaning.upright}</Prose>
@@ -106,18 +107,15 @@ function Meaning({ doc }: { doc: CardDoc }) {
           </Block>
           <Block title={d.abilities}>
             <ul className={styles.abilities}>
-              {[first, second].map(
-                (ability, i) =>
-                  ability?.name && (
-                    <li key={i} className={styles.ability}>
-                      <span className={styles.abilityName}>{ability.name}</span>
-                      <span className={styles.abilityPower}>
-                        {d.power} {ability.power}
-                      </span>
-                      {ability.text && <p className={styles.abilityText}>{ability.text}</p>}
-                    </li>
-                  ),
-              )}
+              {abilities.map((ability) => (
+                <li key={ability.name} className={styles.ability}>
+                  <span className={styles.abilityName}>{ability.name}</span>
+                  <span className={styles.abilityPower}>
+                    {d.power} {ability.power}
+                  </span>
+                  <p className={styles.abilityText}>{ability.text}</p>
+                </li>
+              ))}
             </ul>
           </Block>
         </>
@@ -133,19 +131,15 @@ function Meaning({ doc }: { doc: CardDoc }) {
               <Stat label={s.magic} value={content.s3} />
             </dl>
           </Block>
-          {first?.name && (
-            <Block title={d.ability}>
-              <div className={styles.ability}>
-                <span className={styles.abilityName}>{first.name}</span>
-                {first.text && <p className={styles.abilityText}>{first.text}</p>}
-              </div>
-            </Block>
-          )}
-          {content.subtitle && (
-            <Block title={d.quote}>
-              <Prose>{content.subtitle}</Prose>
-            </Block>
-          )}
+          <Block title={d.ability}>
+            <div className={styles.ability}>
+              <span className={styles.abilityName}>{card.ab1}</span>
+              <p className={styles.abilityText}>{card.ab1t}</p>
+            </div>
+          </Block>
+          <Block title={d.quote}>
+            <Prose>{card.subtitle}</Prose>
+          </Block>
         </>
       );
     case 'prazdna':
@@ -418,7 +412,7 @@ export function CardDetail() {
           </p>
         )}
 
-        <Meaning doc={doc} />
+        <Meaning doc={doc} card={resolveCard(params)} />
 
         {isOwner && <Exports record={record} />}
 

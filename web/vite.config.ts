@@ -16,6 +16,9 @@ export default defineConfig({
       '/_': { target: API, changeOrigin: true },
     },
   },
+  // Loaded on demand by the export. Without this, the first export in development makes
+  // Vite discover a new dependency and reload the page in the middle of it.
+  optimizeDeps: { include: ['pdf-lib'] },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

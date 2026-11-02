@@ -37,6 +37,59 @@ test('edits autosave, survive a reload and can be undone', async ({ page }) => {
   await waitSaved(page);
 });
 
+test('picking an artwork brings its title and numeral in one undo step', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await page.getByRole('button', { name: 'XVIII Měsíc' }).click();
+  await expect(page.getByRole('button', { name: 'XVIII Měsíc' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('img', { name: /^Měsíc/ })).toBeVisible();
+
+  await settingsTab(page, 'Text').click();
+  await expect(page.getByLabel('Název karty')).toHaveValue('Měsíc');
+  await expect(page.getByRole('textbox', { name: 'Číslo arkány' })).toHaveValue('XVIII');
+
+  await page.keyboard.press('Control+z');
+  await expect(page.getByLabel('Název karty')).toHaveValue('Hvězda');
+  await expect(page.getByRole('textbox', { name: 'Číslo arkány' })).toHaveValue('XVII');
+  await settingsTab(page, 'Vzhled').click();
+  await expect(page.getByRole('button', { name: 'XVII Hvězda' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('redo survives the echo of the own save', async ({ page }) => {
+  await signIn(page, 'demo');
+  await createCard(page);
+
+  await settingsTab(page, 'Materiál').click();
+  await page.getByRole('button', { name: 'Duhová' }).click();
+  await waitSaved(page);
+
+  await page.getByRole('button', { name: 'Zpět', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Zlatá' }).first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status').filter({ hasText: 'Ukládám' })).toBeVisible();
+  await waitSaved(page);
+  // Time for the realtime event of that save to come back.
+  await page.waitForTimeout(500);
+
+  await expect(page.getByRole('button', { name: 'Znovu', exact: true })).toBeEnabled();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(page.getByRole('button', { name: 'Duhová' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a blank card keeps its format and offers no frames', async ({ page }) => {
+  await signIn(page, 'demo');
+  await page.goto('/sablony');
+  await page.getByRole('button', { name: /^Čtvercová/ }).click();
+  await page.getByRole('button', { name: 'Vytvořit prázdnou kartu' }).click();
+  await page.waitForURL(/\/dilna\//);
+
+  await expect(page.getByText('70 × 70 mm · vlastní formát')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rám' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Barevná paleta' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Význam' })).toHaveCount(0);
+  await expect(page.locator('main svg[viewBox="0 0 300 300"]').first()).toBeAttached();
+});
+
 test('switching a template asks first when the texts were edited', async ({ page }) => {
   await signIn(page, 'demo');
   await createCard(page);
