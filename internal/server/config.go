@@ -9,17 +9,9 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-const usersCollection = "users"
-
-// oauthProviders lists the optional sign-in providers and their env var prefix.
-var oauthProviders = []struct{ name, displayName, env string }{
-	{"google", "Google", "GOOGLE"},
-	{"github", "GitHub", "GITHUB"},
-	{"discord", "Discord", "DISCORD"},
-}
-
 // applyEnvConfig copies the deployment configuration from the environment into
 // the PocketBase settings, so that a container needs no manual admin UI setup.
+// OAuth2 providers are the exception: they are set up in the admin UI and only there.
 func applyEnvConfig(app core.App) error {
 	settings := app.Settings()
 	settings.Meta.AppName = "Arkánum"
@@ -45,37 +37,6 @@ func applyEnvConfig(app core.App) error {
 
 	if err := app.Save(settings); err != nil {
 		return fmt.Errorf("saving settings: %w", err)
-	}
-
-	return applyOAuthConfig(app)
-}
-
-func applyOAuthConfig(app core.App) error {
-	users, err := app.FindCollectionByNameOrId(usersCollection)
-	if err != nil {
-		return err
-	}
-
-	providers := make([]core.OAuth2ProviderConfig, 0, len(oauthProviders))
-	for _, p := range oauthProviders {
-		// A stray space or line ending from .env would only show up as a sign-in the provider refuses.
-		id, secret := strings.TrimSpace(os.Getenv(p.env+"_CLIENT_ID")), strings.TrimSpace(os.Getenv(p.env+"_CLIENT_SECRET"))
-		if id == "" || secret == "" {
-			continue
-		}
-		providers = append(providers, core.OAuth2ProviderConfig{
-			Name:         p.name,
-			DisplayName:  p.displayName,
-			ClientId:     id,
-			ClientSecret: secret,
-		})
-	}
-
-	users.OAuth2.Enabled = len(providers) > 0
-	users.OAuth2.Providers = providers
-
-	if err := app.Save(users); err != nil {
-		return fmt.Errorf("saving OAuth2 configuration: %w", err)
 	}
 	return nil
 }

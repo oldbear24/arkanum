@@ -8,21 +8,8 @@ BIN := bin/arkanum$(EXE)
 NODE_STAMP := web/node_modules/.package-lock.json
 GO_SRC := $(wildcard main.go cardspec internal migrations web/embed.go)
 
-# `make dev` and `make seed` take their configuration from .env when there is one. The
-# other targets stay independent of it, so tests never reach a real mail server or provider.
-# Make reads the file in its own syntax, so a `$` in a value has to be written as `$$`.
-ifneq ($(filter dev dev-api seed,$(MAKECMDGOALS)),)
-  ifneq ($(wildcard .env),)
-    include .env
-    export
-  endif
-endif
-
 # Known password for the demo accounts created by `make seed`. Development only.
-ifeq ($(strip $(SEED_PASSWORD)),)
-  SEED_PASSWORD := arkanum-dev
-endif
-export SEED_PASSWORD
+export SEED_PASSWORD ?= arkanum-dev
 
 $(NODE_STAMP): web/package-lock.json
 	npm --prefix web ci --no-audit --no-fund

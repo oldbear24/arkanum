@@ -3,13 +3,13 @@ package server
 import (
 	"testing"
 
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 )
 
 func TestApplyEnvConfig(t *testing.T) {
 	for _, key := range []string{
 		"APP_URL", "SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "SMTP_TLS", "SMTP_SENDER_ADDRESS", "SMTP_SENDER_NAME",
-		"GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET",
 	} {
 		t.Setenv(key, "")
 	}
@@ -27,13 +27,6 @@ func TestApplyEnvConfig(t *testing.T) {
 		if app.Settings().SMTP.Enabled {
 			t.Error("SMTP should stay disabled")
 		}
-		users, err := app.FindCollectionByNameOrId(usersCollection)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if users.OAuth2.Enabled || len(users.OAuth2.Providers) != 0 {
-			t.Error("OAuth2 should stay disabled")
-		}
 		if app.Settings().Meta.AppName != "Arkánum" {
 			t.Errorf("unexpected app name %q", app.Settings().Meta.AppName)
 		}
@@ -47,9 +40,6 @@ func TestApplyEnvConfig(t *testing.T) {
 		t.Setenv("SMTP_PASSWORD", "heslo")
 		t.Setenv("SMTP_TLS", "true")
 		t.Setenv("SMTP_SENDER_ADDRESS", "dilna@karty.example")
-		t.Setenv("GITHUB_CLIENT_ID", "id")
-		t.Setenv("GITHUB_CLIENT_SECRET", "secret")
-		t.Setenv("GOOGLE_CLIENT_ID", "only-half-of-the-pair")
 
 		if err := applyEnvConfig(app); err != nil {
 			t.Fatal(err)
@@ -65,39 +55,35 @@ func TestApplyEnvConfig(t *testing.T) {
 		if settings.Meta.SenderAddress != "dilna@karty.example" || settings.Meta.SenderName != "Arkánum" {
 			t.Errorf("unexpected sender %q %q", settings.Meta.SenderName, settings.Meta.SenderAddress)
 		}
+	})
 
-		users, err := app.FindCollectionByNameOrId(usersCollection)
+	t.Run("sign-in providers from the admin UI survive a start, whatever the environment says", func(t *testing.T) {
+		t.Setenv("DISCORD_CLIENT_ID", "from-the-environment")
+		t.Setenv("DISCORD_CLIENT_SECRET", "from-the-environment")
+
+		users, err := app.FindCollectionByNameOrId("users")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !users.OAuth2.Enabled {
-			t.Fatal("OAuth2 should be enabled")
+		users.OAuth2.Enabled = true
+		users.OAuth2.Providers = []core.OAuth2ProviderConfig{{Name: "github", ClientId: "id", ClientSecret: "secret"}}
+		if err := app.Save(users); err != nil {
+			t.Fatal(err)
 		}
-		if len(users.OAuth2.Providers) != 1 || users.OAuth2.Providers[0].Name != "github" {
-			t.Errorf("only the complete provider should be enabled, got %+v", users.OAuth2.Providers)
-		}
-	})
-
-	t.Run("whitespace around the keys is ignored", func(t *testing.T) {
-		t.Setenv("DISCORD_CLIENT_ID", " id\r")
-		t.Setenv("DISCORD_CLIENT_SECRET", "secret\r")
-		t.Setenv("GOOGLE_CLIENT_ID", "id")
-		t.Setenv("GOOGLE_CLIENT_SECRET", " \r")
 
 		if err := applyEnvConfig(app); err != nil {
 			t.Fatal(err)
 		}
 
-		users, err := app.FindCollectionByNameOrId(usersCollection)
+		users, err = app.FindCollectionByNameOrId("users")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(users.OAuth2.Providers) != 1 {
-			t.Fatalf("only Discord should be enabled, got %+v", users.OAuth2.Providers)
+		if !users.OAuth2.Enabled {
+			t.Error("OAuth2 should stay enabled")
 		}
-		discord := users.OAuth2.Providers[0]
-		if discord.Name != "discord" || discord.DisplayName != "Discord" || discord.ClientId != "id" || discord.ClientSecret != "secret" {
-			t.Errorf("unexpected provider %+v", discord)
+		if len(users.OAuth2.Providers) != 1 || users.OAuth2.Providers[0].Name != "github" || users.OAuth2.Providers[0].ClientSecret != "secret" {
+			t.Errorf("the providers should stay as they were, got %+v", users.OAuth2.Providers)
 		}
 	})
 

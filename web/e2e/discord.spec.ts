@@ -42,6 +42,7 @@ function startFake() {
   });
 }
 
+// Saves the same collection options as the OAuth2 section of the admin UI.
 async function setOAuth(request: APIRequestContext, oauth2: Record<string, unknown>) {
   const auth = await request.post('/api/collections/_superusers/auth-with-password', {
     data: { identity: SUPERUSER, password: PASSWORD },
@@ -67,7 +68,7 @@ async function expectSignedIn(page: Page) {
   await expect(page.getByRole('button', { name: 'Můj účet' })).toBeVisible();
 }
 
-test('nothing is offered until the keys are set', async ({ page }) => {
+test('nothing is offered until a provider is set up in PocketBase', async ({ page }) => {
   const methods = page.waitForResponse(/auth-methods/);
   await page.goto('/prihlaseni');
   expect((await methods).ok()).toBe(true);

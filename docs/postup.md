@@ -64,6 +64,12 @@ funguje. Aktualizace Docker image se takhle nezkoušela, lokálně tu Docker nen
 
 - **Spuštění aplikace neotevírá prohlížeč.** PocketBase při prvním startu bez správce otevře instalační
   stránku v prohlížeči. Nahradil jsem to výpisem odkazu do konzole (`printInstallerLink`).
+- **OAuth2 se nastavuje v administraci PocketBase,** ne proměnnými prostředí, jak chce zadání. Rozhodl o tom zadavatel:
+  PocketBase na to má vlastní místo a přihlašovací stránka nabízí to, co vrátí `listAuthMethods`. Vyzkoušené ručně
+  v administraci s falešnými klíči: tlačítko se objeví bez restartu a restart nastavení nezmění. Verze do `v0.1.1`
+  poskytovatele při každém startu přepisovaly z prostředí, a tím mazaly nastavení z administrace. Klíče, které tak
+  uložily, po aktualizaci zůstávají. Tajný klíč je v `_collections.options` nešifrovaně, `PB_ENCRYPTION_KEY` šifruje
+  jen nastavení v `_params`.
 
 ### Pravidla API (fáze 2)
 

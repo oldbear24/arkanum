@@ -35,9 +35,7 @@ make dev
 
 Spustí PocketBase na `http://127.0.0.1:8090` a Vite na `http://localhost:5173`. Vite přeposílá `/api`
 a `/_` na PocketBase. Administrace je na `http://127.0.0.1:8090/_/`. Dokud neexistuje správce, vypíše
-server do konzole odkaz na jeho založení. Prohlížeč sám neotevírá. Konfiguraci si `make dev` a `make seed` načtou
-ze souboru `.env`, pokud existuje. Ostatní příkazy ho nečtou, takže testy nikdy nesahají na skutečnou poštu ani
-přihlašovací služby.
+server do konzole odkaz na jeho založení. Prohlížeč sám neotevírá.
 
 `make seed` založí ukázkové účty, karty a balíčky a jde spustit opakovaně. Přihlásíte se jako
 `demo@arkanum.example` s heslem `arkanum-dev`. Stránka se všemi variantami karty a ovládáním parametrů je
@@ -82,28 +80,28 @@ přepínač `--dir`. Na Windows se binárka jmenuje `bin/arkanum.exe`. Příkaz 
 
 ## Konfigurace
 
-Všechno se nastavuje proměnnými prostředí, vzor je v [.env.example](.env.example). Binárka soubor `.env`
-sama nečte, předává ho například Docker Compose, `docker run --env-file` nebo `make dev`.
+Nasazení se nastavuje proměnnými prostředí, vzor je v [.env.example](.env.example). Binárka soubor `.env`
+sama nečte, předává ho například Docker Compose nebo `docker run --env-file`. Přihlášení přes Discord se nastavuje
+v administraci PocketBase, postup je níže.
 
 | Proměnná | Význam |
 | --- | --- |
-| `PB_ENCRYPTION_KEY` | 32 znaků, šifruje nastavení PocketBase (heslo SMTP, tajné klíče OAuth2) |
+| `PB_ENCRYPTION_KEY` | 32 znaků, šifruje nastavení PocketBase, například heslo SMTP |
 | `APP_URL` | veřejná adresa aplikace, použije se v odkazech v e-mailech |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_TLS`, `SMTP_SENDER_ADDRESS`, `SMTP_SENDER_NAME` | odesílání e-mailů. Bez `SMTP_HOST` se nastavení nemění |
-| `GOOGLE_CLIENT_ID`/`_SECRET`, `GITHUB_CLIENT_ID`/`_SECRET`, `DISCORD_CLIENT_ID`/`_SECRET` | přihlášení přes OAuth2. Poskytovatel se zapne, až když má obě hodnoty |
 | `SEED_PASSWORD` | heslo ukázkových účtů pro `arkanum seed`. Bez něj se vygeneruje a vypíše |
 
-OAuth2 se nastavuje při každém startu z prostředí, takže změny poskytovatelů v administraci přepíše.
-Adresa pro přesměrování u poskytovatele je adresa, na které aplikaci otevíráte v prohlížeči, doplněná
-o `/api/oauth2-redirect`.
-
 ### Přihlášení přes Discord
+
+Přihlášení používá standardní OAuth2 z PocketBase a nastavuje se v jeho administraci. Přihlašovací stránka nabídne
+poskytovatele, kteří jsou tam zapnutí, takže proměnné prostředí ani restart nejsou potřeba.
 
 1. V [Discord Developer Portalu](https://discord.com/developers/applications) založte aplikaci tlačítkem
    **New Application**.
 2. V části **OAuth2** si zkopírujte **Client ID** a tlačítkem **Reset Secret** vytvořte **Client Secret**.
-3. Tamtéž do **Redirects** přidejte adresy, na kterých aplikaci otevíráte. Discord je porovnává znak po znaku, takže
-   `localhost` a `127.0.0.1` jsou pro něj dvě různé adresy.
+3. Tamtéž do **Redirects** přidejte adresu, na které aplikaci otevíráte v prohlížeči, doplněnou
+   o `/api/oauth2-redirect`. Discord ji porovnává znak po znaku, takže `localhost` a `127.0.0.1` jsou pro něj dvě
+   různé adresy.
 
    | Kde aplikace běží | Adresa pro přesměrování |
    | --- | --- |
@@ -111,14 +109,15 @@ o `/api/oauth2-redirect`.
    | `make dev` | `http://localhost:5173/api/oauth2-redirect` |
    | binárka nebo Docker na vlastním počítači | `http://localhost:8090/api/oauth2-redirect` |
 
-4. Do souboru `.env` doplňte oba klíče. Git tento soubor ignoruje, klíče do repozitáře nepatří.
+4. V administraci na `/_/` otevřete kolekci **users** a její nastavení (ikona ozubeného kola). Na záložce **Options**
+   rozbalte **OAuth2**, zapněte **Enable** a přes **Add provider** vyberte **Discord**.
+5. Vložte **Client ID** a **Client secret**, potvrďte **Set provider config** a uložte **Save changes**.
 
-   ```bash
-   DISCORD_CLIENT_ID=...
-   DISCORD_CLIENT_SECRET=...
-   ```
+Tlačítko Discord se hned objeví na stránkách přihlášení a registrace. Stejně jde přidat i Google, GitHub a další
+poskytovatele, které PocketBase umí. Logo na tlačítku má zatím jen Discord.
 
-5. Restartujte aplikaci. Na stránkách přihlášení a registrace přibude tlačítko Discord.
+PocketBase ukládá **Client secret** do databáze nešifrovaně, `PB_ENCRYPTION_KEY` se na něj nevztahuje. Zálohy proto
+chraňte stejně jako klíče samotné.
 
 Jak se přihlášení chová:
 

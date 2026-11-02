@@ -28,9 +28,8 @@ Otevřete `.env` a nastavte aspoň tyto hodnoty:
 
 Klíč `PB_ENCRYPTION_KEY` si uložte, po změně nejde dosavadní nastavení přečíst.
 
-Pro ověřování e-mailů a obnovu hesla vyplňte `SMTP_*`, pro přihlášení přes Google, GitHub nebo Discord dvojice
-`*_CLIENT_ID` a `*_CLIENT_SECRET`. Založení aplikace na Discordu popisuje
-[návod v README](../README.md#přihlášení-přes-discord). Význam všech proměnných popisuje
+Pro ověřování e-mailů a obnovu hesla vyplňte `SMTP_*`. Přihlášení přes Discord se nastavuje v administraci, postup je
+v [návodu v README](../README.md#přihlášení-přes-discord). Význam všech proměnných popisuje
 [README](../README.md#konfigurace). Pro Compose jsou navíc tyto dvě:
 
 | Proměnná | Výchozí hodnota | Význam |
@@ -86,7 +85,9 @@ docker compose exec arkanum arkanum --version
 
 ## Záloha a obnova
 
-Vše podstatné je ve svazku `arkanum-data`. Aplikaci před zálohou zastavte, aby byla databáze v konzistentním stavu:
+Vše podstatné je ve svazku `arkanum-data`. Záloha obsahuje i tajné klíče přihlášení přes OAuth2, které PocketBase
+ukládá nešifrovaně, takže ji mějte na bezpečném místě. Aplikaci před zálohou zastavte, aby byla databáze v konzistentním
+stavu:
 
 ```bash
 docker compose stop
