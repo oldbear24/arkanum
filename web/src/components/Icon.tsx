@@ -46,6 +46,8 @@ export const ICONS = {
   chevronLeft: 'M15 6L9 12L15 18',
   chevronRight: 'M9 6L15 12L9 18',
   rotateLeft: 'M4 12A8 8 0 1 0 6.3 6.3M4 4V8H8',
+  lock: 'M7 11V8A5 5 0 0 1 17 8V11M5.5 11H18.5V20H5.5Z',
+  unlock: 'M7 11V8A5 5 0 0 1 16.6 6.1M5.5 11H18.5V20H5.5Z',
   copy: 'M9 9H20V20H9ZM5 15H4V4H15V5',
   swap: 'M7 4L3 8L7 12M3 8H17M17 12L21 16L17 20M21 16H7',
 } as const;

@@ -94,6 +94,7 @@
 }
 
 .cardArea {
+  position: relative;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
@@ -140,6 +141,14 @@
 
 .round[aria-pressed='true'] {
   border-color: var(--gold);
+}
+
+/* The row under the card is full. Next to the card there is room on any phone. */
+.unlock {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 1;
 }
 
 .sheet {

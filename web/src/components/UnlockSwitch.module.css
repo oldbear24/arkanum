@@ -1,0 +1,36 @@
+.unlock[aria-checked='true'] {
+  border-color: var(--gold);
+}
+
+.unlock[aria-checked='true'] svg {
+  color: var(--gold);
+}
+
+.track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 20px;
+  margin-right: -6px;
+  border-radius: 11px;
+  border: 1px solid var(--line-accent);
+  background: var(--option);
+}
+
+.unlock[aria-checked='true'] .track {
+  background: var(--gold-track);
+}
+
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--text);
+}
+
+.unlock[aria-checked='true'] .knob {
+  left: 17px;
+}

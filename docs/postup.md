@@ -58,6 +58,9 @@ jen část dat, například při nahrání ilustrace. Plné uložení z jejich d
 - **Firefox.** Prohlížeč se na tomhle stroji nepodařilo spustit (systém odmítá `firefox.exe` s `Permission denied`).
 - **E-maily** jsou nastavené a konfigurace je otestovaná, ale nic se reálně neodeslalo.
 - **Otáčení dvěma prsty** je ověřené jen simulovanými událostmi ukazatele v unit testu, ne na skutečném telefonu.
+- **Švih prstem u odemknuté karty** je ověřený jen emulovaným dotykem v Chromiu. V emulaci se první klepnutí po švihnutí ztratí
+  (`pointerup` přijde, `click` ne), a to i na prázdné stránce bez aplikace, takže to dělá prohlížeč. Na telefonu je potřeba
+  vyzkoušet, jestli se to neděje taky. Zastavení stiskem na kartě se to netýká, to stojí na `pointerdown`.
 - **Skutečný Discord.** Přihlášení prochází celé proti falešnému serveru, včetně kódu poskytovatele v PocketBase
   a vyskakovacího okna v prohlížeči (`web/e2e/discord.spec.ts`), a falešný server jen napodobuje odpovědi Discordu.
   Se skutečným se nezkoušelo, protože tu nejsou přístupové údaje. Nevyzkoušené je i stažení avataru, falešný server
@@ -216,7 +219,14 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 - **Tlačítka po 30°** vedle karty má dílna na desktopu. Bez nich by klávesnice kartu otočit vůbec neuměla. Se sníženým
   pohybem fungují také, jen bez animace, protože jde o jednorázový krok a ne o pohyb.
 - Na mobil a na detail karty přibylo tlačítko „Vyrovnat", protože volně otočenou kartu jinak nešlo snadno vrátit.
-- Setrvačnost po puštění jsem nedělal, zadání ji nechce a při úpravách by překážela.
+- **Setrvačnost je na přepínači „Odemknout"** (`web/src/card/momentum.ts`), navíc oproti zadání i návrhu. Karta je proto výchozí
+  zamčená a při úpravách nepřekáží. Odemknutá se po puštění točí dál kolem stejné osy obrazovky a drží si rychlost: polovinu ztratí
+  za 4 s, takže rozmáchnutá dotočí za půl minuty. Rychlost se měří z posledních 80 ms tažení. Karta puštěná po zastavení nebo
+  položená pomalu zůstane stát, stejně jako po pouhém stisku, ve kterém se prst o pár pixelů pohnul.
+- Točící se kartu zastaví stisk, obrácení na druhou stranu, Vyrovnat, krok po 30° a zamčení. Krok ji zastavuje proto, že tlačítka
+  slouží k přesnému natočení. S tlačítkem Otáčet se setrvačnost sčítá, protože jedno jde kolem osy karty a druhé kolem osy obrazovky.
+- Na telefonu je přepínač jen jako ikona vedle karty, protože řada pod kartou je plná. Se sníženým pohybem přepínač není vůbec,
+  karta se tažením stejně neotáčí. Po načtení stránky je karta vždy zamčená, nastavení se nikam neukládá.
 
 ### Další možnosti úprav
 

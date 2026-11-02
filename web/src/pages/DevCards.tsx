@@ -120,10 +120,11 @@ function CardLab() {
   const [interactive, setInteractive] = useState<Interactive>('drag');
   const [flip, setFlip] = useState(false);
   const [spin, setSpin] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
   const set = (patch: CardParams) => setParams((current) => ({ ...current, ...patch }));
-  const json = useMemo(() => JSON.stringify({ ...params, flip, spin, interactive }, null, 2), [params, flip, spin, interactive]);
+  const json = useMemo(() => JSON.stringify({ ...params, flip, spin, unlocked, interactive }, null, 2), [params, flip, spin, unlocked, interactive]);
 
   return (
     <main className={styles.page}>
@@ -189,6 +190,10 @@ function CardLab() {
             <input type="checkbox" checked={spin} onChange={(e) => setSpin(e.target.checked)} />
             <span>spin</span>
           </label>
+          <label className={styles.flag}>
+            <input type="checkbox" checked={unlocked} onChange={(e) => setUnlocked(e.target.checked)} />
+            <span>unlocked</span>
+          </label>
           <button type="button" className={styles.button} onClick={() => setResetKey((k) => k + 1)}>
             resetKey ({resetKey})
           </button>
@@ -198,7 +203,7 @@ function CardLab() {
         </div>
 
         <div className={styles.stage}>
-          <Card3D {...params} interactive={interactive} flip={flip} spin={spin} resetKey={resetKey} />
+          <Card3D {...params} interactive={interactive} flip={flip} spin={spin} unlocked={unlocked} resetKey={resetKey} />
         </div>
 
         <div className={styles.flat}>

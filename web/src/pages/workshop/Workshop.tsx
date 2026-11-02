@@ -65,6 +65,7 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
   const [selectedLayer, setSelectedLayer] = useState('titulek');
   const [flip, setFlip] = useState(false);
   const [spin, setSpin] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [light, setLight] = useState(30);
   const [zoom, setZoom] = useState(100);
   const [resetKey, setResetKey] = useState(0);
@@ -594,6 +595,8 @@ function Editor({ initial, userId }: { initial: CardRecord; userId: string }) {
     setFlip,
     spin,
     toggleSpin: () => setSpin((value) => !value),
+    unlocked,
+    toggleUnlocked: () => setUnlocked((value) => !value),
     light,
     setLight,
     zoom,

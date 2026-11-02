@@ -69,6 +69,51 @@ test('dragging has no limit up and down and follows the pointer on a card upside
   expect(facing).toBeGreaterThan(0.3);
 });
 
+test('an unlocked card goes on turning after a flick until it is stopped', async ({ page }) => {
+  const box = await open(page, 'interactive=drag&unlocked=true');
+  const card = scene(page);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 120, y, { steps: 6 });
+  await page.mouse.up();
+
+  const body = card.locator('> div').nth(1);
+  await expect(body).toHaveCSS('transition-property', 'none');
+  const first = await variable(card, '--orient');
+  await expect.poll(() => variable(card, '--orient')).not.toBe(first);
+  const second = await variable(card, '--orient');
+  await expect.poll(() => variable(card, '--orient')).not.toBe(second);
+  expect(second).toMatch(/^rotate3d\(0\.0000, -?1\.0000, 0\.0000, /);
+
+  // A press catches the card, and letting go without a move leaves it there.
+  await page.mouse.down();
+  const caught = await variable(card, '--orient');
+  await page.waitForTimeout(100);
+  expect(await variable(card, '--orient')).toBe(caught);
+  await page.mouse.up();
+  await page.waitForTimeout(100);
+  expect(await variable(card, '--orient')).toBe(caught);
+});
+
+test('an unlocked card let go of after holding still stays where it is', async ({ page }) => {
+  const box = await open(page, 'interactive=drag&unlocked=true');
+  const card = scene(page);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 100, y, { steps: 5 });
+  await page.waitForTimeout(200);
+  await page.mouse.up();
+
+  await page.waitForTimeout(100);
+  expect(await variable(card, '--orient')).toBe('rotate3d(0.0000, 1.0000, 0.0000, 55.00deg)');
+});
+
 test('the card really is 3D: the front faces away when rotated', async ({ page }) => {
   await open(page, 'interactive=none&flip=true');
   const body = scene(page).locator('> div').nth(1);

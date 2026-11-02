@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { Profiler } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Card3D } from './Card3D';
@@ -11,10 +11,10 @@ import { enums, type ItemType } from './spec';
 
 let frames: FrameRequestCallback[] = [];
 
-function flushFrames() {
+function flushFrames(time = performance.now()) {
   const pending = frames;
   frames = [];
-  act(() => pending.forEach((run) => run(performance.now())));
+  act(() => pending.forEach((run) => run(time)));
 }
 
 function stubMatchMedia(reduced: boolean) {
@@ -310,6 +310,263 @@ describe('Card3D', () => {
     const ids = [...container.querySelectorAll('linearGradient, radialGradient, clipPath, filter')].map((el) => el.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[a-zA-Z0-9]+$/);
+  });
+});
+
+describe('Card3D unlocked', () => {
+  const orient = (scene: HTMLElement) => scene.style.getPropertyValue('--orient');
+  const body = (scene: HTMLElement) => scene.children[1] as HTMLElement;
+
+  /** A pointer event at an exact time, the card takes its speed from these. */
+  function pointer(target: Element, type: 'pointerDown' | 'pointerMove' | 'pointerUp' | 'pointerCancel', time: number, clientX = 0, clientY = 0) {
+    const event = createEvent[type](target, { pointerId: 1, clientX, clientY });
+    Object.defineProperty(event, 'timeStamp', { value: time });
+    fireEvent(target, event);
+  }
+
+  /** 40 px in 32 ms, which makes 22° at 0.6875° per millisecond. */
+  function flick(scene: HTMLElement) {
+    pointer(scene, 'pointerDown', 1000);
+    pointer(scene, 'pointerMove', 1016, 20);
+    pointer(scene, 'pointerMove', 1032, 40);
+    pointer(scene, 'pointerUp', 1032, 40);
+  }
+
+  function setup(element = <Card3D interactive="drag" unlocked />) {
+    const view = render(element);
+    const scene = sceneOf(view.container);
+    scene.setPointerCapture = vi.fn();
+    scene.releasePointerCapture = vi.fn();
+    return { ...view, scene };
+  }
+
+  it('goes on turning after a flick, around the same axis', () => {
+    const { scene } = setup();
+    flick(scene);
+    flushFrames(2000);
+    // The first frame counts 16 ms: 22° + 11°.
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 33.00deg)');
+    flushFrames(2016);
+    expect(orient(scene)).toMatch(/^rotate3d\(0\.0000, 1\.0000, 0\.0000, 43\.9\d+deg\)$/);
+  });
+
+  it('stays still after a flick when locked', () => {
+    const { scene } = setup(<Card3D interactive="drag" />);
+    flick(scene);
+    flushFrames(2000);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 22.00deg)');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('turns without rendering React, and without a transition lagging behind', () => {
+    const onRender = vi.fn();
+    const { scene } = setup(
+      <Profiler id="card" onRender={onRender}>
+        <Card3D interactive="drag" unlocked />
+      </Profiler>,
+    );
+    const rendersAfterMount = onRender.mock.calls.length;
+    flick(scene);
+    flushFrames(2000);
+    flushFrames(2016);
+    expect(body(scene).style.transition).toBe('none');
+    expect(onRender.mock.calls.length).toBe(rendersAfterMount);
+  });
+
+  it('holds on for a long time, then comes to rest', () => {
+    const { scene } = setup();
+    flick(scene);
+    let time = 2000;
+    let frameCount = 0;
+    while (frames.length > 0 && frameCount < 5000) {
+      time += 16;
+      frameCount += 1;
+      flushFrames(time);
+    }
+    // 0.6875° per millisecond down to 0.002° with a half-life of four seconds.
+    expect(frameCount * 16).toBeGreaterThan(30_000);
+    expect(frameCount * 16).toBeLessThan(36_000);
+    expect(body(scene).style.transition).not.toBe('none');
+    const rested = orient(scene);
+    flushFrames(time + 16);
+    expect(orient(scene)).toBe(rested);
+  });
+
+  it('runs the same at any frame rate', () => {
+    const run = (step: number) => {
+      const { scene } = setup();
+      flick(scene);
+      let time = 2000;
+      flushFrames(time);
+      for (let at = 0; at < 960; at += step) flushFrames((time += step));
+      const out = orient(scene);
+      cleanup();
+      return parseFloat(out.split(', ')[3] ?? '');
+    };
+    expect(run(8)).toBeCloseTo(run(32), -1);
+  });
+
+  it('stops on a press and stays stopped after a click', () => {
+    const { scene } = setup();
+    flick(scene);
+    flushFrames(2000);
+    const caught = orient(scene);
+
+    pointer(scene, 'pointerDown', 2010);
+    flushFrames(2016);
+    expect(orient(scene)).toBe(caught);
+
+    pointer(scene, 'pointerUp', 2060);
+    flushFrames(2100);
+    flushFrames(2116);
+    expect(orient(scene)).toBe(caught);
+    expect(frames).toHaveLength(0);
+  });
+
+  it('does not start again from a trembling finger', () => {
+    const { scene } = setup();
+    pointer(scene, 'pointerDown', 1000);
+    pointer(scene, 'pointerMove', 1008, 3);
+    pointer(scene, 'pointerUp', 1012, 3);
+    flushFrames(1016);
+    const held = orient(scene);
+    flushFrames(1032);
+    expect(orient(scene)).toBe(held);
+    expect(frames).toHaveLength(0);
+  });
+
+  it('stays where it was let go of after the pointer held still', () => {
+    const { scene } = setup();
+    pointer(scene, 'pointerDown', 1000);
+    pointer(scene, 'pointerMove', 1016, 40);
+    pointer(scene, 'pointerMove', 1032, 80);
+    pointer(scene, 'pointerUp', 1500, 80);
+    flushFrames(1516);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 44.00deg)');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('does not take off when the browser cancels the pointer', () => {
+    const { scene } = setup();
+    pointer(scene, 'pointerDown', 1000);
+    pointer(scene, 'pointerMove', 1016, 40);
+    pointer(scene, 'pointerCancel', 1020, 40);
+    flushFrames(1032);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 22.00deg)');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('flicks in its plane with the Shift key too', () => {
+    const { scene } = setup();
+    pointer(scene, 'pointerDown', 1000);
+    const event = createEvent.pointerMove(scene, { pointerId: 1, clientX: 40, clientY: 0, shiftKey: true });
+    Object.defineProperty(event, 'timeStamp', { value: 1016 });
+    fireEvent(scene, event);
+    pointer(scene, 'pointerUp', 1020, 40);
+    flushFrames(1032);
+    expect(orient(scene)).toMatch(/^rotate3d\(0\.0000, 0\.0000, 1\.0000, /);
+    expect(parseFloat(orient(scene).split(', ')[3] ?? '')).toBeGreaterThan(22);
+  });
+
+  it('straightens from a turn and stays straight', () => {
+    const { scene, rerender } = setup();
+    flick(scene);
+    flushFrames(2000);
+    rerender(<Card3D interactive="drag" unlocked resetKey={1} />);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+    expect(body(scene).style.transition).not.toBe('none');
+    flushFrames(2016);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+  });
+
+  it('turns over from a turn and stays there', () => {
+    const { scene, rerender } = setup();
+    flick(scene);
+    flushFrames(2000);
+    rerender(<Card3D interactive="drag" unlocked flip />);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+    flushFrames(2016);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+    expect(scene.style.getPropertyValue('--ry')).toBe('180.00deg');
+  });
+
+  it('takes a step of the buttons as the end of the turn', () => {
+    const { scene, rerender } = setup();
+    flick(scene);
+    flushFrames(2000);
+    rerender(<Card3D interactive="drag" unlocked turnBy={{ y: 30 }} />);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 63.00deg)');
+    expect(body(scene).style.transition).not.toBe('none');
+    flushFrames(2016);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 63.00deg)');
+  });
+
+  it('stops where it is when locked again', () => {
+    const { scene, rerender } = setup();
+    flick(scene);
+    flushFrames(2000);
+    const turned = orient(scene);
+    rerender(<Card3D interactive="drag" />);
+    expect(body(scene).style.transition).not.toBe('none');
+    flushFrames(2016);
+    expect(orient(scene)).toBe(turned);
+  });
+
+  it('stops for good when it goes away', () => {
+    const { scene, unmount } = setup();
+    flick(scene);
+    flushFrames(2000);
+    const cancel = vi.fn();
+    vi.stubGlobal('cancelAnimationFrame', cancel);
+    unmount();
+    expect(cancel).toHaveBeenCalled();
+  });
+
+  it('adds up with the spin of the card', () => {
+    const { scene } = setup(<Card3D interactive="drag" unlocked spin />);
+    flick(scene);
+    flushFrames(2000);
+    expect(orient(scene)).toBe('rotate3d(0.0000, 1.0000, 0.0000, 33.00deg)');
+    expect(scene.style.getPropertyValue('--ry')).not.toBe('0.00deg');
+  });
+
+  it('does nothing with reduced motion', () => {
+    stubMatchMedia(true);
+    const { scene } = setup();
+    flick(scene);
+    flushFrames(2000);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('does not take off after moving an item', () => {
+    const symbol: PlacedItem = { ...itemDefaults('symbol'), id: 'a', type: 'symbol', x: 50, y: 50 };
+    const editing = { selected: null, onSelect: vi.fn(), onMove: vi.fn() };
+    const { scene, container } = setup(<Card3D interactive="drag" unlocked items={[symbol]} editing={editing} />);
+    const element = container.querySelector('[data-item="a"]');
+    if (!element) throw new Error('item not found');
+    pointer(element, 'pointerDown', 1000, 10, 10);
+    pointer(scene, 'pointerMove', 1016, 50, 10);
+    pointer(scene, 'pointerUp', 1020, 50, 10);
+    expect(editing.onMove).toHaveBeenCalled();
+    flushFrames(1032);
+    expect(orient(scene)).toBe('rotate3d(0, 0, 1, 0deg)');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('lets an item be grabbed from a card still turning', () => {
+    const symbol: PlacedItem = { ...itemDefaults('symbol'), id: 'a', type: 'symbol', x: 50, y: 50 };
+    const editing = { selected: null, onSelect: vi.fn(), onMove: vi.fn() };
+    const { scene, container } = setup(<Card3D interactive="drag" unlocked items={[symbol]} editing={editing} />);
+    flick(scene);
+    flushFrames(2000);
+    const caught = orient(scene);
+    const element = container.querySelector('[data-item="a"]');
+    if (!element) throw new Error('item not found');
+    pointer(element, 'pointerDown', 2010, 10, 10);
+    expect(editing.onSelect).toHaveBeenCalledWith('a');
+    flushFrames(2016);
+    expect(orient(scene)).toBe(caught);
   });
 });
 

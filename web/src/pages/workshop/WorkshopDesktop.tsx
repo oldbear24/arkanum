@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card3D, type CardTurn } from '../../card/Card3D';
 import { Icon, type IconName } from '../../components/Icon';
 import { ui } from '../../components/ui';
+import { UnlockSwitch } from '../../components/UnlockSwitch';
 import { cs } from '../../i18n/cs';
 import { useWorkshop } from './context';
 import { LAYERS } from './constants';
@@ -104,7 +105,7 @@ function formatLine(formatW: number, formatH: number, family: string) {
 }
 
 function Stage() {
-  const { doc, params, flip, spin, light, setLight, zoom, zoomBy, resetKey, turnBy, itemEditing, uploadArtwork } = useWorkshop();
+  const { doc, params, flip, spin, unlocked, toggleUnlocked, light, setLight, zoom, zoomBy, resetKey, turnBy, itemEditing, uploadArtwork } = useWorkshop();
   const [dropping, setDropping] = useState(false);
 
   const onDragOver = (e: DragEvent) => {
@@ -143,12 +144,13 @@ function Stage() {
           <ellipse cx="200" cy="35" rx="192" ry="27" fill="none" stroke="#d6b067" strokeOpacity="0.35" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           <ellipse cx="200" cy="35" rx="150" ry="18" fill="none" stroke="#d6b067" strokeOpacity="0.2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         </svg>
-        <Card3D {...params} light={light} flip={flip} spin={spin} resetKey={resetKey} turnBy={turnBy} editing={itemEditing} interactive="drag" />
+        <Card3D {...params} light={light} flip={flip} spin={spin} unlocked={unlocked} resetKey={resetKey} turnBy={turnBy} editing={itemEditing} interactive="drag" />
       </div>
 
       <div className={styles.toolbar}>
         <CardControls className={styles.sideSwitch} />
         <SpinButton />
+        <UnlockSwitch on={unlocked} onToggle={toggleUnlocked} className={styles.toolButton} />
         <StraightenButton />
         <TurnButtons />
         <label className={styles.lightLabel}>
@@ -157,7 +159,7 @@ function Stage() {
           <input type="range" min={0} max={100} step={1} value={light} className={styles.lightInput} onChange={(e) => setLight(Number(e.target.value))} />
         </label>
       </div>
-      <p className={styles.hint}>{dropping ? w.dropHint : w.dragHint}</p>
+      <p className={styles.hint}>{dropping ? w.dropHint : unlocked ? w.unlockHint : w.dragHint}</p>
     </main>
   );
 }

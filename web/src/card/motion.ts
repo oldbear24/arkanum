@@ -1,3 +1,4 @@
+import type { Axes } from './momentum';
 import type { ResolvedCard } from './resolve';
 import { cssRotation, fullPose, NO_TURN, viewAngles, viewDirection, type Quat } from './rotation';
 
@@ -16,6 +17,8 @@ export interface MotionState {
   drag: boolean;
   /** The free rotation of the drag mode. A card that was not turned yet has none. */
   orient?: Quat;
+  /** How fast an unlocked card goes on turning on its own, after it was flicked. */
+  coast?: Axes;
 }
 
 export const REST: Readonly<MotionState> = { rx: 0, ry: 0, spin: 0, gx: 50, gy: 30, active: false, drag: false };
@@ -114,7 +117,7 @@ export function computeMotion(card: ResolvedCard, s: Readonly<MotionState>, o: M
   const px = (n: number) => f1(n) + 'px';
 
   let transition = 'transform 700ms cubic-bezier(.2,.8,.2,1)';
-  if (s.drag || o.spinning || o.reducedMotion) transition = 'none';
+  if (s.drag || s.coast || o.spinning || o.reducedMotion) transition = 'none';
   else if (active) transition = 'transform 120ms ease-out';
 
   return {
