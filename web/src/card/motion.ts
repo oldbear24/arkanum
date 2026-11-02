@@ -1,5 +1,5 @@
 import type { ResolvedCard } from './resolve';
-import { cssRotation, fullPose, NO_TURN, viewAngles, type Quat } from './rotation';
+import { cssRotation, fullPose, NO_TURN, viewAngles, viewDirection, type Quat } from './rotation';
 
 // The pointer dependent half of renderVals() from design/Karta.dc.html. Its output
 // goes straight to CSS variables, so that moving a card never re-renders React.
@@ -49,7 +49,25 @@ const HOLO_STRENGTH: Partial<Record<ResolvedCard['foil'], [number, number]>> = {
   kosmos: [0.08, 0.22],
   hranol: [0.14, 0.4],
   perlet: [0.12, 0.5],
+  plamen: [0.14, 0.42],
+  ledova: [0.14, 0.42],
+  trpytky: [0.06, 0.24],
+  vlny: [0.1, 0.34],
+  galaxie: [0.18, 0.5],
 };
+
+/** The foils with a shimmering layer over the card. The others only change its metal. */
+export function hasFoilOverlay(foil: ResolvedCard['foil']): boolean {
+  return foil in HOLO_STRENGTH;
+}
+
+/** The foils whose sparkles change with the angle of the card. */
+const SPARKLING: ReadonlySet<ResolvedCard['foil']> = new Set(['kosmos', 'trpytky', 'galaxie']);
+
+/** How far an item at full depth moves on the card, in em. It matches the illustration. */
+const ITEM_FLOAT_EM = 0.875;
+
+const GLARE: Record<ResolvedCard['surface'], number> = { mat: 0.14, saten: 0.34, lesk: 0.62, zrcadlo: 0.9 };
 
 /**
  * The pose of the card itself, for placing things on it. The turn of the flip is included,
@@ -80,15 +98,17 @@ export function computeMotion(card: ResolvedCard, s: Readonly<MotionState>, o: M
   const rotY = s.ry + s.spin + (o.flip ? 180 : 0);
   const lift = active && o.mode === 'tilt' ? 0.7 : 0;
   const shift = (gx / 100) * 300;
+  // An item above the card shows on it where the line from the viewer through the item hits it.
+  const view = viewDirection(posed(s, o.flip));
 
   const holo = HOLO_STRENGTH[card.foil];
   const holoBase = holo ? holo[0] + holo[1] * card.I : 0;
   const holoO = holoBase * (card.c.light ? 0.45 : 1) * (active ? 1 : 0.7) * (card.showFoil ? 1 : 0);
   const spO =
-    card.foil === 'kosmos' && card.showFoil
+    SPARKLING.has(card.foil) && card.showFoil
       ? (0.3 + 0.6 * card.I) * (0.55 + 0.45 * Math.abs(Math.sin((ry + rx + spin) * RAD * 3)))
       : 0;
-  const ga = (card.surface === 'mat' ? 0.14 : card.surface === 'lesk' ? 0.62 : 0.34) * (active ? 1 : 0.55);
+  const ga = GLARE[card.surface] * (active ? 1 : 0.55);
 
   const { depth } = card;
   const px = (n: number) => f1(n) + 'px';
@@ -114,6 +134,9 @@ export function computeMotion(card: ResolvedCard, s: Readonly<MotionState>, o: M
       '--pmy': px(sx * MID_LAYER_DEPTH * depth),
       '--pbx': px(-sy * 5 * depth),
       '--pby': px(sx * 5 * depth),
+      '--ifx': em(-view.x * ITEM_FLOAT_EM),
+      '--ibx': em(view.x * ITEM_FLOAT_EM),
+      '--ify': em(-view.y * ITEM_FLOAT_EM),
       '--hx': f1(gx) + '%',
       '--hy': f1(gy) + '%',
       '--gx': f1(gx) + '%',

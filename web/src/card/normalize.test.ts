@@ -175,7 +175,7 @@ describe('normalizeCard', () => {
 
   it('accepts only plain colours as custom colours', () => {
     const { colors } = normalizeCard({ look: { colors: { base: '#112233', sky: 'url(#x)', metal: '#12345', text: 12 } } }).look;
-    expect(colors).toEqual({ base: '#112233', sky: '', metal: '', text: '' });
+    expect(colors).toMatchObject({ base: '#112233', sky: '', metal: '', text: '' });
   });
 
   it('clamps the new look options', () => {

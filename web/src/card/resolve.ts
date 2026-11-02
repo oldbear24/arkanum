@@ -1,6 +1,6 @@
 import { cs } from '../i18n/cs';
 import { buildGeometry, type CardGeometry, type WindowBox } from './geometry';
-import { enums, ranges, type ArtFilter, type ArtPlacement, type Art, type BackPattern, type CardElement, type CardFont, type CardItem, type CustomColors, type Edge, type Foil, type Frame, type Palette, type Surface, type Variant } from './spec';
+import { enums, figureChoices, ranges, type ArtFilter, type ArtPlacement, type Art, type BackPattern, type CardElement, type CardFont, type CardItem, type CardParts, type CustomColors, type Edge, type Figure, type Foil, type FoilArea, type Frame, type Palette, type SkyPattern, type SkyStyle, type StatLabels, type Surface, type Texture, type TitleEffect, type Variant } from './spec';
 
 // The static half of renderVals() from design/Karta.dc.html: everything that depends
 // only on the card parameters. The part that depends on the pointer is in motion.ts.
@@ -21,18 +21,27 @@ export interface PlacedItem extends CardItem {
 export interface CardParams {
   variant?: Variant | string;
   art?: Art | string;
+  /** Another illustration than the one of the template, for the families that have a choice. */
+  figure?: Figure | string;
   frame?: Frame | string;
   palette?: Palette | string;
   element?: CardElement | string;
   foil?: Foil | string;
   foilI?: number;
+  foilArea?: FoilArea | string;
+  foilAngle?: number;
   surface?: Surface | string;
+  texture?: Texture | string;
+  textureI?: number;
+  wear?: number;
   emboss?: boolean;
   edge?: Edge | string;
   thick?: number;
   radius?: number;
   depth?: number;
   light?: number;
+  /** The width of the lines of the frame in percent. */
+  frameWeight?: number;
   font?: CardFont | string;
   cardTitle?: string;
   numeral?: string;
@@ -73,7 +82,21 @@ export interface CardParams {
   /** The size of the title in percent. */
   titleScale?: number;
   titleCaps?: boolean;
+  titleEffect?: TitleEffect | string;
+  titleSpacing?: number;
+  titleOffset?: number;
+  bodyScale?: number;
   artFilter?: Partial<ArtFilter>;
+  skyStyle?: SkyStyle | string;
+  skyPattern?: SkyPattern | string;
+  vignette?: number;
+  /** Single parts of the print, all of them are shown unless they are switched off. */
+  parts?: Partial<CardParts>;
+  /** Own captions of the stats. */
+  labels?: Partial<StatLabels>;
+  backText?: string;
+  /** The back belongs to a deck: whatever a card has of its own on it gives way. */
+  uniformBack?: boolean;
   /** The freely placed parts of the card, from the bottom up. */
   items?: PlacedItem[];
 }
@@ -99,6 +122,14 @@ export const PAL: Record<Palette, PaletteColors> = {
   safir: { base: '#0b1730', sky0: '#16325f', sky1: '#081022', g0: '#5c6c8a', g1: '#b7c7de', g2: '#f2f7ff', ink: '#e3ecf8', glow: '#7fb0f0', light: false },
   obsidian: { base: '#101114', sky0: '#272a30', sky1: '#0a0b0d', g0: '#585d66', g1: '#b9bec7', g2: '#f6f8fb', ink: '#e8eaee', glow: '#aab4c4', light: false },
   jantar: { base: '#2a1606', sky0: '#5c3411', sky1: '#1c0e04', g0: '#80521a', g1: '#e8b04c', g2: '#fff0bf', ink: '#f6e4bf', glow: '#f0a03c', light: false },
+  ruze: { base: '#2a0f1c', sky0: '#57203a', sky1: '#1c0a13', g0: '#80475a', g1: '#e8a9b8', g2: '#fff0f3', ink: '#f8e4ea', glow: '#f08fb0', light: false },
+  tyrkys: { base: '#06211f', sky0: '#0f4a46', sky1: '#041614', g0: '#6a6a36', g1: '#d8c98a', g2: '#fbf6d2', ink: '#e3f2ea', glow: '#56d6c6', light: false },
+  popel: { base: '#1c1c1f', sky0: '#3b3c42', sky1: '#131316', g0: '#6b5545', g1: '#c9a58a', g2: '#f7e7da', ink: '#ece7e2', glow: '#c9a58a', light: false },
+  mech: { base: '#141c0c', sky0: '#2f3f18', sky1: '#0c1207', g0: '#6e6a2a', g1: '#c9c26a', g2: '#f6f3c0', ink: '#e8e8cb', glow: '#a6c85a', light: false },
+  vino: { base: '#240b20', sky0: '#4c1a45', sky1: '#180714', g0: '#7a5a3c', g1: '#dfc08c', g2: '#fff1cf', ink: '#f2e2d9', glow: '#c86a9c', light: false },
+  slonovina: { base: '#f3ecdc', sky0: '#fbf7ec', sky1: '#e6dcc4', g0: '#4a3418', g1: '#7a5a28', g2: '#c89a4a', ink: '#43321a', glow: '#c89a4a', light: true },
+  zima: { base: '#e6edf4', sky0: '#f5f9fc', sky1: '#cfdce9', g0: '#23384f', g1: '#3f5f80', g2: '#9fc0de', ink: '#27405a', glow: '#7fb0d8', light: true },
+  pisek: { base: '#e9d6b4', sky0: '#f4e7cc', sky1: '#d9bf92', g0: '#4e2a14', g1: '#7d4520', g2: '#d08a4c', ink: '#4a2a14', glow: '#d08a4c', light: true },
 };
 
 export const EL: Record<CardElement, { c: string; d: string; l: string; n: string }> = {
@@ -107,7 +138,17 @@ export const EL: Record<CardElement, { c: string; d: string; l: string; n: strin
   les: { c: '#7cbf5a', d: '#183012', l: '#dcf3cc', n: cs.card.elements.les },
   blesk: { c: '#e6c548', d: '#352c0b', l: '#fff2be', n: cs.card.elements.blesk },
   stin: { c: '#a58be6', d: '#21183b', l: '#e6dcff', n: cs.card.elements.stin },
+  voda: { c: '#4a9fe0', d: '#0f2740', l: '#cfe6fb', n: cs.card.elements.voda },
+  led: { c: '#8fdbe8', d: '#14363f', l: '#e4f8fb', n: cs.card.elements.led },
+  zeme: { c: '#b58a5a', d: '#2e2012', l: '#efdcc2', n: cs.card.elements.zeme },
+  svetlo: { c: '#efe2b0', d: '#37321b', l: '#fffbe6', n: cs.card.elements.svetlo },
+  jed: { c: '#b4d23c', d: '#25300c', l: '#ecf9c0', n: cs.card.elements.jed },
 };
+
+/** The colours of the edge layers, from a dark outer sheet to a light one in the middle. */
+function edgeRamp(dark: string, light: string): string[] {
+  return [0, 0.25, 0.5, 0.75, 1, 1, 0.75, 0.5, 0.25, 0].map((t) => mix(dark, light, t));
+}
 
 export const EDGE: Record<Exclude<Edge, 'ram'>, string[]> = {
   zlata: ['#6f5424', '#9a7637', '#c49a4f', '#dfbd73', '#f0d796', '#f0d796', '#dfbd73', '#c49a4f', '#9a7637', '#6f5424'],
@@ -115,6 +156,12 @@ export const EDGE: Record<Exclude<Edge, 'ram'>, string[]> = {
   bila: ['#b5ad9d', '#c8c0b0', '#d9d2c3', '#e6e0d2', '#efeadf', '#efeadf', '#e6e0d2', '#d9d2c3', '#c8c0b0', '#b5ad9d'],
   stribrna: ['#5b606a', '#7f858f', '#a5abb5', '#c8cdd5', '#e4e7ec', '#e4e7ec', '#c8cdd5', '#a5abb5', '#7f858f', '#5b606a'],
   medena: ['#5f3417', '#84492a', '#a9623a', '#c9814f', '#e3a26f', '#e3a26f', '#c9814f', '#a9623a', '#84492a', '#5f3417'],
+  ruzova: edgeRamp('#7a4a45', '#f0c4b8'),
+  modra: edgeRamp('#132a55', '#6f9fe0'),
+  cervena: edgeRamp('#4a0c12', '#d24a4a'),
+  zelena: edgeRamp('#0e3a26', '#4fbf88'),
+  fialova: edgeRamp('#2c1650', '#9a74e0'),
+  duha: ['#ff5caa', '#ff8a5c', '#ffb84d', '#ffd666', '#a8e86b', '#68ffc4', '#5cd4ff', '#5cb2ff', '#8f8cff', '#c478ff'],
 };
 
 const SHADE = [0.55, 0.4, 0.25, 0.1, 0, 0, 0.1, 0.25, 0.4, 0.55];
@@ -124,10 +171,25 @@ const FONTS: Record<CardFont, [string, number, number]> = {
   cormorant: ["'Cormorant Garamond', Georgia, serif", 700, 1.12],
   aboreto: ["'Aboreto', 'Cinzel', Georgia, serif", 400, 0.92],
   gotika: ["'Grenze Gotisch', Georgia, serif", 600, 1.08],
+  marcellus: ["'Marcellus', Georgia, serif", 400, 1.02],
+  uncial: ["'Uncial Antiqua', Georgia, serif", 400, 0.9],
+  fondamento: ["'Fondamento', Georgia, serif", 400, 1.04],
+  metamorphous: ["'Metamorphous', Georgia, serif", 400, 0.86],
+  vibes: ["'Great Vibes', Georgia, cursive", 400, 1.3],
 };
 
-/** The silver foil replaces the metal of the palette, in a darker shade on a light card. */
-const SILVER = { dark: { g0: '#5d6470', g1: '#b8c0cc', g2: '#f7f9fc' }, light: { g0: '#3f444d', g1: '#6b727d', g2: '#c9ced6' } };
+/** These foils replace the metal of the palette, in a darker shade on a light card. */
+const METAL_FOILS: Partial<Record<Foil, { dark: Record<'g0' | 'g1' | 'g2', string>; light: Record<'g0' | 'g1' | 'g2', string> }>> = {
+  stribrna: { dark: { g0: '#5d6470', g1: '#b8c0cc', g2: '#f7f9fc' }, light: { g0: '#3f444d', g1: '#6b727d', g2: '#c9ced6' } },
+  ruzova: { dark: { g0: '#7d4f4a', g1: '#e6b0a4', g2: '#fff1ec' }, light: { g0: '#5a2e2a', g1: '#8f5048', g2: '#e0a89a' } },
+  medena: { dark: { g0: '#6a3518', g1: '#d08a54', g2: '#ffe3c8' }, light: { g0: '#4a2410', g1: '#8a4f26', g2: '#d9985f' } },
+};
+
+/** The texts of the panel of a game card, on a dark and on a light panel. */
+const PANEL_INK = {
+  light: { strong: '#2a2018', soft: '#5e4c38', rule: 'rgba(42,32,24,0.25)' },
+  dark: { strong: '#f6ecd2', soft: '#cfc7b2', rule: 'rgba(246,236,210,0.25)' },
+};
 
 /** Placeholder for the gold gradient. Each rendered card swaps it for its own unique id. */
 export const GOLD = 'url(#gold)';
@@ -210,14 +272,16 @@ function isColor(value: unknown): value is string {
   return typeof value === 'string' && HEX_COLOR.test(value);
 }
 
-function isBright(color: string): boolean {
+export function isBright(color: string): boolean {
   const n = parseInt(color.slice(1), 16);
   return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 140;
 }
 
-function withSilver(c: CardColors, tcg: boolean): CardColors {
-  const silver = c.light ? SILVER.light : SILVER.dark;
-  return { ...c, ...silver, txt: tcg || c.light ? c.txt : silver.g1 };
+function withFoilMetal(c: CardColors, foil: Foil, tcg: boolean): CardColors {
+  const metals = METAL_FOILS[foil];
+  if (!metals) return c;
+  const metal = c.light ? metals.light : metals.dark;
+  return { ...c, ...metal, txt: tcg || c.light ? c.txt : metal.g1 };
 }
 
 /** Lays the own colours over those of the palette. Whatever is left empty stays as it is. */
@@ -245,6 +309,9 @@ function withCustomColors(c: CardColors, custom: Partial<CustomColors> | undefin
     if (variant === 'bestie') out.sico = custom.metal;
   }
   if (isColor(custom.text)) out.txt = custom.text;
+  if (isColor(custom.plaque)) out.plaque = custom.plaque;
+  if (isColor(custom.panel)) out.panelFill = custom.panel;
+  if (isColor(custom.glow)) out.glow = custom.glow;
   return out;
 }
 
@@ -255,9 +322,10 @@ function resolveFilter(raw: Partial<ArtFilter> | undefined): ArtFilter | null {
     contrast: clamp(ranges.artContrast[0], ranges.artContrast[1], num(raw.contrast, 100)),
     saturate: clamp(ranges.artSaturate[0], ranges.artSaturate[1], num(raw.saturate, 100)),
     hue: clamp(ranges.artHue[0], ranges.artHue[1], num(raw.hue, 0)),
+    sepia: clamp(ranges.artSepia[0], ranges.artSepia[1], num(raw.sepia, 0)),
   };
   // A filter costs on every frame of a moving card, so a card without one has none at all.
-  return filter.brightness === 100 && filter.contrast === 100 && filter.saturate === 100 && filter.hue === 0 ? null : filter;
+  return filter.brightness === 100 && filter.contrast === 100 && filter.saturate === 100 && filter.hue === 0 && filter.sepia === 0 ? null : filter;
 }
 
 function defaultTexts(variant: Variant, art: Art, elementName: string) {
@@ -271,12 +339,12 @@ const geometryCache = new Map<string, CardGeometry>();
 const GEOMETRY_CACHE_LIMIT = 256;
 
 /** SVG paths are memoized by the parameters they depend on. Many cards share them. */
-function cachedGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, H: number, backPattern: BackPattern): CardGeometry {
-  const key = [variant, frame, art, element, rarity, radius, H, backPattern].join('|');
+function cachedGeometry(variant: Variant, frame: Frame, art: Art, element: CardElement, rarity: number, radius: number, H: number, backPattern: BackPattern, figure: Figure | '', skyPattern: SkyPattern): CardGeometry {
+  const key = [variant, frame, art, element, rarity, radius, H, backPattern, figure, skyPattern].join('|');
   let geometry = geometryCache.get(key);
   if (!geometry) {
     if (geometryCache.size >= GEOMETRY_CACHE_LIMIT) geometryCache.clear();
-    geometry = buildGeometry(variant, frame, art, element, rarity, radius, H, backPattern);
+    geometry = buildGeometry(variant, frame, art, element, rarity, radius, H, backPattern, figure, skyPattern);
     geometryCache.set(key, geometry);
   }
   return geometry;
@@ -294,6 +362,7 @@ export function resolveCard(p: CardParams) {
   const H = blank ? Math.max(BLANK_MIN_HEIGHT, blankHeight(formatW, formatH)) : tcg ? 419 : 514;
 
   const art = pick(p.art, enums.art, 'hvezda');
+  const figure = pick<Figure | ''>(p.figure, figureChoices(variant), '');
   const frame = pick(p.frame, enums.frame, variant === 'orakulum' || blank ? 'minimal' : 'secese');
   const palette = pick(p.palette, enums.palette, variant === 'orakulum' ? 'pergamen' : 'pulnoc');
   const element = pick(p.element, enums.element, 'mlha');
@@ -315,21 +384,32 @@ export function resolveCard(p: CardParams) {
   const backPattern = pick(p.backPattern, enums.backPattern, 'mandala');
   const fullArt = p.fullArt === true;
   const titleScale = clamp(ranges.titleScale[0], ranges.titleScale[1], num(p.titleScale, 100)) / 100;
+  const titleSpacing = clamp(ranges.titleSpacing[0], ranges.titleSpacing[1], num(p.titleSpacing, 0)) / 100;
+  const skyPattern = pick(p.skyPattern, enums.skyPattern, 'zadny');
+  const uniformBack = p.uniformBack === true;
 
-  const geometry = cachedGeometry(variant, frame, art, element, rarity, radius, H, backPattern);
+  const geometry = cachedGeometry(variant, frame, art, element, rarity, radius, H, backPattern, figure, skyPattern);
 
   const E = EL[element];
   const paletteColors = palettes(variant, palette, element);
-  const c = withCustomColors(foil === 'stribrna' ? withSilver(paletteColors, tcg) : paletteColors, p.colors, variant);
-  const hl = foil === 'zadna' ? 0.12 : foil === 'zlata' || foil === 'stribrna' ? 0.55 + 0.45 * I : 0.3 + 0.3 * I;
+  const c = withCustomColors(withFoilMetal(paletteColors, foil, tcg), p.colors, variant);
+  const hl = foil === 'zadna' ? 0.12 : foil === 'zlata' || METAL_FOILS[foil] ? 0.55 + 0.45 * I : 0.3 + 0.3 * I;
 
   const backPalette = enums.palette.includes(p.backPalette as Palette) ? PAL[p.backPalette as Palette] : null;
   const back = backPalette
     ? { base: backPalette.base, g0: backPalette.g0, g1: backPalette.g1, g2: mix(backPalette.g1, backPalette.g2, hl), txt: backPalette.g1 }
     : { base: c.backBase, g0: c.g0, g1: c.g1, g2: mix(c.g1, c.g2, hl), txt: c.txt };
+  if (!uniformBack && isColor(p.colors?.backBase)) back.base = p.colors.backBase;
+  if (!uniformBack && isColor(p.colors?.backMetal)) {
+    back.g0 = mix(p.colors.backMetal, '#000000', 0.45);
+    back.g1 = p.colors.backMetal;
+    back.g2 = mix(p.colors.backMetal, mix(p.colors.backMetal, '#ffffff', 0.75), hl);
+    back.txt = p.colors.backMetal;
+  }
 
   const half = thick / 32;
-  const edgeColors = edge === 'ram' ? SHADE.map((t) => mix(c.base, '#000000', t)) : EDGE[edge];
+  const ownEdge = !uniformBack && isColor(p.colors?.edge) ? p.colors.edge : null;
+  const edgeColors = ownEdge ? SHADE.map((t) => mix(ownEdge, '#000000', t)) : edge === 'ram' ? SHADE.map((t) => mix(c.base, '#000000', t)) : EDGE[edge];
   const edges = edgeColors.map((color, i) => ({
     color,
     z: (-half * 0.94 + i * ((half * 1.88) / 9)).toFixed(3) + 'em',
@@ -341,15 +421,18 @@ export function resolveCard(p: CardParams) {
 
   const F = FONTS[p.font as CardFont] || FONTS.cinzel;
   const len = Math.max(1, title.length);
-  const tLs = len > 10 ? 0.08 : 0.18;
+  const tLs = (len > 10 ? 0.08 : 0.18) + titleSpacing;
   const tFs = Math.min(1.14 * F[2], 12.4 / (len * (0.74 + tLs))) * titleScale;
-  const nameFs = Math.min(1.0 * F[2], 11.2 / (len * 0.86)) * titleScale;
-  const heroFs = Math.min(0.92 * F[2], 11 / (len * 0.78)) * titleScale;
+  const nameFs = Math.min(1.0 * F[2], 11.2 / (len * (0.86 + titleSpacing))) * titleScale;
+  const heroFs = Math.min(0.92 * F[2], 11 / (len * (0.78 + titleSpacing))) * titleScale;
   const subFs = Math.min(0.66, 14 / (Math.max(1, subtitle.length) * 0.42));
 
   const d = cs.card.defaults;
   const isHrdina = variant === 'hrdina';
   const artBox: WindowBox = fullArt ? { x: 0, y: 0, w: 300, h: H } : geometry.box;
+  const panelIsLight = isColor(p.colors?.panel) ? isBright(p.colors.panel) : isHrdina;
+  const ownTitle = isColor(p.colors?.title) ? p.colors.title : null;
+  const parts = p.parts;
 
   return {
     variant,
@@ -360,7 +443,13 @@ export function resolveCard(p: CardParams) {
     palette,
     element,
     foil,
+    /** A full art card has no window that the foil could stop at. */
+    foilArea: fullArt ? ('cela' as const) : pick(p.foilArea, enums.foilArea, 'cela'),
+    foilAngle: clamp(ranges.foilAngle[0], ranges.foilAngle[1], num(p.foilAngle, 115)),
     surface,
+    texture: pick(p.texture, enums.texture, 'zadna'),
+    textureI: clamp(ranges.textureI[0], ranges.textureI[1], num(p.textureI, 50)) / 100,
+    wear: clamp(ranges.wear[0], ranges.wear[1], num(p.wear, 0)) / 100,
     edge,
     rarity,
     radius,
@@ -388,10 +477,40 @@ export function resolveCard(p: CardParams) {
     artBox,
     fullArt,
     backPattern,
+    uniformBack,
+    /** The own text on the back. A deck has none, and the brand of a game card keeps its place. */
+    backText: uniformBack ? '' : txt(p.backText, ''),
     titleCaps: on(p.titleCaps),
+    titleEffect: pick(p.titleEffect, enums.titleEffect, 'zadny'),
+    titleOffset: clamp(ranges.titleOffset[0], ranges.titleOffset[1], num(p.titleOffset, 0)),
+    titleSpacing,
+    bodyScale: clamp(ranges.bodyScale[0], ranges.bodyScale[1], num(p.bodyScale, 100)) / 100,
+    frameWeight: clamp(ranges.frameWeight[0], ranges.frameWeight[1], num(p.frameWeight, 100)) / 100,
     artFilter: resolveFilter(p.artFilter),
-    /** The title colour of the game cards, which is not the colour of their other texts. */
-    ink: isColor(p.colors?.text) ? p.colors.text : '#f6ecd2',
+    skyStyle: pick(p.skyStyle, enums.skyStyle, 'prechod'),
+    sky: geometry.sky,
+    vignette: clamp(ranges.vignette[0], ranges.vignette[1], num(p.vignette, 0)) / 100,
+    parts: {
+      title: on(parts?.title),
+      numeral: on(parts?.numeral),
+      subtitle: on(parts?.subtitle),
+      plaque: on(parts?.plaque),
+      window: on(parts?.window),
+      border: on(parts?.border),
+      corners: on(parts?.corners),
+      ornaments: on(parts?.ornaments),
+      rarity: on(parts?.rarity),
+      credit: on(parts?.credit),
+    },
+    /** The title colour of the game cards is not the colour of their other texts. */
+    titleColor: ownTitle ?? (tcg ? (isColor(p.colors?.text) ? p.colors.text : '#f6ecd2') : c.txt),
+    panelInk: panelIsLight ? PANEL_INK.light : PANEL_INK.dark,
+    labels: {
+      level: txt(p.labels?.level, cs.card.level),
+      s1: txt(p.labels?.s1, cs.card.statStrength),
+      s2: txt(p.labels?.s2, cs.card.statDefense),
+      s3: txt(p.labels?.s3, cs.card.statMagic),
+    },
     artwork: p.artwork ?? [],
     items: p.items ?? [],
     g0: c.g0,

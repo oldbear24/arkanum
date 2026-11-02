@@ -3,6 +3,7 @@ import {
   counts,
   enums,
   ranges,
+  figureChoices,
   templateFor,
   textLimits,
   type ArtFilter,
@@ -14,10 +15,14 @@ import {
   type CardItem,
   type CardLook,
   type CardMeaning,
+  type CardParts,
   type CustomColors,
   type Family,
+  type Figure,
+  type ItemShape,
   type ItemType,
   type Palette,
+  type StatLabels,
 } from './spec';
 
 type Raw = Record<string, unknown>;
@@ -60,7 +65,34 @@ function color(value: unknown): string {
 }
 
 function normalizeColors(raw: Raw): CustomColors {
-  return { base: color(raw.base), sky: color(raw.sky), metal: color(raw.metal), text: color(raw.text) };
+  return {
+    base: color(raw.base),
+    sky: color(raw.sky),
+    metal: color(raw.metal),
+    text: color(raw.text),
+    title: color(raw.title),
+    plaque: color(raw.plaque),
+    panel: color(raw.panel),
+    glow: color(raw.glow),
+    edge: color(raw.edge),
+    backBase: color(raw.backBase),
+    backMetal: color(raw.backMetal),
+  };
+}
+
+function normalizeParts(raw: Raw, d: CardParts): CardParts {
+  return {
+    title: bool(raw.title, d.title),
+    numeral: bool(raw.numeral, d.numeral),
+    subtitle: bool(raw.subtitle, d.subtitle),
+    plaque: bool(raw.plaque, d.plaque),
+    window: bool(raw.window, d.window),
+    border: bool(raw.border, d.border),
+    corners: bool(raw.corners, d.corners),
+    ornaments: bool(raw.ornaments, d.ornaments),
+    rarity: bool(raw.rarity, d.rarity),
+    credit: bool(raw.credit, d.credit),
+  };
 }
 
 function normalizeFilter(raw: Raw, d: ArtFilter): ArtFilter {
@@ -69,6 +101,7 @@ function normalizeFilter(raw: Raw, d: ArtFilter): ArtFilter {
     contrast: clampNumber(raw.contrast, ranges.artContrast, d.contrast),
     saturate: clampNumber(raw.saturate, ranges.artSaturate, d.saturate),
     hue: clampNumber(raw.hue, ranges.artHue, d.hue),
+    sepia: clampNumber(raw.sepia, ranges.artSepia, d.sepia),
   };
 }
 
@@ -78,22 +111,36 @@ function normalizeLook(raw: Raw, family: Family): CardLook {
   return {
     variant: family,
     art: pick(raw.art, enums.art, d.art),
+    figure: pick<Figure | ''>(raw.figure, figureChoices(family), ''),
     frame: pick(raw.frame, enums.frame, d.frame),
     palette: pick(raw.palette, enums.palette, d.palette),
     element: pick(raw.element, enums.element, d.element),
     foil: pick(raw.foil, enums.foil, d.foil),
     foilI: clampNumber(raw.foilI, ranges.foilI, d.foilI),
+    foilArea: pick(raw.foilArea, enums.foilArea, d.foilArea),
+    foilAngle: clampNumber(raw.foilAngle, ranges.foilAngle, d.foilAngle),
     surface: pick(raw.surface, enums.surface, d.surface),
+    texture: pick(raw.texture, enums.texture, d.texture),
+    textureI: clampNumber(raw.textureI, ranges.textureI, d.textureI),
+    wear: clampNumber(raw.wear, ranges.wear, d.wear),
     emboss: bool(raw.emboss, d.emboss),
     edge: pick(raw.edge, enums.edge, d.edge),
     thick: clampNumber(raw.thick, ranges.thick, d.thick),
     radius: clampNumber(raw.radius, ranges.radius, d.radius),
     depth: clampNumber(raw.depth, ranges.depth, d.depth),
+    frameWeight: clampNumber(raw.frameWeight, ranges.frameWeight, d.frameWeight),
     font: pick(raw.font, enums.font, d.font),
     titleScale: clampNumber(raw.titleScale, ranges.titleScale, d.titleScale),
     titleCaps: bool(raw.titleCaps, d.titleCaps),
+    titleEffect: pick(raw.titleEffect, enums.titleEffect, d.titleEffect),
+    titleSpacing: clampNumber(raw.titleSpacing, ranges.titleSpacing, d.titleSpacing),
+    titleOffset: clampNumber(raw.titleOffset, ranges.titleOffset, d.titleOffset),
+    bodyScale: clampNumber(raw.bodyScale, ranges.bodyScale, d.bodyScale),
     fullArt: bool(raw.fullArt, d.fullArt),
     artFilter: normalizeFilter(asObject(raw.artFilter), d.artFilter),
+    skyStyle: pick(raw.skyStyle, enums.skyStyle, d.skyStyle),
+    skyPattern: pick(raw.skyPattern, enums.skyPattern, d.skyPattern),
+    vignette: clampNumber(raw.vignette, ranges.vignette, d.vignette),
     colors: normalizeColors(asObject(raw.colors)),
     backPalette: pick<Palette | ''>(raw.backPalette, enums.palette, d.backPalette),
     backPattern: pick(raw.backPattern, enums.backPattern, d.backPattern),
@@ -103,6 +150,7 @@ function normalizeLook(raw: Raw, family: Family): CardLook {
       text: bool(visible.text, d.visible.text),
       foil: bool(visible.foil, d.visible.foil),
     },
+    parts: normalizeParts(asObject(raw.parts), d.parts),
   };
 }
 
@@ -127,7 +175,7 @@ const ITEM_KINDS: Partial<Record<ItemType, readonly string[]>> = {
 
 /** What a new item of a type starts from. Also fills in whatever a stored one misses. */
 export function itemDefaults(type: ItemType): Omit<CardItem, 'id' | 'type'> {
-  const common = { side: 'face', x: 50, y: 50, rotate: 0, opacity: 100, color: '', hidden: false, text: '', value: '', font: 'cormorant', align: 'center', kind: '', filled: true, ratio: 100, file: '' } as const;
+  const common = { side: 'face', x: 50, y: 50, rotate: 0, opacity: 100, color: '', hidden: false, text: '', value: '', font: 'cormorant', align: 'center', kind: '', filled: true, ratio: 100, file: '', flipX: false, flipY: false, depth: 0, shadow: 0, blend: 'normal', locked: false, spacing: 0, line: 115, caps: false, effect: 'zadny', curve: 0, stroke: 3, mask: '', border: 0 } as const;
   switch (type) {
     case 'text':
       return { ...common, size: 8, text: cs.workshop.items.defaultText };
@@ -174,6 +222,20 @@ function normalizeItem(raw: Raw, index: number, taken: Set<string>): CardItem | 
     filled: bool(raw.filled, d.filled),
     ratio: clampNumber(raw.ratio, ranges.itemRatio, d.ratio),
     file: text(raw.file, textLimits.itemFile, d.file),
+    flipX: bool(raw.flipX, d.flipX),
+    flipY: bool(raw.flipY, d.flipY),
+    depth: clampNumber(raw.depth, ranges.itemDepth, d.depth),
+    shadow: clampNumber(raw.shadow, ranges.itemShadow, d.shadow),
+    blend: pick(raw.blend, enums.itemBlend, d.blend),
+    locked: bool(raw.locked, d.locked),
+    spacing: clampNumber(raw.spacing, ranges.itemSpacing, d.spacing),
+    line: clampNumber(raw.line, ranges.itemLine, d.line),
+    caps: bool(raw.caps, d.caps),
+    effect: pick(raw.effect, enums.titleEffect, d.effect),
+    curve: clampNumber(raw.curve, ranges.itemCurve, d.curve),
+    stroke: clampNumber(raw.stroke, ranges.itemStroke, d.stroke),
+    mask: pick<ItemShape | ''>(raw.mask, enums.itemShape, d.mask),
+    border: clampNumber(raw.border, ranges.itemBorder, d.border),
   };
 }
 
@@ -184,6 +246,15 @@ function normalizeItems(raw: unknown): CardItem[] {
     .map((item, i) => normalizeItem(item, i, taken))
     .filter((item) => item !== null)
     .slice(0, counts.elements);
+}
+
+function normalizeLabels(raw: Raw): StatLabels {
+  return {
+    level: text(raw.level, textLimits.statLabel, ''),
+    s1: text(raw.s1, textLimits.statLabel, ''),
+    s2: text(raw.s2, textLimits.statLabel, ''),
+    s3: text(raw.s3, textLimits.statLabel, ''),
+  };
 }
 
 function normalizeContent(raw: Raw, family: Family, look: CardLook): CardContent {
@@ -202,6 +273,8 @@ function normalizeContent(raw: Raw, family: Family, look: CardLook): CardContent
     rarity: Math.round(clampNumber(raw.rarity, ranges.rarity, d.rarity)),
     setNo: text(raw.setNo, textLimits.setNo, d.setNo),
     artist: text(raw.artist, textLimits.artist, d.artist),
+    backText: text(raw.backText, textLimits.backText, d.backText),
+    labels: normalizeLabels(asObject(raw.labels)),
     abilities: normalizeAbilities(raw.abilities, d.abilities),
     elements: normalizeItems(raw.elements),
   };

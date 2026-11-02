@@ -3,13 +3,14 @@ import { templateFor, type CardContent, type CardDoc, type CardLook, type CardMe
 
 // VDEF from design/Dilna.dc.html: which values a template resets when switching to it.
 // Everything else (thickness, surface, font, the element…) stays as the user set it.
+// The figure goes too, because every family has other illustrations to choose from.
 // Tarot also resets its meaning, otherwise a detour over the oracle would leave its text there.
 const SWITCH_KEYS: Record<Family, { look: (keyof CardLook)[]; content: (keyof CardContent)[]; meaning: (keyof CardMeaning)[] }> = {
-  tarot: { look: ['palette', 'frame', 'foil', 'edge'], content: ['subtitle'], meaning: ['upright', 'reversed', 'keywords'] },
-  orakulum: { look: ['palette', 'frame', 'foil', 'edge'], content: ['subtitle'], meaning: ['upright'] },
-  bestie: { look: ['foil', 'edge'], content: ['subtitle', 's1', 's2', 'abilities'], meaning: [] },
-  hrdina: { look: ['foil', 'edge'], content: ['subtitle', 's1', 's2', 's3', 'abilities'], meaning: [] },
-  prazdna: { look: ['palette', 'frame', 'foil', 'edge'], content: ['subtitle'], meaning: [] },
+  tarot: { look: ['palette', 'frame', 'foil', 'edge', 'figure'], content: ['subtitle'], meaning: ['upright', 'reversed', 'keywords'] },
+  orakulum: { look: ['palette', 'frame', 'foil', 'edge', 'figure'], content: ['subtitle'], meaning: ['upright'] },
+  bestie: { look: ['foil', 'edge', 'figure'], content: ['subtitle', 's1', 's2', 'abilities'], meaning: [] },
+  hrdina: { look: ['foil', 'edge', 'figure'], content: ['subtitle', 's1', 's2', 's3', 'abilities'], meaning: [] },
+  prazdna: { look: ['palette', 'frame', 'foil', 'edge', 'figure'], content: ['subtitle'], meaning: [] },
 };
 
 function copyKeys<T extends object>(target: T, source: T, keys: (keyof T)[]): T {

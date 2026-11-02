@@ -12,11 +12,19 @@ import styles from './DevCards.module.css';
 // Developer page for checking the card against design/Karta.dc.html. It is not linked
 // from the app, and its labels are the raw parameter names on purpose.
 
-type EnumKey = 'variant' | 'art' | 'frame' | 'palette' | 'element' | 'foil' | 'surface' | 'edge' | 'font';
-const ENUM_CONTROLS: EnumKey[] = ['variant', 'art', 'frame', 'palette', 'element', 'foil', 'surface', 'edge', 'font'];
+type EnumKey = 'variant' | 'art' | 'frame' | 'palette' | 'element' | 'foil' | 'foilArea' | 'surface' | 'texture' | 'edge' | 'font' | 'titleEffect' | 'skyStyle' | 'skyPattern';
+const ENUM_CONTROLS: EnumKey[] = ['variant', 'art', 'frame', 'palette', 'element', 'foil', 'foilArea', 'surface', 'texture', 'edge', 'font', 'titleEffect', 'skyStyle', 'skyPattern'];
 
-const RANGE_CONTROLS: { key: 'foilI' | 'thick' | 'radius' | 'depth' | 'light'; min: number; max: number; step: number }[] = [
+const RANGE_CONTROLS: { key: 'foilI' | 'foilAngle' | 'textureI' | 'wear' | 'vignette' | 'frameWeight' | 'titleSpacing' | 'titleOffset' | 'bodyScale' | 'thick' | 'radius' | 'depth' | 'light'; min: number; max: number; step: number }[] = [
   { key: 'foilI', min: ranges.foilI[0], max: ranges.foilI[1], step: 1 },
+  { key: 'foilAngle', min: ranges.foilAngle[0], max: ranges.foilAngle[1], step: 1 },
+  { key: 'textureI', min: ranges.textureI[0], max: ranges.textureI[1], step: 1 },
+  { key: 'wear', min: ranges.wear[0], max: ranges.wear[1], step: 1 },
+  { key: 'vignette', min: ranges.vignette[0], max: ranges.vignette[1], step: 1 },
+  { key: 'frameWeight', min: ranges.frameWeight[0], max: ranges.frameWeight[1], step: 5 },
+  { key: 'titleSpacing', min: ranges.titleSpacing[0], max: ranges.titleSpacing[1], step: 1 },
+  { key: 'titleOffset', min: ranges.titleOffset[0], max: ranges.titleOffset[1], step: 1 },
+  { key: 'bodyScale', min: ranges.bodyScale[0], max: ranges.bodyScale[1], step: 5 },
   { key: 'thick', min: ranges.thick[0], max: ranges.thick[1], step: 0.5 },
   { key: 'radius', min: ranges.radius[0], max: ranges.radius[1], step: 1 },
   { key: 'depth', min: ranges.depth[0], max: ranges.depth[1], step: 1 },
@@ -45,11 +53,11 @@ function itemGrid(type: ItemType, kinds: readonly string[], columns: number, siz
 const NO_PRINT: CardParams = { variant: 'prazdna', formatW: 70, formatH: 120, cardTitle: ' ', showFrame: false, showArt: false, foil: 'zadna' };
 
 const ITEM_MATRIX: { name: string; params: CardParams }[] = [
-  { name: 'itemSymbol', params: { ...NO_PRINT, items: itemGrid('symbol', enums.itemSymbol, 4, 20) } },
-  { name: 'itemOrnament', params: { ...NO_PRINT, items: itemGrid('ornament', enums.itemOrnament, 2, 42) } },
-  { name: 'itemShape', params: { ...NO_PRINT, items: itemGrid('shape', enums.itemShape, 3, 26) } },
-  { name: 'itemShape (obrys)', params: { ...NO_PRINT, items: itemGrid('shape', enums.itemShape, 3, 26).map((item) => ({ ...item, filled: false, ratio: 150 })) } },
-  { name: 'stat', params: { ...NO_PRINT, items: itemGrid('stat', enums.itemShape, 3, 28) } },
+  { name: 'itemSymbol', params: { ...NO_PRINT, items: itemGrid('symbol', enums.itemSymbol, 6, 13) } },
+  { name: 'itemOrnament', params: { ...NO_PRINT, items: itemGrid('ornament', enums.itemOrnament, 3, 30) } },
+  { name: 'itemShape', params: { ...NO_PRINT, items: itemGrid('shape', enums.itemShape, 4, 20) } },
+  { name: 'itemShape (obrys)', params: { ...NO_PRINT, items: itemGrid('shape', enums.itemShape, 4, 20).map((item) => ({ ...item, filled: false, ratio: 150 })) } },
+  { name: 'stat', params: { ...NO_PRINT, items: itemGrid('stat', enums.itemShape, 4, 20) } },
   {
     name: 'text',
     params: {
@@ -58,6 +66,14 @@ const ITEM_MATRIX: { name: string; params: CardParams }[] = [
     },
   },
   ...enums.backPattern.map((backPattern) => ({ name: `back ${backPattern}`, params: { variant: 'tarot', backPattern } })),
+  ...enums.skyPattern.map((skyPattern) => ({ name: `sky ${skyPattern}`, params: { variant: 'tarot', skyPattern } })),
+  ...enums.skyStyle.map((skyStyle) => ({ name: `sky ${skyStyle}`, params: { variant: 'tarot', skyStyle } })),
+  ...enums.texture.map((texture) => ({ name: `texture ${texture}`, params: { variant: 'tarot', texture, textureI: 70 } })),
+  ...enums.titleEffect.map((titleEffect) => ({ name: `title ${titleEffect}`, params: { variant: 'tarot', titleEffect } })),
+  ...enums.font.map((font) => ({ name: `font ${font}`, params: { variant: 'tarot', font, titleCaps: font !== 'vibes', cardTitle: 'Žluťoučký kůň' } })),
+  ...enums.figureBestie.map((figure) => ({ name: `figure ${figure}`, params: { variant: 'bestie', figure } })),
+  ...enums.figureHrdina.map((figure) => ({ name: `figure ${figure}`, params: { variant: 'hrdina', figure } })),
+  ...enums.art.map((figure) => ({ name: `figure ${figure}`, params: { variant: 'orakulum', figure } })),
 ];
 
 const MATRIX: CardParams[] = [
