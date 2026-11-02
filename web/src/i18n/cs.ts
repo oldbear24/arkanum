@@ -1,0 +1,46 @@
+// All user-facing Czech text lives here. Identifiers stay English.
+
+export const cs = {
+  card: {
+    kind: {
+      tarot: 'tarotová karta',
+      bestie: 'karta bytosti',
+      hrdina: 'karta hrdiny',
+      orakulum: 'věštecká karta',
+      prazdna: 'vlastní karta',
+    },
+    backSide: ', rubová strana',
+    brand: 'ARKÁNUM',
+    level: 'ÚR.',
+    illustrator: 'il.',
+    statStrength: 'SÍLA',
+    statDefense: 'OBRANA',
+    statMagic: 'MAGIE',
+    arts: {
+      hvezda: { name: 'Hvězda', numeral: 'XVII' },
+      mesic: { name: 'Měsíc', numeral: 'XVIII' },
+      slunce: { name: 'Slunce', numeral: 'XIX' },
+      mag: { name: 'Mág', numeral: 'I' },
+    },
+    elements: { mlha: 'Mlha', ohen: 'Oheň', les: 'Les', blesk: 'Blesk', stin: 'Stín' },
+    defaults: {
+      titleOrakulum: 'Trpělivost',
+      titleBestie: 'Bludička',
+      titleHrdina: 'Strážkyně brány',
+      titleBlank: 'Nová karta',
+      subtitleOrakulum: 'Co má vyrůst, nespěchá.',
+      subtitleBestie: 'bažinný přízrak · ',
+      subtitleHrdina: 'Brána se otevře jen tomu, kdo zná heslo.',
+      ability1Hrdina: 'Hradba',
+      ability1Bestie: 'Mámení',
+      ability1TextHrdina: 'Když vstoupí do hry, tvé ostatní bytosti získají +1 obranu.',
+      ability1TextBestie: 'Soupeř příští kolo útočí naslepo.',
+      ability2: 'Bažinné světlo',
+      ability2Text: 'Odhoď kartu a zasáhni libovolnou bytost.',
+      cls: 'Paladin · Legenda',
+      author: '@noctua',
+      setNoHrdina: 'ARK · 031/120',
+      setNoBestie: 'ARK · 014/120',
+    },
+  },
+} as const;

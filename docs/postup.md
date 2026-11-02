@@ -6,7 +6,7 @@
 | --- | --- |
 | 1. Kostra | hotovo |
 | 2. Data | hotovo |
-| 3. Karta | čeká |
+| 3. Karta | hotovo |
 | 4. Úvod, šablony, přihlášení, profil | čeká |
 | 5. Dílna | čeká |
 | 6. Detail karty, lajky, remix, balíčky | čeká |
@@ -61,6 +61,28 @@ pravidla jen zpřísňují a pokrývají je testy v `internal/hooks/rules_test.g
 - Meze, které návrh neurčuje (`subtitle` 120, `abilityText` 200, `upright`/`reversed` 1000, 12 klíčových slov
   po 24 znacích), jsem zvolil sám.
 - `template.defaults` obsahuje kromě `look` a `content` i `title` a `meaning`, aby nová karta měla výchozí význam.
+
+### Komponenta karty (fáze 3)
+
+- **Věrnost návrhu ověřuju dvakrát.** `web/src/card/prototype.test.ts` spouští skutečný kód z
+  `design/Karta.dc.html` a porovnává cesty, barvy, texty i hodnoty pohybu s přepisem. Pixelové porovnání deseti
+  variant s vykresleným návrhem dalo rozdíl nejvýš 0,38 % pixelů (vyhlazení textu). Porovnávací skript není
+  v repozitáři, protože potřebuje běhové prostředí návrhu `support.js`, které k předání nepatří.
+- `CardFace` a `CardBack` mají styly inline, ne v CSS Modules. Export serializuje jejich DOM do SVG obrázku a tam
+  externí styly neplatí.
+- `prefers-reduced-motion` vypíná i otáčení tažením (režim `drag`), protože zadání říká „vypne náklon, otáčení
+  i animaci obrácení". Líc a rub lze dál přepínat tlačítky, jen bez animace.
+- Prototyp bere prázdný text jako „použij výchozí" (`txt()`). Zachoval jsem to, protože na tom stojí návrh: prázdný
+  „Popis bytosti" zobrazí text podle elementu. Vrácení výchozího textu ukazuje v dílně `placeholder` pole.
+- Na kartě bestie je „ÚR. 2" s mezerou, jak je to ve zdroji návrhu. Běhové prostředí návrhu mezeru při vykreslení
+  zahazuje, jde o jeho chybu.
+- **Prázdná karta** není v návrhu, geometrii jsem odvodil z tarotu (`buildBlank`). Přizpůsobuje se libovolnému
+  poměru stran, rám i okno se při extrémních formátech zmenšují.
+- Vlastní parametry navíc oproti návrhu: `artwork`, `formatW`, `formatH`, `backPalette`. Parametr `pad` z prototypu
+  odpadl, odsazení řeší rodič.
+- `artworkTransform` je `{ x, y, zoom, layers: [{ x, y, zoom }] }`. `x` a `y` jsou procenta velikosti okna. Vrstvy
+  v `artworkLayers` jdou od pozadí k popředí a hloubku určuje jejich počet (1: pozadí, 2: pozadí a popředí,
+  3: pozadí, střed a popředí). Obrázek přesahuje okno o 16 jednotek, aby paralaxa neodhalila okraj.
 
 ### Lajky
 
